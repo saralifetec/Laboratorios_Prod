@@ -1,0 +1,376 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}
+  <span data-i18n="nav.">Emails Automáticos</span>
+{% endblock %}
+
+
+
+
+{% block content %}
+
+<style>
+/* Tabela compacta */
+#horasAutoTable {
+    font-size: 0.85em;
+}
+#horasAutoTable thead th {
+    font-size: 1.0em;
+    font-weight: 500;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+#horasAutoTable tbody td {
+    font-size: 1.0em;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.dataTables_wrapper .dataTables_paginate .pagination {
+    font-size: 0.8em !important;
+}
+.dataTables_wrapper .dataTables_paginate .page-item .page-link {
+    font-size: 0.8em !important;
+    padding: 2px 8px !important;
+}
+</style>
+
+<div class="tabelas-page">
+
+		<form id="formEmailAuto" class="mb-4">
+		<input type="hidden" id="cfg_id">
+
+		<div class="tabelas-page">
+			<div class="tabelas-page">
+			  	<div class="row">
+					<div class="col-md-9">
+						<div class="card">
+							<div class="card-body">
+								<div class="row">
+									<div class="col-md-4">
+										<label class="form-label"  data-i18n="field.nome">Nome</label>
+										<input type="text" class="form-control" id="nome" maxlength="50" required>
+									</div>
+									<div class="col-md-4">
+										<label class="form-label" data-i18n="field.evento">Evento</label>
+										<select class="form-select" id="evento" required>
+											<option value=""></option>
+											<option value="ensaio_concluido"><span data-i18n="field.ensaio">Ensaio</span> <span data-i18n="field.concluido">concluído</span></option>
+                      <option value="envio_externo_concluido"><span data-i18n="field.envio">Envio</span> <span data-i18n="field.concluido">concluído</span></option>
+                      <option value="recolha_interna_concluida"><span data-i18n="field.recolha">Recolha</span> <span data-i18n="field.concluido">concluído</span></option>
+										</select>
+									</div>
+									<div class="col-md-4">
+										<label class="form-label" data-i18n="field.status">Estado</label>
+										<select class="form-select" id="obsoleto">
+										<option value="0"><span data-i18n="field.ativo">Ativo</span></option>
+										<option value="1"><span data-i18n="field.obsolete">Obsoleto</span></option>
+										</select>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<label class="form-label" data-i18n="field.assunto">Assunto</label>
+										<input type="text" class="form-control" id="assunto" required>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<label class="form-label" data-i18n="field.texto">Texto</label>
+										<textarea class="form-control" id="texto" rows="8" required></textarea>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-6">
+										<label class="form-label" data-i18n="field.para">Para</label>
+										<textarea class="form-control" id="to_email" rows="2" required></textarea>
+										<small class="text-muted"><span data-i18n="field.separar">Separar múltiplos por ;</span></small>
+									</div>
+									<div class="col-md-6">
+										<label class="form-label" data-i18n="field.cc">CC</label>
+										<textarea class="form-control" id="cc_email" rows="2"></textarea>
+										<small class="text-muted"><span data-i18n="field.separar">Separar múltiplos por ;</span></small>
+									</div>
+								</div>
+								<div class="row">
+									<div class="col-md-12">
+										<label class="form-label" data-i18n="field.laboratorios">Laboratórios</label>
+										<select class="form-control form-control-sm" id="laboratorios" name="laboratorios" multiple required size="8"> 
+											<!-- opções preenchidas via JS -->
+										</select>
+										<small class="form-text text-muted"><span data-i18n="field.selecionar_varios">Ctrl+Clique para selecionar vários</span></small>
+									</div>	
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-3">
+						<div class="card">
+							<div class="card-body">
+								<label class="form-label" data-i18n="field.variaveis_disponiveis">Variáveis disponíveis</label>
+								<div id="varsBox" class="d-flex flex-wrap gap-2"></div>
+								<small class="text-muted"><span data-i18n="field.inserir_campo">Clique para inserir no campo ativo.</span></small>	
+							</div>	
+						</div>
+					</div>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-md-1">
+					<button type="button" class="btn btn-warning btn-sm" onclick="clearFormFields()">
+            <span data-i18n="action.clear">
+						Limpar
+            </span>
+					</button>
+				</div>
+				
+				<div class="col-md-10"></div>
+				
+				<div class="col-md-1 align-right">
+					<button type="submit" class="btn btn-success btn-sm" name="save_email_cfg">
+            <span data-i18n="action.save">
+						Guardar
+            </span>
+					</button>
+				</div>
+				
+			</div>
+		</div>
+
+	</form>
+	<br>
+	<hr>
+
+	<table class="table table-striped table-hover" id="tblEmailCfg">
+	<thead>
+		<tr>
+		<th><span data-i18n="field.id">ID</span></th>
+		<th><span data-i18n="field.nome">Nome</span></th>
+		<th><span data-i18n="field.evento">Evento</span></th>
+		<th><span data-i18n="field.laboratorios">Labs</span></th>
+		<th><span data-i18n="field.estado">Estado</span></th>
+		<th><span data-i18n="field.acoes">Ações</span></th>
+		</tr>
+	</thead>
+	<tbody></tbody>
+	</table>
+</div>
+				
+
+
+
+</div>
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+
+<script>
+let LABS = [];
+let CFGS = [];
+
+let activeFieldId = 'assunto';
+
+function setActiveFieldTracking() {
+  ['assunto', 'texto', 'to_email', 'cc_email'].forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('focus', () => activeFieldId = id);
+  });
+}
+
+function insertAtCursor(input, text) {
+  const start = input.selectionStart ?? input.value.length;
+  const end = input.selectionEnd ?? input.value.length;
+  input.value = input.value.slice(0, start) + text + input.value.slice(end);
+  input.focus();
+  const pos = start + text.length;
+  input.setSelectionRange(pos, pos);
+}
+
+async function loadVariablesForEvent() {
+  const evento = document.getElementById('evento').value;
+  const box = document.getElementById('varsBox');
+  box.innerHTML = '';
+
+  if (!evento) return;
+
+  const res = await fetch(`/api/email-variables?evento=${encodeURIComponent(evento)}`);
+  const data = await res.json();
+
+  (data.variables || []).forEach(v => {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'btn btn-outline-secondary btn-sm';
+    btn.textContent = `\u007B\u007B${v.key}\u007D\u007D`;
+	
+    btn.title = `${v.label} | Ex.: ${v.example || ''}`;
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(activeFieldId) || document.getElementById('assunto');
+      insertAtCursor(target, `\u007B\u007B${v.key}\u007D\u007D`);
+    });
+    box.appendChild(btn);
+  });
+}
+
+
+
+function getSelectedValues(selectId) {
+  const sel = document.getElementById(selectId);
+  return Array.from(sel.selectedOptions).map(o => parseInt(o.value, 10));
+}
+
+function clearFormFields() {
+  document.getElementById('cfg_id').value = '';
+  document.getElementById('formEmailAuto').reset();
+  Array.from(document.getElementById('laboratorios').options).forEach(o => o.selected = false);
+}
+
+async function loadLabs() {
+  const res = await fetch('/laboratorios/ativos');
+  LABS = await res.json();
+  const sel = document.getElementById('laboratorios');
+  sel.innerHTML = '';
+  LABS.forEach(l => {
+    const op = document.createElement('option');
+    op.value = l.id;
+    op.textContent = l.laboratorio;
+    sel.appendChild(op);
+  });
+}
+
+function renderTable() {
+  const tbody = document.querySelector('#tblEmailCfg tbody');
+  tbody.innerHTML = '';
+  CFGS.forEach(c => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${c.id}</td>
+      <td>${c.nome || ''}</td>
+      <td>${c.evento || ''}</td>
+      <td>${(c.laboratorios_nomes || []).join(', ')}</td>
+      <td>${c.obsoleto ? 'Obsoleto' : 'Ativo'}</td>
+      
+      <td>
+        <i class="fas fa-edit text-primary me-2" style="cursor:pointer;"
+            onclick="editCfg(${c.id})" title="Editar"></i>
+        <i class="fas fa-trash text-danger" style="cursor:pointer;"
+            onclick="deleteCfg(${c.id})" title="Eliminar"></i>
+      </td>
+      
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+async function loadCfgs() {
+  const res = await fetch('/api/confemailauto');
+  CFGS = await res.json();
+  renderTable();
+}
+
+function editCfg(id) {
+  const c = CFGS.find(x => x.id === id);
+  if (!c) return;
+
+  document.getElementById('cfg_id').value = c.id || '';
+  document.getElementById('nome').value = c.nome || '';
+  document.getElementById('evento').value = c.evento || '';
+  document.getElementById('assunto').value = c.assunto || '';
+  document.getElementById('texto').value = c.texto || '';
+  document.getElementById('to_email').value = c.to_email || '';
+  document.getElementById('cc_email').value = c.cc_email || '';
+  document.getElementById('obsoleto').value = c.obsoleto ? '1' : '0';
+
+  const labsSet = new Set((c.laboratorios || []).map(Number));
+  Array.from(document.getElementById('laboratorios').options).forEach(o => {
+    o.selected = labsSet.has(Number(o.value));
+  });
+
+  	// Carregar variáveis correspondentes ao evento
+	loadVariablesForEvent();
+
+
+}
+
+
+
+// Aguardar DOM carregar
+document.addEventListener('DOMContentLoaded', function() {
+
+	setActiveFieldTracking();
+	document.getElementById('evento').addEventListener('change', loadVariablesForEvent);
+	loadVariablesForEvent();
+  
+  // Event listener do formulário
+  document.getElementById('formEmailAuto').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const payload = {
+      id: document.getElementById('cfg_id').value || null,
+      nome: document.getElementById('nome').value.trim(),
+      evento: document.getElementById('evento').value,
+      assunto: document.getElementById('assunto').value,
+      texto: document.getElementById('texto').value,
+      to_email: document.getElementById('to_email').value,
+      cc_email: document.getElementById('cc_email').value,
+      obsoleto: document.getElementById('obsoleto').value === '1',
+      laboratorios: getSelectedValues('laboratorios')
+    };
+
+    const res = await fetch('/api/confemailauto', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      alert(i18n.t('msg.erro_ao_guardar'));
+      return;
+    }
+
+    await loadCfgs();
+    clearFormFields();
+  });
+
+  // Inicialização
+  (async function initEmailAutoPage(){
+    await loadLabs();
+    await loadCfgs();
+  })();
+  
+});
+
+
+async function deleteCfg(id) {
+  if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.configuracao') + '?')) return;
+
+  const res = await fetch(`/api/confemailauto/${id}`, {
+    method: 'DELETE'
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    alert(data.error || i18n.t('msg.error_delete'));
+    return;
+  }
+
+  await loadCfgs();
+}
+
+</script>
+
+{% endblock %}

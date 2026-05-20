@@ -1,0 +1,40 @@
+/* Style DataTables tables */
+  .tabelas-page table {
+    font-size: 0.6em !important; /* Ajuste o valor conforme necessário */
+  }
+
+/* Style DataTables pagination buttons */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  border: 0px solid #ccc; /* Add a border */
+  border-radius: 0px; /* Make the buttons square */
+  background-color: transparent !important; /* Remove background color */
+  color: inherit !important; /* Inherit text color from parent */
+  margin: 0 3px; /* Adjust spacing */
+}
+
+/* Hover state */
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+  background-color: #f0f0f0 !important; /* Light grey on hover */
+  border-color: #999; /* Darker border on hover */
+}
+
+/* Active (current page) state */
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+  background-color: #ddd !important; /* Slightly darker grey for current page */
+  border-color: #666; /* Even darker border for current page */
+  color: black !important; /* Ensure current page number is readable */
+}
+
+/* Disabled state */
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+  color: #999 !important; /* Grey out disabled buttons */
+  border-color: #eee; /* Lighter border for disabled buttons */
+}
+
+.sidebar.sidebar-mini .sidebar-title {
+    display: none;
+}
+
+body.sidebar-mini .sidebar-title {
+    display: none;
+}

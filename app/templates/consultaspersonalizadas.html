@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.queries_custom">Consultas Personalizadas</span>{% endblock %}
+
+{% block navbar %}
+<h4 class="page-title"><span data-i18n="nav.queries_custom"></span>Consultas Personalizadas</span></h4>
+{% endblock %}
+
+{% block content %}
+<style>
+#resultadoConsulta table {
+  width: 100% !important;
+}
+#filtrosRuntime .form-label {
+  font-size: 0.85rem;
+}
+</style>
+
+<div class="tabelas-page">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div class="card-header">
+          <div class="container-fluid">
+            <div class="row g-2 align-items-end">
+              <div class="col-md-5">
+           
+                <select id="layoutSelect" class="form-control form-control-sm">
+                  <option value=""></option>
+                </select>
+              </div>
+              <div class="col-md-1">
+                <button type="button" class="btn btn-success btn-sm ms-auto" id="btnSave" onclick="executarConsultaSelecionada(); return false;">
+                  <span data-i18n="field.gerar">
+                    Gerar
+                    </span>
+                </button>
+            </div>
+            <div class="col-md-6 text-end">
+              <div class="dropdown d-inline-block">
+                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+                  <i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+                </button>
+                <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                
+                  <li>
+                    <a class="dropdown-item" href="#" onclick="exportarUltimaConsulta(); return false;">
+                      <i class="fas fa-file-excel"></i> <span data-i18n="action.export">Exportar</span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            </div>
+
+            <div class="row mt-2">
+              <div class="col-md-12">
+                <small id="layoutHint" class="text-muted"></small>
+              </div>
+            </div>
+
+            <div class="row mt-3" id="filtrosRuntimeWrap" style="display:none;">
+              <div class="col-md-12">
+                <h6 class="mb-2"><span data-i18n="field.filtros_consulta">Filtros da consulta</span></h6>
+                <div id="filtrosRuntime" class="row g-2"></div>
+              </div>
+            </div>
+
+            <div class="row mt-3">
+              <div class="col-md-12">
+                <div id="resultadoConsulta"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+
+<script>
+let layoutAtual = null;
+let dadosUltimaConsulta = [];
+
+function opLabel(op) {
+  const m = {
+    eq: '=',
+    neq: '!=',
+    gt: '>',
+    gte: '>=',
+    lt: '<',
+    lte: '<=',
+    contains: i18n.t('field.contem'),
+    starts_with: i18n.t('field.comeca_por'),
+    ends_with: i18n.t('field.termina_em'),
+    in: i18n.t('field.em_lista'),
+    between: i18n.t('field.entre'),
+    is_null: i18n.t('field.nulo'),
+    is_not_null: i18n.t('field.nao_nulo')
+  };
+  return m[op] || op;
+}
+
+async function carregarConsultasPersonalizadas() {
+  const select = document.getElementById('layoutSelect');
+  const hint = document.getElementById('layoutHint');
+
+  select.innerHTML = '<option value=""></option>';
+  hint.textContent = '';
+  layoutAtual = null;
+  dadosUltimaConsulta = [];
+
+  try {
+    const res = await fetch('/api/consultas/layouts', { credentials: 'same-origin' });
+    if (!res.ok) throw new Error(i18n.t('common.error_loading'));
+
+    const data = await res.json();
+    const layoutsAtivos = (Array.isArray(data) ? data : []).filter(l => !l.obsoleto);
+
+    select.innerHTML = '<option value=""><span data-i18n="msg.selecione">Selecione uma</span> <span data-i18n="field.consulta">consulta</span></option>';
+    if (!layoutsAtivos.length) {
+      select.innerHTML = '<option value=""><span data-i18n="field.sem_dados">Sem dados</span></option>';
+      hint.textContent = '<span data-i18n="field.sem_dados">Sem dados.</span>';
+      return;
+    }
+
+    layoutsAtivos.forEach(l => {
+      const opt = document.createElement('option');
+      opt.value = String(l.id);
+      opt.textContent = l.nome;
+      opt.dataset.descricao = l.descricao || '';
+      select.appendChild(opt);
+    });
+
+    hint.textContent = '';
+  } catch (err) {
+    select.innerHTML = '<option value=""><span data-i18n="common.error_loading">Erro ao carregar</span></option>';
+    hint.textContent = '<span data-i18n="common.error_loading">Erro ao carregar</span>';
+    console.error(err);
+  }
+}
+
+async function carregarDetalheLayout(layoutId) {
+  const hint = document.getElementById('layoutHint');
+  const filtrosWrap = document.getElementById('filtrosRuntimeWrap');
+  const filtrosDiv = document.getElementById('filtrosRuntime');
+
+  layoutAtual = null;
+  filtrosDiv.innerHTML = '';
+  filtrosWrap.style.display = 'none';
+
+  if (!layoutId) {
+    hint.textContent = '<span data-i18n="msg.selecione">Selecione uma</span> <span data-i18n="field.consulta">consulta</span>';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/consultas/layouts/' + encodeURIComponent(layoutId), { credentials: 'same-origin' });
+    if (!res.ok) throw new Error(i18n.t('common.error_loading'));
+
+    const data = await res.json();
+    layoutAtual = data;
+
+    hint.textContent = (data.descricao || i18n.t('field.sem_dados'));
+
+    const flt = (data.definicao && Array.isArray(data.definicao.filters)) ? data.definicao.filters : [];
+    renderFiltrosRuntime(flt);
+  } catch (err) {
+    hint.textContent = '<span data-i18n="common.error_loading">Erro ao carregar</span>';
+    console.error(err);
+  }
+}
+
+function renderFiltrosRuntime(filters) {
+  const filtrosWrap = document.getElementById('filtrosRuntimeWrap');
+  const filtrosDiv = document.getElementById('filtrosRuntime');
+  filtrosDiv.innerHTML = '';
+
+  if (!filters.length) {
+    filtrosWrap.style.display = 'none';
+    return;
+  }
+
+  filters.forEach((f, idx) => {
+    const table = (f.table || '').trim();
+    const field = (f.field || '').trim();
+    const op = (f.op || 'eq').trim();
+    const value = f.value ?? '';
+    const value2 = f.value2 ?? '';
+
+    const row = document.createElement('div');
+    row.className = 'col-md-12';
+    row.innerHTML = `
+      <div class="row g-2 align-items-end border rounded p-2 mb-1" data-idx="${idx}">
+        <div class="col-md-4">
+          <label class="form-label"><span data-i18n="field.campo">Campo</span></label>
+          <input class="form-control form-control-sm" value="${table}.${field}" disabled>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label"><span data-i18n="field.operador">Operador</span></label>
+          <input class="form-control form-control-sm" value="${opLabel(op)}" disabled>
+        </div>
+        <div class="col-md-3 filtro-v1-wrap">
+          <label class="form-label"><span data-i18n="field.valor">Valor</span></label>
+          <input class="form-control form-control-sm filtro-v1" value="${Array.isArray(value) ? value.join(',') : value}">
+        </div>
+        <div class="col-md-3 filtro-v2-wrap">
+          <label class="form-label"><span data-i18n="field.valor">Valor</span> 2</label>
+          <input class="form-control form-control-sm filtro-v2" value="${value2}">
+        </div>
+      </div>
+    `;
+
+    const v1Wrap = row.querySelector('.filtro-v1-wrap');
+    const v2Wrap = row.querySelector('.filtro-v2-wrap');
+
+    if (op === 'is_null' || op === 'is_not_null') {
+      v1Wrap.style.display = 'none';
+      v2Wrap.style.display = 'none';
+    } else if (op === 'between') {
+      v1Wrap.style.display = '';
+      v2Wrap.style.display = '';
+    } else {
+      v1Wrap.style.display = '';
+      v2Wrap.style.display = 'none';
+    }
+
+    row.dataset.table = table;
+    row.dataset.field = field;
+    row.dataset.op = op;
+
+    filtrosDiv.appendChild(row);
+  });
+
+  filtrosWrap.style.display = '';
+}
+
+function recolherFiltrosRuntime() {
+  const rows = Array.from(document.querySelectorAll('#filtrosRuntime > .col-md-12'));
+  const filtros = [];
+
+  rows.forEach(r => {
+    const table = r.dataset.table || '';
+    const field = r.dataset.field || '';
+    const op = r.dataset.op || 'eq';
+
+    let value = null;
+    let value2 = null;
+
+    const v1 = r.querySelector('.filtro-v1');
+    const v2 = r.querySelector('.filtro-v2');
+
+    if (op === 'is_null' || op === 'is_not_null') {
+      value = null;
+      value2 = null;
+    } else if (op === 'between') {
+      value = v1 ? v1.value : null;
+      value2 = v2 ? v2.value : null;
+    } else if (op === 'in') {
+      const raw = v1 ? v1.value : '';
+      value = raw.split(',').map(x => x.trim()).filter(Boolean);
+      value2 = null;
+    } else {
+      value = v1 ? v1.value : null;
+      value2 = null;
+    }
+
+    filtros.push({ table, field, op, value, value2 });
+  });
+
+  return filtros;
+}
+
+async function executarConsultaSelecionada() {
+  const select = document.getElementById('layoutSelect');
+  const layoutId = select.value;
+  if (!layoutId) {
+    alert(i18n.t('msg.selecione'));
+    return;
+  }
+
+  
+  const filtros = recolherFiltrosRuntime();
+
+  try {
+    const res = await fetch('/api/consultas/layouts/' + encodeURIComponent(layoutId) + '/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      body: JSON.stringify({
+        filters: filtros
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || i18n.t('msg.erro_gerar'));
+    }
+
+    dadosUltimaConsulta = Array.isArray(data.rows) ? data.rows : [];
+    renderTabelaResultado(data.columns || [], dadosUltimaConsulta);
+  } catch (err) {
+    console.error(err);
+    alert(err.message || i18n.t('msg.erro_gerar'));
+  }
+}
+
+function renderTabelaResultado(columns, rows) {
+  const box = document.getElementById('resultadoConsulta');
+  if (!columns.length) {
+    box.innerHTML = '<div class="alert alert-warning mb-0"><span data-i18n="field.sem_dados">Sem dados</span></div>';
+    return;
+  }
+
+  const thead = '<tr>' + columns.map(c => '<th>' + c + '</th>').join('') + '</tr>';
+
+  let tbody = '';
+  if (rows.length) {
+    rows.forEach(r => {
+      tbody += '<tr>' + columns.map(c => '<td>' + (r[c] ?? '') + '</td>').join('') + '</tr>';
+    });
+  } else {
+    tbody = '<tr><td colspan="' + columns.length + '"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>';
+  }
+
+  box.innerHTML = `
+    <div class="table-responsive">
+      <table id="tabelaConsultaPersonalizada" class="table table-bordered table-striped table-hover align-middle">
+        <thead>${thead}</thead>
+        <tbody>${tbody}</tbody>
+      </table>
+    </div>
+  `;
+
+  if (window.$ && $.fn.DataTable) {
+    setTimeout(function () {
+      if ($.fn.DataTable.isDataTable('#tabelaConsultaPersonalizada')) {
+        $('#tabelaConsultaPersonalizada').DataTable().destroy();
+      }
+      $('#tabelaConsultaPersonalizada').DataTable({
+        language: { url: i18n.getDataTablesLanguageUrl() },
+        order: [],
+        pageLength: 25
+      });
+    }, 50);
+  }
+}
+
+function exportarUltimaConsulta() {
+  if (!dadosUltimaConsulta || !dadosUltimaConsulta.length) {
+    alert(i18n.t('field.sem_dados'));
+    return;
+  }
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(dadosUltimaConsulta);
+  XLSX.utils.book_append_sheet(wb, ws, i18n.t('field.consulta'));
+
+  const select = document.getElementById('layoutSelect');
+  const nome = (select.options[select.selectedIndex] && select.options[select.selectedIndex].textContent) || i18n.t('field.consulta');
+  const safe = nome.replace(/[^\w\-]+/g, '_');
+
+  XLSX.writeFile(wb, i18n.t('field.consulta') + safe + '.xlsx');
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+  const select = document.getElementById('layoutSelect');
+  const btnExecutar = document.getElementById('btnExecutar');
+
+
+  carregarConsultasPersonalizadas();
+
+  select.addEventListener('change', function () {
+    carregarDetalheLayout(select.value);
+    document.getElementById('resultadoConsulta').innerHTML = '';
+    dadosUltimaConsulta = [];
+  });
+
+  btnExecutar.addEventListener('click', executarConsultaSelecionada);
+  
+});
+</script>
+{% endblock %}

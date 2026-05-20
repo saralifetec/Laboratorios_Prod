@@ -1,0 +1,1029 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}
+    <span data-i18n="field.consultas_armazem_externo">
+        Consultas Armazém Externo
+    </span>
+{% endblock %}
+
+
+{% block navbar %}
+    <h4 class="page-title">
+        <span data-i18n="field.consultas_armazem_externo">
+            Consultas Armazém Externo
+        </span>  
+    </h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+#stocksTable_wrapper {
+  width: 100%;
+  overflow-x: auto; /* nunca sai da página */
+}
+
+#stocksTable {
+  width: 100% !important;
+  table-layout: auto; /* largura conforme conteúdo */
+}
+
+#stocksTable thead th,
+#stocksTable tbody td {
+  vertical-align: middle !important;
+  padding: 8px 6px !important;  /* menos espaço entre linhas */
+  line-height: 1.2 !important;
+}
+
+/* Evita "texto em cima de texto" */
+#stocksTable th,
+#stocksTable td {
+  white-space: nowrap;
+}
+
+/* Colunas com texto potencialmente longo podem quebrar */
+#stocksTable td:nth-child(4), /* Projeto */
+#stocksTable td:nth-child(5), /* Componente */
+#stocksTable td:nth-child(8) { /* Localização */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+
+
+
+/* DataTable customization */
+.dataTables_wrapper .dataTables_length,
+.dataTables_wrapper .dataTables_filter {
+  font-size: 11px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+  font-size: 10px;
+  padding: 2px 6px;
+}
+
+/* Tabela principal */
+#historicoMovimentosTable {
+  border-collapse: collapse;
+  width: 100%;
+  background: #fff;
+  color: #212529;
+  font-size: 12px;
+  margin-bottom: 1rem;
+}
+
+#historicoMovimentosTable th,
+#historicoMovimentosTable td {
+  padding: 8px 10px;
+  vertical-align: middle;
+}
+
+#historicoMovimentosTable thead th {
+  background: #f8f9fa;
+  font-size: 10px;
+  font-weight: 600;
+  color: #495057;
+  border-bottom: 2px solid #dee2e6;
+}
+
+#historicoMovimentosTbody > tr:nth-child(even) {
+  background: #f6f6f6;
+}
+
+#historicoMovimentosTbody > tr:hover {
+  background: #e9ecef;
+}
+
+#historicoMovimentosTbody > tr {
+  transition: background 0.2s;
+}
+
+/* Botão expandir/recolher */
+.toggle-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0 4px;
+  color: #666;
+  line-height: 1;
+}
+.toggle-btn:hover {
+  color: #222;
+}
+
+/* Linhas de detalhe (expandida) */
+.historico-detail-row td {
+  background: #fbfbfb;
+  font-size: 0.82em !important;
+}
+
+/* Cabeçalho da tabela interna */
+.historico-detail-row .table thead th {
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  padding: 4px 6px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap;
+}
+
+/* Linhas da tabela interna */
+.historico-detail-row .table tbody td {
+  font-size: 0.76rem !important;
+  padding: 4px 6px !important;
+  line-height: 1.15 !important;
+}
+
+
+
+</style>
+
+<div class="tabelas-page">
+  <div class="row align-items-center">
+					
+    <div class="col-md-11">
+      
+    </div>
+    <div class="col-md-1" style="text-align:right;">
+      <div class="dropdown">
+        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+        <i class="fas fa-bars"></i> 
+            <span data-i18n="field.acoes">
+            Ações
+            </span>
+        </button>
+        <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+          
+          <a class="dropdown-item" href="#" onclick="exportarexcel()">
+            <i class="fas fa-file-excel"></i> 
+            <span data-i18n="action.export">
+            Exportar 
+            </span>
+          </a>
+          
+        </ul>
+      </div>
+    </div>
+  </div>	
+<div class="row mb-3">
+    <div class="col-md-3">
+        <label class="form-label">
+        <span data-i18n="field.tipo">
+            Tipo
+        </span>
+        </label>
+        <select id="tipoConsulta" class="form-control">
+            <option value="historico_movimentos" selected>
+                <span data-i18n="field.movimentos">
+                Movimentos
+                </span>
+            </option>
+            <option value="stocks">
+                <span data-i18n="field.stock">
+                Stock
+                </span>    
+            </option>
+        </select>
+    </div>
+
+    <div class="col-md-2" id="colFiltroMes">
+        <label for="filtromes" class="form-label">
+            <span data-i18n="field.mes">
+            Mês
+            </span>
+        </label>
+        <select id="filtroMes" class="form-control"></select>
+    </div>
+    
+    <div class="col-md-2" id="colFiltroAno">
+        <label for="filtroano" class="form-label">
+            <span data-i18n="field.ano">
+            Ano
+            </span>
+        </label>
+        <select id="filtroAno" class="form-control"></select>
+    </div>
+    
+    <div class="col-md-5" id="colFiltroLocalizacao">
+        <label for ="filtrolocalizacao" class="form-label">
+            <span data-i18n="field.localizacao_externa">
+            Localização Externa
+            </span>
+        </label>
+        <select id="filtroLocalizacao" class="form-control">
+            {% for loc in localizacoes_externas %}
+                <option value="{{ loc.id }}" {% if loop.first %}selected{% endif %}>{{ loc.nome }}</option>
+            {% endfor %}
+        </select>
+    </div>
+</div>
+
+<div id="blocoHistoricoMovimentos">
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <div class="card card-stats card-round">
+                <div class="card-body">
+                    <div class="card-title">
+                        <span data-i18n="field.enviadas">
+                        Enviadas
+                        </span>
+                    </div>
+                    <div class="card-category" id="totalEnviadas">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-stats card-round">
+                <div class="card-body">
+                    <div class="card-title">
+                        <span data-i18n="field.recebidas">
+                        Recebidas
+                        </span>
+                    </div>
+                    <div class="card-category" id="totalRecebidas">0</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card card-stats card-round">
+                <div class="card-body">
+                    <div class="card-title">
+                        <span data-i18n="field.total">
+                        Total
+                        </span>
+                    </div>
+                    <div class="card-category" id="totalGeral">0</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">
+                <span data-i18n="field.movimentos">
+                Movimentos
+                </span>
+            </h6>
+            <div>
+                <a href="#" class="small me-3 text-decoration-none" onclick="expandirTodos(); return false;">
+                    <i class="fas fa-expand-alt fa-xs"></i> 
+                    <span data-i18n="field.expandir_todos">
+                    Expandir Todos
+                    </span>
+                </a>
+                <a href="#" class="small text-decoration-none" onclick="recolherTodos(); return false;">
+                    <i class="fas fa-compress-alt fa-xs"></i> 
+                    <span data-i18n="field.recolher_todos">
+                    Recolher Todos
+                    </span>
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            <table class="table table-sm table-bordered align-middle" id="historicoMovimentosTable">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width:32px;"></th>
+                        <th>
+                            <span data-i18n="field.data">
+                            Data
+                            </span>
+                        </th>
+                        <th class="text-center">
+                            <span data-i18n="field.enviadas">
+                            Enviadas
+                            </span>
+                        </th>
+                        <th class="text-center">
+                            <span data-i18n="field.recebidas">
+                            Recebidas
+                            </span>
+                        </th>
+                        <th class="text-center">
+                            <span data-i18n="field.total">
+                            Total
+                            </span>
+                        </th>
+                        <th class="text-center">
+                            <span data-i18n="field.acoes">
+                            Ações
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="historicoMovimentosTbody">
+                    <tr>
+                        <td colspan="6" class="text-center text-muted fst-italic py-4">
+                            <span data-i18n="field.sem_dados">
+                            Sem dados
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div id="blocoStocks" style="display:none;">
+    <div class="row mb-3">
+        
+        <div class="col-md-12">
+            <div class="card card-stats card-round">
+                <div class="card-body">
+                    <div class="card-title">
+                        <span data-i18n="field.stock_localizacao">
+                        Stock por Localização
+                        </span>
+                    </div>
+                    <div id="stocksResumoLocalizacoes" class="small text-muted">
+                        <span data-i18n="field.sem_dados">
+                        Sem dados
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-sm table-bordered align-middle" id="stocksTable">
+                <thead class="table-light">
+                    <tr>
+                        <th>
+                            <span data-i18n="field.referencia">
+                            Referência
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.localizacao">
+                            Localização
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.projeto">
+                            Projeto
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.componente">
+                            Componente
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.status">
+                            Estado
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.responsavel">
+                            Responsável
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.tipo_volume">
+                            Tipo Volume
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.peso">
+                            Peso (Kg)
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.dimensoes">
+                            Dimensões
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.storage_deadline">
+                            Data Limite Armazenamento
+                            </span>
+                        </th>
+                        <th>
+                            <span data-i18n="field.notes">
+                            Observações
+                            </span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="stocksTbody">
+                    <tr>
+                        <td colspan="12" class="text-center text-muted fst-italic py-4">
+                            <span data-i18n="common.loading">
+                            A carregar...
+                            </span>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+	   
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.plugin.addimage.min.js"></script>
+<script src="{{ url_for('static', filename='js/plugin/select2/select2.full.min.js') }}"></script>
+
+
+<script>
+let historicoAtual = null;
+let dtStocks = null;
+
+document.addEventListener('DOMContentLoaded', function () {
+    preencherMeses();
+    preencherAnos();
+    initSelect2Consultas();
+    bindFiltroEventos();
+    alternarTipoConsulta();
+});
+
+//////////////////////////////////////
+//excel
+function csvCell(value) {
+    const v = (value ?? '').toString().replaceAll('"', '""');
+    return `"${v}"`;
+}
+
+function exportarexcel() {
+    const tipo = document.getElementById('tipoConsulta')?.value;
+    if (tipo !== 'historico_movimentos') {
+        mostrarNotificacao(i18n.t('field.sem_dados'), 'warning');
+        return;
+    }
+
+    const rows = (historicoAtual && Array.isArray(historicoAtual.rows)) ? historicoAtual.rows : [];
+    if (!rows.length) {
+        mostrarNotificacao(i18n.t('field.sem_dados'), 'warning');
+        return;
+    }
+
+    const mes = document.getElementById('filtroMes')?.value || '';
+    const ano = document.getElementById('filtroAno')?.value || '';
+    const locSel = document.getElementById('filtroLocalizacao');
+    const locNome = locSel?.options?.[locSel.selectedIndex]?.text || '';
+
+    const linhas = [];
+
+    linhas.push([
+    i18n.t('field.data_hora_lote'),
+    i18n.t('field.data'),
+    i18n.t('field.enviadas') + ' (' + i18n.t('field.dia') + ')',
+    i18n.t('field.recebidas') + ' (' + i18n.t('field.dia') + ')',
+    i18n.t('field.total') + ' (' + i18n.t('field.dia') + ')',
+    i18n.t('field.referencia'),
+    i18n.t('field.componente'),
+    i18n.t('field.status'),
+    i18n.t('field.responsavel'),
+    i18n.t('field.tipo_volume'),
+    i18n.t('field.peso'),
+    i18n.t('field.dimensoes'),
+    i18n.t('field.observacoes'),
+    i18n.t('field.horas')
+    ].map(csvCell).join(';'));
+
+    rows.forEach(r => {
+        const movs = Array.isArray(r.movimentos) ? r.movimentos : [];
+
+        if (!movs.length) {
+            linhas.push([
+                r.datahora || '',
+                r.data || '',
+                r.enviadas ?? '',
+                r.recebidas ?? '',
+                r.total ?? '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                'Sem detalhe',
+                ''
+            ].map(csvCell).join(';'));
+            return;
+        }
+
+        movs.forEach(m => {
+            linhas.push([
+                r.datahora || '',
+                r.data || '',
+                r.enviadas ?? '',
+                r.recebidas ?? '',
+                r.total ?? '',
+                m.referencia || '',
+                m.componente_nome || '',
+                m.estado_nome || '',
+                m.responsavel_nome || '',
+                m.tipovolume_nome || '',
+                m.peso || '',
+                m.dimensoes || '',
+                m.observacoes || '',
+                m.data_confirmacao || ''
+            ].map(csvCell).join(';'));
+        });
+    });
+
+    const conteudo = '\ufeff' + linhas.join('\r\n'); // BOM para Excel
+    const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const nomeSeguroLoc = (locNome || 'localizacao')
+        .replace(/[\\/:*?"<>|]/g, '_')
+        .replace(/\s+/g, '_')
+        .trim();
+
+    const nomeFicheiro =i18n.t('field.historico') + '_' + i18n.t('field.movimentos') + `_${ano}_${mes}_${nomeSeguroLoc}.csv`;
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomeFicheiro;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+
+    mostrarNotificacao(i18n.t('msg.ficheiro_gerado_sucesso'), 'success');
+}
+
+async function preencherMeses() {
+    const select = document.getElementById('filtroMes');
+    const mesAtual = new Date().getMonth() + 1;
+    
+    await i18n.init();
+
+    const meses = Array.from({ length: 12 }, (_, i) =>
+    i18n.t(`month.${i + 1}`)
+    );
+
+
+    select.innerHTML = '';
+    meses.forEach((nome, idx) => {
+        const opt = document.createElement('option');
+        opt.value = String(idx + 1);
+        opt.textContent = nome;
+        if ((idx + 1) === mesAtual) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+function preencherAnos() {
+    const select = document.getElementById('filtroAno');
+    const anoAtual = new Date().getFullYear();
+    const anoInicial = 2025;
+
+    select.innerHTML = '';
+    for (let ano = anoAtual; ano >= anoInicial; ano--) {
+        const opt = document.createElement('option');
+        opt.value = String(ano);
+        opt.textContent = String(ano);
+        if (ano === anoAtual) opt.selected = true;
+        select.appendChild(opt);
+    }
+}
+
+function initSelect2Consultas() {
+    if (!window.jQuery || !$.fn.select2) return;
+
+    ['#tipoConsulta', '#filtroMes', '#filtroAno', '#filtroLocalizacao'].forEach(sel => {
+        const $el = $(sel);
+        if ($el.length && !$el.data('select2')) {
+            $el.select2({ width: '100%' });
+        }
+    });
+}
+
+function bindFiltroEventos() {
+    const ids = ['tipoConsulta', 'filtroMes', 'filtroAno', 'filtroLocalizacao'];
+
+    ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+
+        el.addEventListener('change', () => {
+            if (id === 'tipoConsulta') {
+                alternarTipoConsulta();
+            } else {
+                atualizarConsultaAtual();
+            }
+        });
+    });
+
+    if (window.jQuery && $.fn.select2) {
+        ids.forEach(id => {
+            const $el = $('#' + id);
+            if (!$el.length) return;
+
+            $el.on('select2:select select2:unselect select2:clear', function () {
+                if (id === 'tipoConsulta') {
+                    alternarTipoConsulta();
+                } else {
+                    atualizarConsultaAtual();
+                }
+            });
+        });
+    }
+}
+
+function atualizarConsultaAtual() {
+    const tipo = document.getElementById('tipoConsulta').value;
+
+    if (tipo === 'historico_movimentos') {
+        carregarHistoricoMovimentos();
+    } else if (tipo === 'stocks') {
+        carregarStocks();
+    }
+}
+
+function alternarTipoConsulta() {
+    const tipo = document.getElementById('tipoConsulta').value;
+    const isHistorico = tipo === 'historico_movimentos';
+
+    document.getElementById('blocoHistoricoMovimentos').style.display = isHistorico ? '' : 'none';
+    document.getElementById('blocoStocks').style.display = isHistorico ? 'none' : '';
+
+    document.getElementById('colFiltroMes').style.display = isHistorico ? '' : 'none';
+    document.getElementById('colFiltroAno').style.display = isHistorico ? '' : 'none';
+    document.getElementById('colFiltroLocalizacao').style.display = isHistorico ? '' : 'none';
+
+    if (isHistorico) {
+        carregarHistoricoMovimentos();
+    } else {
+        carregarStocks();
+    }
+}
+
+function carregarHistoricoMovimentos() {
+    const localizacaoId = document.getElementById('filtroLocalizacao').value;
+    const mes = document.getElementById('filtroMes').value;
+    const ano = document.getElementById('filtroAno').value;
+    const tbody = document.getElementById('historicoMovimentosTbody');
+
+    if (!localizacaoId || !mes || !ano) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted fst-italic py-4">
+                    <span data-i18n="field.sem_dados">Sem dados</span>
+                </td>
+            </tr>
+        `;
+        atualizarTotais({ recebidas: 0, enviadas: 0, total: 0 });
+        return;
+    }
+
+    const params = new URLSearchParams({
+        localizacao_id: localizacaoId,
+        mes: mes,
+        ano: ano
+    });
+
+    fetch('/api/movimentosae/historico_resumo?' + params.toString())
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                mostrarNotificacao(data.error || i18n.t('common.error_loading'), 'error');
+                return;
+            }
+
+            historicoAtual = data;
+            atualizarTotais(data.resumo);
+            renderHistorico(data.rows || []);
+        })
+        .catch(() => mostrarNotificacao(i18n.t('common.error_loading'), 'error'));
+}
+
+function atualizarTotais(resumo) {
+    document.getElementById('totalRecebidas').textContent = resumo.recebidas || 0;
+    document.getElementById('totalEnviadas').textContent = resumo.enviadas || 0;
+    document.getElementById('totalGeral').textContent = resumo.total || 0;
+}
+
+function renderHistorico(rows) {
+    const tbody = document.getElementById('historicoMovimentosTbody');
+    tbody.innerHTML = '';
+
+    if (!rows.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center text-muted fst-italic py-4">
+                    <span data-i18n="field.sem_dados">Sem dados</span>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    rows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td class="text-center">
+              <button class="toggle-btn btn btn-link btn-sm p-0" data-idx="${idx}" title="Expandir/Recolher" data-i18n="field.expandir_recolher" data-i18n-attr="title">
+                  <i class="fas fa-chevron-right fa-xs"></i>
+              </button>
+          </td>
+          <td>${row.data}</td>
+          <td class="text-center">${row.enviadas}</td>
+          <td class="text-center">${row.recebidas}</td>
+          <td class="text-center">${row.total}</td>
+          <td class="text-center">
+              <a href="#"
+               class="text-danger"
+               title="Anular"
+               onclick="reabrirDataHora('${row.datahora}', ${row.destino_id}); return false;">
+              <i class="fas fa-times"></i>
+            </a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+
+        let detalheHtml = '';
+        if (!row.movimentos.length) {
+            detalheHtml = `
+                <tr>
+                    <td colspan="10" class="text-center text-muted fst-italic"><span data-i18n="field.sem_dados">Sem dados</span></td>
+                </tr>
+            `;
+        } else {
+            row.movimentos.forEach(m => {
+                detalheHtml += `
+                    <tr>
+                        <td><a href="/armazem_externo?rid=${m.referenciaae_id}">${m.referencia || ''}</a></td>
+                        <td>${m.componente_nome || ''}</td>
+                        <td>${m.estado_nome || ''}</td>
+                        <td>${m.responsavel_nome || ''}</td>
+                        <td>${m.tipovolume_nome || ''}</td>
+                        <td>${m.peso || ''}</td>
+                        <td>${m.dimensoes || ''}</td>
+                        <td>${m.observacoes || ''}</td>
+                        <td>${m.data_confirmacao || ''}</td>
+                    </tr>
+                `;
+            });
+        }
+
+        const detailTr = document.createElement('tr');
+        detailTr.classList.add('historico-detail-row', 'd-none');
+        detailTr.dataset.parent = idx;
+        detailTr.innerHTML = `
+            <td colspan="6" class="p-0">
+                <table class="table table-sm mb-0" style="background:#f8f9fa;">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th><span data-i18n="field.referencia">Referência</span></th>
+                            <th><span data-i18n="field.componente">Componente</span></th>
+                            <th><span data-i18n="field.status">Estado</span></th>
+                            <th><span data-i18n="field.responsavel">Responsável</span></th>
+                            <th><span data-i18n="field.tipo_volume">Tipo Volume</span></th>
+                            <th><span data-i18n="field.peso">Peso</span></th>
+                            <th><span data-i18n="field.dimensoes">Dimensões</span></th>
+                            <th><span data-i18n="field.observacoes">Observações</span></th>
+                            <th><span data-i18n="field.horas">Horas</span></th>
+                        </tr>
+                    </thead>
+                    <tbody>${detalheHtml}</tbody>
+                </table>
+            </td>
+        `;
+        tbody.appendChild(detailTr);
+    });
+
+    tbody.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const idx = this.dataset.idx;
+            const detailRow = tbody.querySelector(`.historico-detail-row[data-parent="${idx}"]`);
+            const icon = this.querySelector('i');
+            const hidden = detailRow.classList.contains('d-none');
+
+            detailRow.classList.toggle('d-none', !hidden);
+            icon.classList.toggle('fa-chevron-right', !hidden);
+            icon.classList.toggle('fa-chevron-down', hidden);
+        });
+    });
+}
+
+function expandirTodos() {
+    document.querySelectorAll('#historicoMovimentosTbody .historico-detail-row').forEach(r => r.classList.remove('d-none'));
+    document.querySelectorAll('#historicoMovimentosTbody .toggle-btn i').forEach(i => {
+        i.classList.remove('fa-chevron-right');
+        i.classList.add('fa-chevron-down');
+    });
+}
+
+function recolherTodos() {
+    document.querySelectorAll('#historicoMovimentosTbody .historico-detail-row').forEach(r => r.classList.add('d-none'));
+    document.querySelectorAll('#historicoMovimentosTbody .toggle-btn i').forEach(i => {
+        i.classList.remove('fa-chevron-down');
+        i.classList.add('fa-chevron-right');
+    });
+}
+
+function initStocksDataTable() {
+    if (!window.jQuery || !$.fn.DataTable) return;
+    if ($.fn.DataTable.isDataTable('#stocksTable')) return;
+
+    dtStocks = $('#stocksTable').DataTable({
+        data: [],
+        columns: [
+            {
+                data: 'id',
+                render: function (id, type, row) {
+                    if (type === 'display') {
+                        return `<a href="/armazem_externo?rid=${id}">${row.referencia || ''}</a>`;
+                    }
+                    return row.referencia || '';
+                }
+            },
+            { data: 'localizacao_nome' },
+            { data: 'projeto_ou_codificacao' },
+            { data: 'componente_nome' },
+            { data: 'estado_nome' },
+            { data: 'responsavel_nome' },
+            { data: 'tipovolume_nome' },
+            { data: 'peso' },
+            { data: 'dimensoes' },
+            { data: 'data_limite_armazenamento' },
+            { data: 'observacoes' }
+        ],
+        order: [[0, 'asc']],
+        pageLength: 25,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, 'Todos']],
+        autoWidth: false,
+        responsive: true,
+        scrollX: false,
+        scrollCollapse: false,
+        language: { url: i18n.getDataTablesLanguageUrl() },
+        dom: '<"top"lf>rt<"bottom"ip><"clear">'
+    });
+}
+
+function preencherStocksDataTable(rows) {
+    if (!window.jQuery || !$.fn.DataTable) {
+        // fallback sem DataTables
+        renderStocksFallback(rows);
+        return;
+    }
+
+    initStocksDataTable();
+    dtStocks.clear();
+    dtStocks.rows.add(rows || []);
+    dtStocks.draw();
+}
+
+function renderStocksFallback(rows) {
+    const tbody = document.getElementById('stocksTbody');
+    tbody.innerHTML = '';
+
+    if (!rows.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="12" class="text-center text-muted fst-italic py-4">
+                    <span data-i18n="field.sem_dados">Sem dados</span>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><a href="/armazem_externo?rid=${r.id}">${r.referencia || ''}</a></td>
+            <td>${r.localizacao_nome || ''}</td>
+            <td>${r.projeto_ou_codificacao || ''}</td>
+            <td>${r.componente_nome || ''}</td>
+            <td>${r.estado_nome || ''}</td>
+            <td>${r.responsavel_nome || ''}</td>
+            <td>${r.tipovolume_nome || ''}</td>
+            <td>${r.peso || ''}</td>
+            <td>${r.dimensoes || ''}</td>
+            <td>${r.data_limite_armazenamento || ''}</td>
+            <td>${r.observacoes || ''}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function carregarStocks() {
+    const tbody = document.getElementById('stocksTbody');
+    tbody.innerHTML = `
+        <tr>
+            <td colspan="12" class="text-center text-muted fst-italic py-4"></td>
+        </tr>
+    `;
+
+    fetch('/api/referenciasae/stocks_resumo')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) {
+                mostrarNotificacao(data.error || i18n.t('common.error_loading'), 'error');
+                return;
+            }
+
+            renderResumoStocks(data.resumo_localizacoes || []);
+            preencherStocksDataTable(data.rows || []);
+        })
+        .catch(() => mostrarNotificacao(i18n.t('common.error_loading'), 'error'));
+}
+
+function renderResumoStocks(resumoLocalizacoes) {
+    const el = document.getElementById('stocksResumoLocalizacoes');
+    if (!resumoLocalizacoes.length) {
+        el.textContent = i18n.t('field.sem_dados');
+        return;
+    }
+
+    el.innerHTML = resumoLocalizacoes
+        .map(r => `${r.localizacao}: <strong>${r.total}</strong>`)
+        .join('<br>');
+}
+
+function renderStocks(rows) {
+    const tbody = document.getElementById('stocksTbody');
+    tbody.innerHTML = '';
+
+    if (!rows.length) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="12" class="text-center text-muted fst-italic py-4">
+                    <span data-i18n="field.sem_dados">Sem dados</span>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    rows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><a href="/armazem_externo?rid=${r.id}">${r.referencia || ''}</a></td>
+            <td>${r.tipo || ''}</td>
+            <td>${r.projeto_ou_codificacao || ''}</td>
+            <td>${r.componente_nome || ''}</td>
+            <td>${r.estado_nome || ''}</td>
+            <td>${r.responsavel_nome || ''}</td>
+            <td>${r.tipovolume_nome || ''}</td>
+            <td>${r.peso || ''}</td>
+            <td>${r.dimensoes || ''}</td>
+            <td>${r.localizacao_nome || ''}</td>
+            <td>${r.data_limite_armazenamento || ''}</td>
+            <td>${r.observacoes || ''}</td>
+        `;
+        tbody.appendChild(tr);
+    });
+}
+
+function reabrirDataHora(datahora, destinoId) {
+    const localizacaoId = document.getElementById('filtroLocalizacao').value;
+    if (!localizacaoId || !datahora || !destinoId) return;
+
+
+    if (!confirm(i18n.t('field.anular_movimentos') + ` ${datahora}?`)) {
+        return;
+    }
+
+    fetch('/api/movimentosae/historico_reabrir_dia', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        localizacao_id: Number(localizacaoId),
+        datahora: datahora,
+        destino_id: Number(destinoId)
+      })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+            carregarHistoricoMovimentos();
+        } else {
+            mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+        }
+    })
+    .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+}
+</script>
+
+{% endblock %}
+

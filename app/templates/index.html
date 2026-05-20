@@ -1,0 +1,1067 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="page.home">Laboratórios</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title" data-i18n="page.home">Home</h4>
+{% endblock %}
+
+
+{% block content %}
+
+
+<style>
+
+/* Garantir tamanho do cabeçalho no clone do DataTables (scrollX) */
+#pedidosHorasExtraTable_wrapper .dataTables_scrollHead th {
+  font-size: 9.5px !important;
+  font-weight: 600 !important;
+  white-space: nowrap !important;
+}
+
+/* Tornar a DataTable da home mais compacta */
+#homeEnsaiosTable.dataTable, #homeRelatoriosTable.dataTable, #resumoHorasTablee.dataTable, #pedidosHorasExtraTable.dataTable {
+    font-size: 10px !important;
+}
+
+/* Células (td + th) mais compactas */
+#homeEnsaiosTable.dataTable th,
+#homeRelatoriosTable.dataTable th,
+#resumoHorasTable.dataTable th,
+#pedidosHorasExtraTable.dataTable th,
+#homeEnsaiosTable.dataTable td,
+#homeRelatoriosTable.dataTable td,
+#resumoHorasTable.dataTable td,
+#pedidosHorasExtraTable.dataTable td {
+    padding: 9px 6px !important;
+    font-size: 11px !important;
+}
+
+/* Permitir quebra de linha em colunas longas da home */
+#homeEnsaiosTable td:nth-child(3),
+#homeEnsaiosTable th:nth-child(3),
+#homeEnsaiosTable td:nth-child(5),
+#homeEnsaiosTable th:nth-child(5) {
+    white-space: normal !important;
+    word-break: break-word;
+    overflow-wrap: anywhere;
+}
+
+/* Permite quebra de linha na coluna "Teste" da tabela de pedidos */
+#pedidosHorasExtraTable td:nth-child(3),
+#pedidosHorasExtraTable th:nth-child(3) {
+  white-space: normal !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Cabeçalho */
+#homeEnsaiosTable.dataTable thead th, #homeRelatoriosTable.dataTable thead th, #resumoHorasTable.dataTable thead th, #pedidosHorasExtraTable.dataTable thead th {
+    font-size: 9.5px !important;
+    font-weight: 600;
+}
+
+/* Linhas pares */
+#homeEnsaiosTable.dataTable tbody tr:nth-child(even), #homeRelatoriosTable.dataTable tbody tr:nth-child(even), #resumoHorasTable.dataTable tbody tr:nth-child(even), #pedidosHorasExtraTable.dataTable tbody tr:nth-child(even) {
+    background: #f3f3f3 !important;
+}
+
+/* Hover */
+#homeEnsaiosTable.dataTable tbody tr:hover, #homeRelatoriosTable.dataTable tbody tr:hover, #resumoHorasTable.dataTable tbody tr:hover, #pedidosHorasExtraTable.dataTable tbody tr:hover {
+    background: #e2e6ea !important;
+}
+
+#resumoHorasTable {
+    border: 1px solid #d3d3d3 !important; /* cinza claro */
+    border-radius: 6px !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.home-aviso {
+    white-space: nowrap !important;
+    display: block !important;
+}
+
+#home_avisos_lista li {
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: normal !important;
+}
+
+#home_avisos_container .list-group-item-warning {
+  background-color: #fff4d6 !important; /* laranja suave */
+  border-color: #ffe8ad !important;
+  font-size: 14px;
+}
+#home_avisos_container .list-group-item-success {
+  font-size: 14px;
+}
+
+#home_avisos_horas_container .list-group-item-warning {
+  background-color: #fff4d6 !important; /* laranja suave */
+  border-color: #ffe8ad !important;
+  font-size: 14px;
+}
+
+
+
+
+</style>
+
+<div class="tabelas-page">
+
+<div class="row">    
+	<div class="col-md-6">
+		<div class="card">
+			<div class="card-header">
+				<div class="card-title">
+					<div class="row align-items-center">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio"><b>Laboratório</b></label>
+
+                                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;" {% if user.funcao_id == 1 %} disabled {% endif %}>
+                                     
+                                </select>
+                            </div>
+                        </div>
+						
+					</div>
+
+				</div>			
+			</div>        
+			<div class="card-body">            
+				<div class="row">
+						<h6 class="fw-bold" data-i18n="index.pending_tests">Ensaios Pendentes</h6>
+						<table id="homeEnsaiosTable" class="table table-striped table-sm" style="width:100%">
+							<thead>
+								<tr>
+								<th data-i18n="field.ensaio">Ensaio</th>
+								<th data-i18n="field.projeto">Projeto</th>
+								<th data-i18n="field.denominacao">Denominação</th>
+								<th data-i18n="field.peca">Peça</th>
+								<th data-i18n="field.solicitante">Solicitante</th>
+								<th data-i18n="field.data_solicitada">Data Solicitada</th>  
+								</tr>
+							</thead>
+							<tbody></tbody>
+						</table>
+				
+				</div>
+        <br>
+        <div class="row" id="relatoriosPendentesContainer" style="display:none;">
+            <h6 class="fw-bold" data-i18n="index.pending_reports">Relatórios Pendentes</h6>
+            <table id="homeRelatoriosTable" class="table table-striped table-sm" style="width:100%">
+              <thead>
+                <tr>
+                  <th data-i18n="field.ensaio">Ensaio</th>
+                  <th data-i18n="field.projeto">Projeto</th>
+                  <th data-i18n="field.denominacao">Denominação</th>
+                  <th data-i18n="field.solicitante">Solicitante</th>
+                  <th data-i18n="field.nome">Nome</th>
+                  <th data-i18n="field.data_inicio">Data Início</th>
+                  <th data-i18n="field.concluido">Concluído</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          {% if user and user.funcao_id in [2, 3] %}
+          <div class="card-body" id="avisosenviosCard" style="display:none;">
+              <h6 class="fw-bold" data-i18n="index.warehouse_alerts">Avisos Armazém Externo</h6>
+              <div id="home_avisos_enviospendentes_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
+              <div id="home_avisos_envios_planeados" class="alert alert-danger py-1 mb-1" style="display:none;"></div>
+          </div>
+          {% endif %}
+				
+			</div>
+		</div>
+	</div>
+
+
+    
+
+
+	<div class="col-md-6">
+		<div class="card">
+			<div class="card-header">
+				<div class="card-title">
+					 <div class="row">
+						<br>
+					</div>
+				</div>		
+			
+				<div class="card-body" id="avisosHorasCard" style="display:none;">            
+            <h6 class="fw-bold" data-i18n="index.hours_alerts">Avisos Horas</h6>
+            <div id="home_avisos_horas_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
+            <div id="home_avisos_horas_percentagem" class="alert alert-danger py-1 mb-1" style="display:none;"></div>
+        </div>	
+
+        <div class="card-body" id="pedidosHorasExtraContainer" style="display:none;">
+          <h6 class="fw-bold" data-i18n="index.extra_hours_requests">Pedidos Horas Extra</h6>
+          <table id="pedidosHorasExtraTable" class="table table-striped table-sm" style="width:100%">
+            <thead>
+              <tr>
+                <th data-i18n="field.nome">Nome</th>
+                <th data-i18n="field.horas">Horas</th>
+                <th data-i18n="field.teste">Teste</th>
+                <th data-i18n="field.status">Estado</th>
+                <th data-i18n="field.acoes">Ações</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card-body" id="avisosEnsaiosCard" style="display:none;">            
+          <h6 class="fw-bold" data-i18n="index.test_alerts">Avisos Ensaios</h6>
+          <div id="home_avisos_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
+        </div>
+
+        <div class="card-body">         
+          <div id="resumoHorasContainer" style="display:none;">
+          <h6 class="fw-bold" data-i18n="index.hours_summary">Resumo Horas</h6>
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <label for="ano" class="form-label mb-0 me-2" data-i18n="field.ano">Ano</label>
+            <select class="form-control form-control-sm w-auto" id="ano" name="ano" required>
+              {% set ano_inicio = 2026 %}
+              {% set ano_fim = ano_atual %}
+              {% set ano_selecionado = ano_atual %}
+              {% for ano in range(ano_inicio, ano_fim + 1) %}
+                <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+              {% endfor %}
+            </select>
+            <label for="mes" class="form-label mb-0 ms-3 me-2" data-i18n="field.mes">Mês</label>
+            <select class="form-control form-control-sm w-auto" id="mes" name="mes" required>
+              {% for i in range(1, 13) %}
+                <option value="{{ i }}" {% if i == mes_atual %}selected{% endif %}>
+                  {{ i }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+              <table id="resumoHorasTable" class="table table-striped table-sm" style="width:100%">
+                <thead>
+                    <tr>
+                        <th data-i18n="field.nome">Nome</th>
+                        <th class="text-center" data-i18n="field.horas_previstas">H. Previstas</th>
+                        <th class="text-center" data-i18n="field.horas_inseridas">H. Inseridas</th>
+                        <th class="text-center" data-i18n="field.perc_gerais">% H. Gerais</th>
+                        <th class="text-center" data-i18n="field.ultima_exportacao">Ult. Exp.</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+						</table>
+        
+        </div>
+        </div>      
+    </div>
+			     
+		
+		</div>
+	</div>
+</div>       
+</div>
+
+<div class="row">    
+	<div class="col-md-6">
+			      
+			
+		</div>
+	</div>
+
+
+    
+
+
+	      
+</div>
+
+
+<div class="modal fade" id="tratarPedidoModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" data-i18n="modal.colocar_horas_extra">Colocar Horas (Pedido Extra)</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+                <form id="formTratarPedido">
+          <input type="hidden" id="tpPedidoId">
+        
+          <div class="mb-2 row align-items-center">
+            <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.nome">Nome</label>
+            <div class="col-9">
+              <input type="text" class="form-control form-control-sm" id="tpTecnico" disabled>
+            </div>
+          </div>
+        
+          <div class="mb-2 row align-items-center">
+            <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.teste">Teste</label>
+            <div class="col-9">
+              <input type="text" class="form-control form-control-sm" id="tpTeste" disabled>
+            </div>
+          </div>
+        
+          <div class="mb-2 row align-items-center">
+            <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.data">Data</label>
+            <div class="col-9">
+              <input type="date" class="form-control form-control-sm" id="tpData" required>
+            </div>
+          </div>
+        
+          <div class="mb-2 row align-items-center">
+            <label class="col-3 col-form-label col-form-label-sm" data-i18n="nav.hours">Horas</label>
+            <div class="col-9">
+              <input type="time" class="form-control form-control-sm" id="tpHoras" required>
+            </div>
+          </div>
+        
+          <div class="mb-2 row align-items-start">
+            <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.notes">Observações</label>
+            <div class="col-9">
+              <textarea class="form-control form-control-sm" id="tpObs" rows="2"></textarea>
+            </div>
+          </div>
+        
+          <div class="modal-footer px-0 pb-0">
+            <button type="submit" class="btn btn-success btn-sm" data-i18n="action.save">Guardar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+<script>
+/////////////////////////////////////////////////////
+
+document.querySelectorAll('select option').forEach(opt => {
+  const month = parseInt(opt.value, 10);
+  if (month >= 1 && month <= 12) {
+    opt.textContent = i18n.t(`month.${month}`);
+  }
+});
+
+
+///////////////////////////////////////////////////////
+//combo laboratorios
+document.addEventListener('DOMContentLoaded', async function () {
+
+	carregarAvisosHoras();
+  carregarAvisosHorasPercentagem();
+  carregarAvisosArmazemExterno();
+
+    
+
+    const selectLab = document.getElementById('laboratorio');
+    selectLab.innerHTML = `<option value="" disabled>${i18n.t('common.loading', 'A carregar...')}</option>`;
+
+    try {
+        // Buscar labs + info do user autenticado
+        const [labsRes, meRes] = await Promise.all([
+            fetch('/laboratorios/ativos'),
+            fetch('/api/me')
+        ]);
+
+        const labs = await labsRes.json();
+        const me = await meRes.json();
+
+        const userLab  = String(me.laboratorio_id);
+        const userFunc = Number(me.funcao_id);  // 1 = técnico, NÃO pode alterar
+
+        // Limpar select
+        selectLab.innerHTML = '';
+
+        // Adicionar opção "Todos" first
+        const optTodos = document.createElement('option');
+        optTodos.value = '0';
+        optTodos.textContent = i18n.t('common.all', 'Todos');
+        optTodos.setAttribute('data-i18n', 'common.all');
+        selectLab.appendChild(optTodos);
+
+        // Preencher lista
+        labs.forEach(lab => {
+            const opt = document.createElement('option');
+            opt.value = String(lab.id);
+            opt.textContent = lab.laboratorio;
+            selectLab.appendChild(opt);
+        });
+
+        // Ver se o laboratório do user está na lista de ativos
+        const existsInList = [...selectLab.options].some(o => o.value === userLab);
+
+        if (existsInList) {
+            selectLab.value = userLab;
+        }
+
+        // Se função == 1 (técnico), NÃO pode alterar
+        if (userFunc === 1) {
+            selectLab.disabled = true;
+            selectLab.title = i18n.t('common.lab_no_change', 'Não pode alterar o laboratório.');
+        } else {
+            // Coordenadores / outras funções → atualiza dashboard
+            selectLab.addEventListener('change', () => {
+                const selectedLab = selectLab.value;
+                // carregarDashboard(selectedLab); → chamaremos isto quando criares dashboard
+            });
+        }
+
+    } catch (err) {
+        console.error("Erro ao carregar laboratórios:", err);
+        selectLab.innerHTML = `<option value="">${i18n.t('common.error_loading', 'Erro ao carregar')}</option>`;
+        selectLab.disabled = true;
+    }
+
+    /////////////////////////////////////////////////////
+    // TABELA RELATÓRIOS PENDENTES
+    let homeRelatoriosTable = $('#homeRelatoriosTable').DataTable({
+      columns: [
+        {
+          data: 'link',
+          render: function (link, type, row) {
+            if (type === 'display' && link) {
+              return `<a href="${link}" class="text-decoration-none">${row.ensaio}</a>`;
+            }
+            return row.ensaio || '';
+          }
+        },
+        { data: 'codigo_projeto' },
+        { data: 'denominacao' },
+        { data: 'solicitante' },
+        { data: 'tecnico' },
+        { data: 'datainicio',
+          render: function (val, type) {
+            if (!val) return type === 'sort' ? '' : '';
+            return val;
+          }
+        },
+        {
+          data: 'concluido',
+          orderable: false,
+          render: function (val, type, row) {
+            const checked = val && val !== '0000-00-00 00:00:00' ? 'checked' : '';
+            return `<center><input type="checkbox" class="report-concluido-checkbox" data-reportid="${row.report_id}" ${checked}></center>`;
+          }
+        }
+      ],
+      order: [[5, 'asc']],
+      language: { url: i18n.getDataTablesLanguageUrl() },
+      dom: '<"top"lf>rt<"bottom"ip><"clear">',
+      pageLength: 5,
+      pagingType: "simple_numbers"
+    });
+    
+    // Função para recarregar a tabela de relatórios pendentes
+    async function carregarRelatoriosPendentes(labId) {
+      const container = document.getElementById('relatoriosPendentesContainer');
+    
+      try {
+        let url = '/home/relatorios_pendentes';
+        if (labId) url += `?laboratorio_id=${encodeURIComponent(labId)}`;
+        const res = await fetch(url);
+        const data = await res.json();
+    
+        if (!data || data.length === 0) {
+          container.style.display = 'none';
+          homeRelatoriosTable.clear().draw();
+          return;
+        }
+    
+        container.style.display = '';
+        homeRelatoriosTable.clear();
+        homeRelatoriosTable.rows.add(data);
+        homeRelatoriosTable.draw();
+        homeRelatoriosTable.columns.adjust();
+      } catch (err) {
+        console.error('Erro ao carregar relatórios pendentes:', err);
+        container.style.display = 'none';
+        homeRelatoriosTable.clear().draw();
+      }
+    }
+    
+    // Carregar ao entrar e ao mudar laboratório
+    if (selectLab) {
+      carregarRelatoriosPendentes(selectLab.value);
+      selectLab.addEventListener('change', () => carregarRelatoriosPendentes(selectLab.value));
+    }
+    
+    // Handler para checkbox de concluído
+    $('#homeRelatoriosTable').on('change', '.report-concluido-checkbox', async function() {
+      const reportId = $(this).data('reportid');
+      const checked = $(this).is(':checked');
+      try {
+        await fetch(`/reports/${reportId}/concluido`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ concluido: checked })
+        });
+      } catch (err) {
+        mostrarNotificacao(i18n.t('common.error_loading', 'Erro ao CARREGAR'), 'error');
+        $(this).prop('checked', !checked);
+      }
+    });
+
+
+
+  ///////////////////////////////////////////////////////
+  //TABELA ENSAIOS
+  let homeEnsaiosTable = $('#homeEnsaiosTable').DataTable({
+    columns: [
+      // 0: Ensaio (link)
+		{ 
+        data: 'link',
+        render: function (link, type, row) {
+          if (type === 'display' && link) {
+            return `<a href="${link}" class="text-decoration-none">${row.ensaio}</a>`;
+          }
+          return row.ensaio || '';
+        }
+      },
+
+      // 1..5: texto direto
+      { data: 'codigo_projeto' },
+      { data: 'denominacao' },
+      { data: 'tipopeca' },
+      { data: 'solicitante' },
+      // 6: datasolicitada
+      { data: 'datasolicitada',
+        render: function (val, type) {
+          // Para ordenar, devolver como 'YYYY-MM-DD' (natural). Para display, podes formatar.
+          if (!val) return type === 'sort' ? '' : '';
+          return val;
+        }
+      },
+    ],
+    order: [[5, 'asc']], // ordenar por datasolicitada asc
+    language: { url: i18n.getDataTablesLanguageUrl() },
+    dom: '<"top"lf>rt<"bottom"ip><"clear">',
+	pageLength: 5,
+    pagingType: "simple_numbers",
+    createdRow: function (row, data) {
+      // Pintar a laranja se datasolicitada < hoje
+      const ds = data.datasolicitada;
+      if (ds) {
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+      
+        const [dia, mes, ano] = ds.split('-').map(Number);
+        const d = new Date(ano, mes - 1, dia);
+      
+        if (!Number.isNaN(d.getTime()) && d < hoje) {
+          $('td', row).eq(5).css({ 'background': '#fff4d6' });
+        }
+      }
+    }
+  });
+
+  // Função para recarregar a tabela com base no laboratório selecionado
+  async function carregarEnsaiosHomePorLab(labId) {
+    if (!labId) {
+      homeEnsaiosTable.clear().draw();
+      return;
+    }
+    try {
+      const res = await fetch(`/home/ensaios_nao_concluidos?laboratorio_id=${encodeURIComponent(labId)}`);
+      const data = await res.json();
+      homeEnsaiosTable.clear();
+      homeEnsaiosTable.rows.add(data);
+      homeEnsaiosTable.draw();
+    } catch (err) {
+      console.error('Erro ao carregar ensaios da home:', err);
+      homeEnsaiosTable.clear().draw();
+    }
+  }
+
+  // Integra com o select de laboratório que já tens
+ 
+  if (selectLab) {
+    // carregar uma vez ao entrar
+    carregarEnsaiosHomePorLab(selectLab.value);
+    // e sempre que o utilizador (se permitido) mudar
+    selectLab.addEventListener('change', () => carregarEnsaiosHomePorLab(selectLab.value));
+  }
+});
+
+
+////////////////////////////////////////////////////////////////////////////
+//AVISOS ENSAIOS
+document.addEventListener('DOMContentLoaded', () => {
+  const selectLab = document.getElementById('laboratorio');
+  const avisosContainer = document.getElementById('home_avisos_container');
+
+  async function whoAmI() {
+    const r = await fetch('/api/me');
+    if (!r.ok) throw new Error('Falha a obter utilizador');
+    return r.json();
+  }
+
+    async function carregarAvisosHome(labId) {
+      const cont = document.getElementById('home_avisos_container');
+      cont.innerHTML = '';
+  
+      const res = await fetch(`/home/avisos?laboratorio_id=${encodeURIComponent(labId)}`);
+      if (!res.ok) {
+          cont.style.display = 'none';
+          cont.innerHTML = '';
+          atualizarVisibilidadeAvisosEnsaiosCard();
+          return;
+      }
+  
+      const avisos = await res.json();
+  
+      if (!avisos.length) {
+          cont.style.display = 'none';
+          cont.innerHTML = '';
+          atualizarVisibilidadeAvisosEnsaiosCard();
+          return;
+      }
+  
+      cont.style.display = '';
+  
+      const aviso = avisos[0];
+      const falta = [
+          aviso.falta_network ? '<span class="text-danger">NETWORK</span>' : '',
+          aviso.falta_pep ? '<span class="text-danger">PEP</span>' : ''
+      ].filter(Boolean).join(' e ');
+  
+      cont.innerHTML = i18n.t('msg.test_alert', '', {
+          ensaio: `<a href="${aviso.link}" class="text-decoration-none fw-bold">${aviso.ensaio}</a>`,
+          falta
+      });
+  
+      atualizarVisibilidadeAvisosEnsaiosCard();
+  }
+
+	// controlador principal: decide se mostra e carrega avisos
+	async function atualizarAvisosParaLabAtual() {
+		try {
+			const me = await whoAmI();
+			const labId = selectLab.value;
+
+			// Só para utilizadores com função ≠ 1
+			      if (Number(me.funcao_id) !== 1) {
+          await carregarAvisosHome(labId);
+      } else {
+          avisosContainer.style.display = 'none';
+          avisosContainer.innerHTML = '';
+          atualizarVisibilidadeAvisosEnsaiosCard();
+      }
+		} catch (err) {
+			console.error('Erro a atualizar avisos:', err);
+			avisosContainer.style.display = 'none';
+		}
+	}
+
+	// On load
+	atualizarAvisosParaLabAtual();
+
+	// On lab change
+	selectLab.addEventListener('change', atualizarAvisosParaLabAtual);
+
+	// Chama no load…
+	atualizarAvisosParaLabAtual();
+
+	// …e sempre que o laboratório mudar (para quem puder mudar)
+	selectLab.addEventListener('change', atualizarAvisosParaLabAtual);
+});
+
+async function carregarAvisosHoras() {
+    const cont = document.getElementById('home_avisos_horas_container');
+
+    // ir buscar dados do user
+    const me = await fetch('/api/me').then(r => r.json());
+
+    // técnicos (funcao_id == 1) NÃO vêem este aviso
+    if (Number(me.funcao_id) === 1) {
+        cont.style.display = 'none';
+        return;
+    }
+
+    // tirar conteúdo anterior
+    cont.innerHTML = '';
+
+    // pedir ao backend se há horas antigas não exportadas
+    const res = await fetch('/home/avisos_horas');
+    const data = await res.json();
+
+    if (!data.has_old_unexported) {
+        cont.style.display = 'none';
+        return;
+    }
+
+    // mostrar aviso
+    cont.style.display = '';
+
+    cont.innerHTML = i18n.t('msg.old_hours_warning');
+
+     atualizarVisibilidadeAvisosHorasCard(); 
+
+}
+
+async function carregarAvisosHorasPercentagem() {
+    const box = document.getElementById("home_avisos_horas_percentagem");
+
+    // Buscar utilizador atual
+    const me = await fetch('/api/me').then(r => r.json());
+
+    // Técnicos (função 1) NÃO vêem este aviso
+    if (Number(me.funcao_id) === 1) {
+        box.style.display = 'none';
+        return;
+    }
+
+    // Buscar estado do aviso
+    const res = await fetch('/home/avisos_horas_percentagem');
+    const data = await res.json();
+
+    if (!data.excedeu) {
+        box.style.display = 'none';
+        return;
+    }
+
+    // Montar aviso
+    box.style.display = '';
+    box.innerHTML = i18n.t('msg.hours_limit_exceeded', '', { real: data.percentagem_real, limite: data.limite });
+    atualizarVisibilidadeAvisosHorasCard();
+}
+
+function atualizarVisibilidadeAvisosHorasCard() {
+    const card = document.getElementById('avisosHorasCard');
+    const avisoHoras = document.getElementById('home_avisos_horas_container');
+    const avisoPercentagem = document.getElementById('home_avisos_horas_percentagem');
+
+    const mostrar =
+        (avisoHoras && avisoHoras.style.display !== 'none' && avisoHoras.innerHTML.trim() !== '') ||
+        (avisoPercentagem && avisoPercentagem.style.display !== 'none' && avisoPercentagem.innerHTML.trim() !== '');
+
+    if (card) card.style.display = mostrar ? '' : 'none';
+}
+
+//tabela horas
+// TABELA RESUMO HORAS (apenas funções 2 e 3)
+  let resumoHorasTable = null;
+  
+   async function carregarResumoHoras() {
+    const me = await fetch('/api/me').then(r => r.json());
+    
+    // Sempre mostra o container
+    document.getElementById('resumoHorasContainer').style.display = '';
+  
+    const labId = document.getElementById('laboratorio').value;
+    const ano = document.getElementById('ano').value;
+    const mes = document.getElementById('mes').value;
+    
+    // Se técnico, pedir apenas os seus dados
+    const apenasEu = Number(me.funcao_id) === 1 ? 'true' : 'false';
+    
+    try {
+      const res = await fetch(`/home/resumo_horas?laboratorio_id=${encodeURIComponent(labId)}&ano=${encodeURIComponent(ano)}&mes=${encodeURIComponent(mes)}&apenas_eu=${apenasEu}`);
+      const data = await res.json();
+      resumoHorasTable.clear();
+      resumoHorasTable.rows.add(data);
+      resumoHorasTable.draw();
+    } catch (err) {
+      resumoHorasTable.clear().draw();
+    }
+  }
+  
+  document.addEventListener('DOMContentLoaded', function () {
+    // Adiciona tabela se container existir
+    if (document.getElementById('resumoHorasContainer')) {
+      resumoHorasTable = $('#resumoHorasTable').DataTable({
+        columns: [
+          {
+            data: 'tecnico',
+            render: function(nome, type, row) {
+              if (type === 'display' && nome) {
+                const nomeUrl = encodeURIComponent(nome);
+                return `<a href="/horas_pessoa?tecnico=${nomeUrl}" class="text-decoration-none">${nome}</a>`;
+              }
+              return nome || '';
+            }
+          },
+          { data: 'horas_previstas', className: 'text-center' },
+          { data: 'horas_lancadas', className: 'text-center' },
+          { data: 'percentagem_gerais', className: 'text-center', render: v => v + '%' },
+          { data: 'ultima_exportacao', className: 'text-center' },
+        ],
+        searching: false,
+        paging: false,
+        info: false,
+        ordering: false,
+        language: { url: i18n.getDataTablesLanguageUrl() },
+        headerCallback: function(thead) {
+            $(thead).find('[data-i18n]').each(function() {
+                const key = $(this).attr('data-i18n');
+                if (key && typeof i18n !== 'undefined' && i18n.t) {
+                    $(this).text(i18n.t(key, $(this).text().trim()));
+                }
+            });
+        },
+        createdRow: function(row, data) {
+          // Laranja claro só na célula "Horas Inseridas" se horas lançadas < previstas
+          if (Number(data.horas_lancadas) < Number(data.horas_previstas)) {
+            $('td', row).eq(2).css('background-color', '#fff4d6');
+          }
+          // Vermelho claro só na célula "% Horas Gerais" se percentagem_gerais > limite
+          if (data.limite_gerais !== undefined && Number(data.percentagem_gerais) > Number(data.limite_gerais)) {
+            $('td', row).eq(3).css('background-color', '#ffd6d6');
+          }
+          if (data.exportacao_alerta) {
+            $('td', row).eq(4).css({
+              'background-color': '#ffd6d6',
+              'color': '#8b0000',
+              'font-weight': '600'
+            });
+          }
+        }
+      });
+      // Carregar ao entrar
+      carregarResumoHoras();
+      // Atualizar ao mudar lab, ano ou mês
+      document.getElementById('laboratorio').addEventListener('change', carregarResumoHoras);
+      document.getElementById('ano').addEventListener('change', carregarResumoHoras);
+      document.getElementById('mes').addEventListener('change', carregarResumoHoras);
+    }
+  });
+
+    function decimalToHHMM(v) {
+    const n = Number(v) || 0;
+    const total = Math.round(Math.abs(n) * 60);
+    const hh = Math.floor(total / 60);
+    const mm = total % 60;
+    return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+  }
+  
+  function timeToFloat(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h + (m / 60);
+  }
+  
+  let pedidosHorasExtraTable = null;
+  let meInfo = null;
+  
+    async function carregarPedidosHorasExtra() {
+    const container = document.getElementById('pedidosHorasExtraContainer');
+    const labId = document.getElementById('laboratorio').value;
+    const qs = meInfo && meInfo.funcao_id == 1 ? '' : `?laboratorio_id=${encodeURIComponent(labId)}`;
+    const res = await fetch(`/api/pedidos_horas_extra${qs}`);
+    const data = await res.json();
+  
+    if (!data || data.length === 0) {
+      container.style.display = 'none';
+      if (pedidosHorasExtraTable) {
+        pedidosHorasExtraTable.clear().draw();
+      }
+      return;
+    }
+  
+    container.style.display = '';
+    pedidosHorasExtraTable.clear();
+    pedidosHorasExtraTable.rows.add(data);
+    pedidosHorasExtraTable.draw();
+  }
+  
+  document.addEventListener('DOMContentLoaded', async function () {
+    meInfo = await fetch('/api/me').then(r => r.json());
+  
+       pedidosHorasExtraTable = $('#pedidosHorasExtraTable').DataTable({
+      columns: [
+        { data: 'tecnico_nome', className: 'text-nowrap' },
+        { data: 'horas', className: 'text-nowrap', render: (v) => decimalToHHMM(v) },
+        { data: 'teste', className: '' },
+        { data: 'estado', className: 'text-nowrap' },
+        {
+          data: null,
+          orderable: false,
+          searchable: false,
+          className: 'text-nowrap',
+          render: function (_, __, row) {
+            if (Number(meInfo.funcao_id) === 1) {
+              return `<i class="fas fa-times text-danger btn-pedido-eliminar"
+                         data-id="${row.id}" title="${i18n.t('action.delete', 'Eliminar')}" style="cursor:pointer;"></i>`;
+            }
+            return `<i class="fas fa-times text-warning me-2 btn-pedido-recusar"
+                       data-id="${row.id}" title="${i18n.t('action.reject_request', 'Recusar pedido')}" style="cursor:pointer;"></i>
+                    <i class="far fa-clock text-success btn-pedido-tratar"
+                       data-id="${row.id}" title="${i18n.t('action.log_hours', 'Colocar horas')}" style="cursor:pointer;"></i>`;
+          }
+        }
+      ],
+      autoWidth: false,
+      searching: false,
+      lengthChange: false,
+      paging: false,
+      info: false,
+      language: { url: i18n.getDataTablesLanguageUrl() },
+      dom: 't'
+    });
+  
+    await carregarPedidosHorasExtra();
+  
+    document.getElementById('laboratorio').addEventListener('change', async () => {
+      await carregarPedidosHorasExtra();
+    });
+  });
+  
+  $('#pedidosHorasExtraTable').on('click', '.btn-pedido-eliminar', async function () {
+    const id = $(this).data('id');
+    const res = await fetch(`/api/pedido_horas_extra/${id}/estado`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ estado: 'Eliminado' })
+    });
+    const out = await res.json();
+    if (out.success) {
+      mostrarNotificacao(i18n.t('msg.request_deleted', 'Pedido eliminado.'), 'success');
+      carregarPedidosHorasExtra();
+    } else {
+      mostrarNotificacao(out.error || i18n.t('msg.error_delete', 'Erro ao eliminar.'), 'error');
+    }
+  });
+  
+  $('#pedidosHorasExtraTable').on('click', '.btn-pedido-recusar', async function () {
+    const id = $(this).data('id');
+    const res = await fetch(`/api/pedido_horas_extra/${id}/estado`, {
+      method: 'PUT',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ estado: 'Recusado' })
+    });
+    const out = await res.json();
+    if (out.success) {
+      mostrarNotificacao(i18n.t('msg.request_rejected', 'Pedido recusado.'), 'success');
+      carregarPedidosHorasExtra();
+    } else {
+      mostrarNotificacao(out.error || i18n.t('msg.error_reject', 'Erro ao recusar.'), 'error');
+    }
+  });
+  
+  $('#pedidosHorasExtraTable').on('click', '.btn-pedido-tratar', function () {
+    const row = pedidosHorasExtraTable.row($(this).closest('tr')).data();
+    $('#tpPedidoId').val(row.id);
+    $('#tpTecnico').val(row.tecnico_nome);
+    $('#tpTeste').val(row.teste);
+    $('#tpData').val(row.data);
+    $('#tpHoras').val(decimalToHHMM(row.horas));
+    $('#tpObs').val(row.justificacao || '');
+    new bootstrap.Modal(document.getElementById('tratarPedidoModal')).show();
+  });
+  
+  document.getElementById('formTratarPedido').addEventListener('submit', async function (e) {
+    e.preventDefault();
+    const pedidoId = document.getElementById('tpPedidoId').value;
+  
+    const res = await fetch(`/api/pedido_horas_extra/${pedidoId}/tratar`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        data: document.getElementById('tpData').value,
+        horas: timeToFloat(document.getElementById('tpHoras').value),
+        obs: document.getElementById('tpObs').value
+      })
+    });
+  
+    const out = await res.json();
+    if (out.success) {
+      mostrarNotificacao(i18n.t('msg.hours_logged', 'Horas inseridas e pedido tratado.'), 'success');
+      bootstrap.Modal.getInstance(document.getElementById('tratarPedidoModal')).hide();
+      carregarPedidosHorasExtra();
+    } else {
+      mostrarNotificacao(out.error || i18n.t('msg.error_process', 'Erro ao tratar pedido.'), 'error');
+    }
+  });
+
+function atualizarVisibilidadeAvisosEnviosCard() {
+    const card = document.getElementById('avisosenviosCard');
+    const avisoPendentes = document.getElementById('home_avisos_enviospendentes_container');
+    const avisoPlaneados = document.getElementById('home_avisos_envios_planeados');
+
+    const mostrar =
+        (avisoPendentes && avisoPendentes.style.display !== 'none' && avisoPendentes.innerHTML.trim() !== '') ||
+        (avisoPlaneados && avisoPlaneados.style.display !== 'none' && avisoPlaneados.innerHTML.trim() !== '');
+
+    if (card) card.style.display = mostrar ? '' : 'none';
+}
+
+async function carregarAvisosArmazemExterno() {
+    const pendentesBox = document.getElementById('home_avisos_enviospendentes_container');
+    const planeadosBox = document.getElementById('home_avisos_envios_planeados');
+
+    if (!pendentesBox || !planeadosBox) return;
+
+    pendentesBox.style.display = 'none';
+    pendentesBox.innerHTML = '';
+    planeadosBox.style.display = 'none';
+    planeadosBox.innerHTML = '';
+
+    try {
+        const [pendRes, datasRes] = await Promise.all([
+            fetch('/api/movimentosae/pendentes'),
+            fetch('/api/movimentosae/datas_planeadas')
+        ]);
+
+        const pendentes = pendRes.ok ? await pendRes.json() : [];
+        const datas = datasRes.ok ? await datasRes.json() : [];
+
+        if (Array.isArray(pendentes) && pendentes.length > 0) {
+            pendentesBox.innerHTML = i18n.t('msg.warehouse_pending', '', { count: pendentes.length });
+
+            pendentesBox.style.display = '';
+        }
+
+        const hoje = new Date();
+        hoje.setHours(0, 0, 0, 0);
+
+        const amanha = new Date(hoje);
+        amanha.setDate(amanha.getDate() + 1);
+
+        const temHojeOuAmanha = (Array.isArray(datas) ? datas : []).some(item => {
+            if (!item || !item.datahora) return false;
+            const d = new Date(item.datahora); // formato YYYY-MM-DDTHH:MM
+            if (Number.isNaN(d.getTime())) return false;
+            d.setHours(0, 0, 0, 0);
+            return d.getTime() <= amanha.getTime();
+        }
+      );
+
+        if (temHojeOuAmanha) {
+            planeadosBox.innerHTML = i18n.t('msg.warehouse_planned');
+            planeadosBox.style.display = '';
+        }
+    } catch (err) {
+        console.error('Erro ao carregar avisos de Armazém Externo:', err);
+    } finally {
+        atualizarVisibilidadeAvisosEnviosCard();
+    }
+}
+
+function atualizarVisibilidadeAvisosEnsaiosCard() {
+    const card = document.getElementById('avisosEnsaiosCard');
+    const aviso = document.getElementById('home_avisos_container');
+
+    const mostrar =
+        aviso &&
+        aviso.style.display !== 'none' &&
+        aviso.innerHTML.trim() !== '';
+
+    card.style.display = mostrar ? '' : 'none';
+}
+
+</script>
+
+{% endblock %}

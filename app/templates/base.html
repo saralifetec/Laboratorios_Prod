@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="common.app_name">Laboratórios</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.ico') }}">
+
+    <!-- CSS: do mais geral para o mais específico -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}" />
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/plugins.min.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" />
+    
+    
+    <!-- Bibliotecas externas (depois do seu CSS principal) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/select/1.3.3/css/select.dataTables.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/datetime/1.1.1/css/dataTables.dateTime.min.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Titillium+Web:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+   
+    <style>
+      body {
+        font-family: 'Titillium Web', sans-serif;
+      }
+
+      .avatar-img {
+        width: 40px;
+        height: 40px;
+        background-color: #f36f21; /* Laranja Zflifetec */
+        color: #fff;
+        font-weight: bold;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-transform: uppercase;
+      }
+      .rounded-circle {
+        border-radius: 50%;
+      }
+
+            .sidebar.sidebar-mini .sidebar-title {
+          display: none !important;
+      }
+
+      /* Menos espaço entre itens do 2o nivel (submenu) */
+      .sidebar .nav-collapse > li > a {
+        padding-top: 7px !important;
+        padding-bottom: 7px !important;
+        min-height: 0 !important;
+      }
+      
+      .sidebar .nav-collapse .sub-item {
+        line-height: 1.2 !important;
+        font-size: 0.92rem;
+      }
+
+    </style>
+
+
+</head>
+<body>
+
+  <div id="notificacao" class="alert alert-info" style="display:none; position:fixed; top:20px; right:20px; z-index:9999;"></div>
+
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar" data-background-color="dark">
+          <div class="sidebar-logo">
+            <!-- Logo Header -->
+            <div class="logo-header" data-background-color="dark">
+              <a href="{{ url_for('index') }}" class="logo">
+                <img src="{{ url_for('static', filename='img/logo.png') }}" alt="navbar brand" class="navbar-brand" height="30" />
+              </a>
+              <div class="nav-toggle">
+                <button class="btn btn-toggle toggle-sidebar">
+                  <i class="gg-menu-right"></i>
+                </button>
+                <button class="btn btn-toggle sidenav-toggler">
+                  <i class="gg-menu-left"></i>
+                </button>
+              </div>
+              <button class="topbar-toggler more">
+                <i class="gg-more-vertical-alt"></i>
+              </button>
+            </div>
+            <!-- End Logo Header -->
+          </div>
+          <div class="sidebar-wrapper scrollbar scrollbar-inner">
+            <div class="sidebar-content">
+			<h3 class="sidebar-title" data-i18n="common.app_name" style="padding-left: 30px;">Laboratórios
+      </h3>
+              <!-- Sidebar content here -->
+              <ul class="nav nav-secondary">
+
+			  <li class="nav-section">
+                <span class="sidebar-mini-icon">
+                  <i class="fa fa-ellipsis-h"></i>
+                </span>
+                <h4 class="text-section" data-i18n="nav.menu">Menu</h4>
+              </li>
+                <li class="nav-item active">
+                  <a href="{{ url_for('index') }}">
+                    <i class="fas fa-home"></i>
+                    <p data-i18n="nav.home">Início</p>
+                  </a>
+                </li>
+
+                
+
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#ensaios">
+                  <i class="fas fa-microscope"></i>
+                  <p data-i18n="nav.tests">Ensaios</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="ensaios">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('ensaios') }}">
+                        <span class="sub-item" data-i18n="nav.tests">Ensaios</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('ensaioshistorico') }}">
+                        <span class="sub-item" data-i18n="nav.history">Histórico</span>
+                      </a>
+                    </li>
+                  
+                    
+                  </ul>
+                </div>
+              </li>
+
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#horas">
+                  <i class="fas fa-clock"></i>
+                  <p data-i18n="nav.hours">Horas</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="horas">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('horas_pessoa') }}">
+                        <span class="sub-item" data-i18n="nav.hours_person">Horas Pessoa</span>
+                      </a>
+                    </li>
+                    {% if user and user.funcao_id != 1 %}
+                    <li>
+                      <a href="{{ url_for('horas_maquina') }}">
+                        <span class="sub-item" data-i18n="nav.hours_machine">Horas Máquina</span>
+                      </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                      <a href="{{ url_for('historico_horas') }}">
+                        <span class="sub-item" data-i18n="nav.history">Histórico</span>
+                      </a>
+                    </li>
+                    {% if user and user.funcao_id != 1 %}
+                    <li>
+                      <a href="{{ url_for('resumo_horas') }}">
+                        <span class="sub-item" data-i18n="nav.summary">Resumo</span>
+                      </a>
+                    </li>
+                    {% endif %}
+                    
+                  </ul>
+                </div>
+              </li>
+
+              {% if user and user.funcao_id != 1 %}
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#armazem">
+                  <i class="fas fa-box"></i>
+                  <p data-i18n="nav.plme_warehouse">Armazém PLME</p>
+                  <span class="caret"></span>
+                </a>
+                
+                <div class="collapse" id="armazem">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('referencias') }}">
+                        <span class="sub-item" data-i18n="nav.references">Referências</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('plme') }}">
+                        <span class="sub-item" data-i18n="nav.plme">PLME</span>
+                      </a>
+                    </li>
+                    
+                  </ul>
+                </div>
+              </li>
+              {% endif %}
+
+              
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#armazemexterno">
+                  <i class="fas fa-truck"></i>
+                  <p data-i18n="nav.external_warehouse">Armazém Externo</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="armazemexterno">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('armazem_externo') }}">
+                        <span class="sub-item" data-i18n="nav.references">Referências</span>
+                      </a>
+                    </li>
+                    {% if user and user.funcao_id != 1 %}
+                    <li>
+                      <a href="{{ url_for('ae_envios') }}">
+                        <span class="sub-item" data-i18n="nav.shipments">Envios/Recolhas</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('ae_consultas') }}">
+                        <span class="sub-item" data-i18n="nav.queries">Consultas</span>
+                      </a>
+                    </li>
+                    {% endif %}
+                  </ul>
+                </div>
+              </li>
+              
+
+              
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#consultas">
+                  <i class="fas fa-search"></i>
+                  <p data-i18n="nav.queries">Consultas</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="consultas">
+                  <ul class="nav nav-collapse">
+                    {% if user and user.funcao_id != 1 %}
+                    <li>
+                      <a href="{{ url_for('ensaiosconsultas') }}">
+                        <span class="sub-item" data-i18n="nav.queries">Consultas</span>
+                      </a>
+                    </li>
+                    {% endif %}
+                    <li>
+                      <a href="{{ url_for('consultaspersonalizadas') }}">
+                        <span class="sub-item" data-i18n="nav.queries_custom">Consultas Personalizadas</span>
+                      </a>
+                    </li>
+                    
+                    
+                    
+                  </ul>
+                </div>
+              </li>
+              
+
+              {% if user and user.funcao_id != 1 %}
+              <li class="nav-item">
+                <a data-bs-toggle="collapse" href="#gestao">
+                  <i class="fas fa-gears"></i>
+                  <p data-i18n="nav.management">Gestão</p>
+                  <span class="caret"></span>
+                </a>
+                <div class="collapse" id="gestao">
+                  <ul class="nav nav-collapse">
+                    <li>
+                      <a href="{{ url_for('tabelas') }}">
+                        <span class="sub-item" data-i18n="nav.tables">Tabelas</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('horasauto') }}">
+                        <span class="sub-item" data-i18n="nav.automatic_hours">Horas Automáticas</span>
+                      </a>
+                    </li>
+                    <li>
+                      <a href="{{ url_for('emailsauto') }}">
+                        <span class="sub-item" data-i18n="nav.automatic_emails">Emails Automáticos</span>
+                      </a>
+                    </li>
+                    {% if user and user.funcao_id == 3 %}
+                    <li>
+                      <a href="{{ url_for('dadosgerais') }}">
+                        <span class="sub-item" data-i18n="nav.validation_rules">Regras Validação</span>
+                      </a>
+                    </li>
+                    {% endif %}
+                    {% if user and user.funcao_id == 3 %}
+                    <li>
+                      <a href="{{ url_for('construtorconsultas') }}">
+                        <span class="sub-item" data-i18n="nav.query_builder">Construtor de Consultas</span>
+                      </a>
+                    </li>
+                    {% endif %}
+                    
+                  </ul>
+                </div>
+              </li>  
+              {% endif %}
+
+            
+              </ul>
+            </div>
+          </div>
+        </div>
+        <!-- End Sidebar -->
+
+        <div class="main-panel">
+        
+          <div class="main-header">
+            <nav class="navbar navbar-header navbar-header-transparent navbar-expand-lg border-bottom">
+                <div class="container-fluid">
+
+                 
+                 <h3 class="fw-bold mb-3">{% block page_title %}Laboratórios{% endblock %}</h3>
+              
+            
+
+
+                  <ul class="navbar-nav topbar-nav ms-md-auto align-items-center">
+                   
+                    <li class="nav-item">
+                      <select id="languageSelector" class="form-select form-select-sm" style="width: auto;" onchange="i18n.switchLanguage(this.value)">
+                        <option value="pt">PT</option>
+                        <option value="es">ES</option>
+                        <option value="en">EN</option>
+                      </select>
+                    </li>
+                    <li class="nav-item topbar-user dropdown hidden-caret">
+                      <a
+                        class="dropdown-toggle profile-pic"
+                        data-bs-toggle="dropdown"
+                        href="#"
+                        aria-expanded="false"
+                      >
+                        <div class="avatar-sm">
+                          <div id="avatar" class="avatar-img rounded-circle"></div>
+                        </div>
+                        <span class="profile-username">
+                          <span class="op-7" data-i18n="common.hello">Olá,</span>
+                          <span class="fw-bold" id="username">{{ user.full_name if user else 'Utilizador' }}</span>
+                        </span>
+                      </a>
+                      <ul class="dropdown-menu dropdown-user animated fadeIn">
+                        <div class="dropdown-user-scroll scrollbar-outer">
+                          <li>
+                            <div class="user-box">
+                              <div class="u-text">
+                                <h4>{{ user.full_name if user else 'Utilizador' }}</h4>
+                                <p class="text-muted">{{ user.email if user else '' }}</p>
+                              </div>
+                            </div>
+                          </li>
+                          <li>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#userPasswordModal2" id="alterarPasswordMenu">
+                              <i class="fas fa-key"></i>
+                              <span data-i18n="auth.change_password">Alterar Password</span>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a class="dropdown-item" href="{{ url_for('logout') }}" data-i18n="auth.logout">Logout</a>
+                          </li>
+                        </div>
+                      </ul>
+                    </li>
+                  </ul>
+                </div>
+            </nav>
+          </div>  
+
+
+
+
+
+
+          <div class="container">
+            <div class="page-inner">
+             
+			  
+				
+			
+			  
+            <br> <br> 
+           
+              <div class="page-category">
+			  
+			  
+			  
+                {% block content %}{% endblock %}
+            
+			  
+			
+			  </div>
+            </div>
+          </div></div>
+          </div>
+
+          
+          <div class="modal fade" id="userPasswordModal2" tabindex="-1" aria-labelledby="userPasswordModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+              <form id="userPasswordForm">
+                <div class="modal-content">
+                  <div class="modal-header">
+                    <h5 class="modal-title" data-i18n="auth.change_password" id="userPasswordModalLabel">Alterar Password</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+                  </div>
+                  <div class="modal-body">
+                    <input type="hidden" id="userPasswordUserId" name="user_id" value="{{ user.id }}">
+                    <div class="mb-3">
+                      <label for="userNewPassword" class="form-label" data-i18n="auth.new_password">Nova Password</label>
+                      <input type="password" class="form-control" id="userNewPassword" name="new_password" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="userConfirmPassword" class="form-label" data-i18n="auth.confirm_password">Confirmar Password</label>
+                      <input type="password" class="form-control" id="userConfirmPassword" name="confirm_password" required>
+                    </div>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="submit" data-i18n="action.save" class="btn btn-success btn-sm">Guardar</button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+
+
+
+
+
+       <!-- JS: jQuery primeiro, depois Bootstrap, depois Kaiadmin, depois plugins -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='js/core/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/core/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/kaiadmin.min.js') }}"></script>
+    
+    <!-- DataTables e plugins -->
+    <script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.dataTables.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
+    
+    <!-- WebFont Loader -->
+    <script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    
+<!-- Sistema de Traduções -->
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+
+
+
+<script>
+
+  
+
+//////////////////////////////////////////////////
+//nova password
+document.getElementById('userPasswordForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const userId = document.getElementById('userPasswordUserId').value;
+  const newPassword = document.getElementById('userNewPassword').value;
+  const confirmPassword = document.getElementById('userConfirmPassword').value;
+  if (newPassword !== confirmPassword) {
+    mostrarNotificacao(i18n.t('msg.password_mismatch'), 'error');
+    return;
+  }
+  if (newPassword.length < 4) {
+    mostrarNotificacao(i18n.t('msg.password_short'), 'error');
+    return;
+  }
+  fetch(`/users/update_password/${userId}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ new_password: newPassword })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.error) {
+      mostrarNotificacao(i18n.t(data.error), 'error');
+    } else {
+      mostrarNotificacao(i18n.t(data.message), 'success');
+      var modal = bootstrap.Modal.getInstance(document.getElementById('userPasswordModal2'));
+      modal.hide();
+    }
+  })
+  .catch(err => {
+    mostrarNotificacao(i18n.t('msg.password_update_error'), 'error');
+    console.error(err);
+  });
+});
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Restaurar estado do submenu
+    const aberto = localStorage.getItem('submenu_aberto');
+    if (aberto) {
+        const submenu = document.getElementById(aberto);
+        if (submenu) {
+            submenu.classList.add('show');
+        }
+    }
+
+    // Guardar estado ao expandir/colapsar
+    document.querySelectorAll('.collapse').forEach(function(el) {
+        el.addEventListener('show.bs.collapse', function() {
+            localStorage.setItem('submenu_aberto', this.id);
+        });
+        el.addEventListener('hide.bs.collapse', function() {
+            localStorage.removeItem('submenu_aberto');
+        });
+    });
+});
+
+      WebFont.load({
+        google: { families: ["Titillium Web:300,400,600,700"] },
+      });
+  
+      // Captura o nome do elemento
+      const name = document.getElementById("username").textContent.trim();
+
+      // Divide em palavras
+      const parts = name.split(" ");
+
+      // Gera iniciais (primeira e última palavra)
+      const initials = parts.length > 1
+        ? parts[0].charAt(0) + parts[parts.length - 1].charAt(0)
+        : parts[0].charAt(0);
+
+      // Insere no avatar
+      document.getElementById("avatar").textContent = initials;
+
+      //alerta que desaparece sozinho
+      function mostrarNotificacao(mensagem, tipo = "info", duracao = 3000) {
+        const div = document.getElementById("notificacao");
+        div.className = `alert alert-${tipo}`;
+        div.innerText = mensagem;
+        div.style.display = "block";
+
+        setTimeout(() => {
+            div.style.display = "none";
+        }, duracao);
+    }
+
+
+      document.querySelectorAll('.toggle-sidebar').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelector('.sidebar').classList.toggle('sidebar-mini');
+        });
+      });
+
+
+
+      document.addEventListener('DOMContentLoaded', function() {
+          // Restaurar estado do submenu
+          const aberto = localStorage.getItem('submenu_aberto');
+          if (aberto) {
+              const submenu = document.getElementById(aberto);
+              if (submenu) {
+                  submenu.classList.add('show');
+              }
+         }
+
+        // Guardar estado ao expandir/colapsar
+        document.querySelectorAll('.collapse').forEach(function(el) {
+            el.addEventListener('show.bs.collapse', function() {
+                localStorage.setItem('submenu_aberto', this.id);
+            });
+            el.addEventListener('hide.bs.collapse', function() {
+                localStorage.removeItem('submenu_aberto');
+            });
+        });
+      });
+</script>
+
+
+
+    {% block scripts %}{% endblock %}
+
+
+  </body>
+</html>

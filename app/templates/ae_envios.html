@@ -1,0 +1,1035 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}
+  <span data-i18n="nav.shipments">
+  Envios/Recolhas
+  </span>
+{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title">
+    <span data-i18n="nav.shipments">
+    Envios/Recolhas
+    </span>
+  </h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+/* Select2 Height Fix */
+.select2-container--default .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    min-height: 38px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5 !important;
+    padding: 0.375rem 0.75rem !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    top: 0 !important;
+}
+
+/* Select2: opções numa única linha + scroll horizontal no dropdown */
+.select2-container--default .select2-results > .select2-results__options {
+    white-space: nowrap;
+    overflow-x: auto !important;
+}
+
+.select2-container--default .select2-results__option {
+    white-space: nowrap;
+}
+
+/* Garante que a largura acompanha o conteúdo */
+.select2-container--default .select2-results {
+    min-width: max-content;
+}
+
+/* Select2 com fundo totalmente opaco */
+.select2-container--default .select2-selection--single,
+.select2-container--open .select2-dropdown,
+.select2-container--default .select2-results,
+.select2-container--default .select2-results > .select2-results__options,
+.select2-container--default .select2-results__option {
+    background-color: #fff !important;
+    opacity: 1 !important;
+}
+
+/* Manter legibilidade no hover/seleção */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+
+table.dataTable {
+    border-collapse: collapse;
+    width: 100% !important;
+    background: #fff;
+    color: #212529;
+    font-size: 12px !important;
+    margin-bottom: 1rem;
+}
+table.dataTable th, table.dataTable td {
+    border: 0px solid #dee2e6;
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+table.dataTable tbody td[contenteditable="true"]:focus {
+    outline: 1px solid #ced4da;
+    border-radius: 3px;
+    background: #f8f9fa;
+}
+
+table.dataTable thead th {
+    background: #f8f9fa;
+	font-size: 10px !important;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+table.dataTable tbody tr:nth-child(even) {
+    background: #f6f6f6;
+}
+table.dataTable tbody tr:hover {
+    background: #e9ecef;
+}
+table.dataTable tbody tr {
+    transition: background 0.2s;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td input,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm,
+table.dataTable thead th input,
+table.dataTable thead th .form-control,
+table.dataTable thead th .form-control-sm {
+    font-size: 11px !important;
+    line-height: 1 !important;
+    height: auto !important;
+}
+
+table.dataTable tbody td {
+    font-size: 11px !important;
+}
+
+
+.acoes-envio a {
+  font-size: 1.15rem;
+  margin-right: 12px;
+  display: inline-flex;
+  align-items: center;
+}
+.acoes-envio a:last-child {
+  margin-right: 0;
+}
+
+</style>
+
+<div class="tabelas-page">
+
+	    <div class="card mb-3">
+      <div class="card-header"><strong>
+         <span data-i18n="field.pendentes_planeamento">
+        Pendentes de Planeamento
+        </span>
+      </strong></div>
+      <div class="card-body">
+        <table id="tblPendentes" class="table table-striped table-bordered w-100">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>
+                <span data-i18n="field.referencia">
+                Referência
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.origem">
+                Origem
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.destino">
+                Destino
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.data">
+                Data
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.observacoes">
+                Observações
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.acoes">
+                Ações
+                </span>
+              </th>
+            </tr>
+          </thead>
+        </table>
+      </div>
+    </div>
+    
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <strong>
+                <span data-i18n="field.envios_recolhas_planeados">
+                Envios / Recolhas Planeadas
+                </span>
+              </strong>
+            
+              <div class="dropdown">
+                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+                  <i class="fas fa-bars"></i> 
+                   <span data-i18n="field.acoes">
+                  Ações
+                  </span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="menuAcoes">
+                  <li>
+                    <a class="dropdown-item" href="#" onclick="exportarexcel()">
+                      <i class="fas fa-file-excel"></i> 
+                      <span data-i18n="action.export">
+                      Exportar
+                      </span>
+                    </a>
+                  </li>
+                </ul>
+              </div>
+            </div>
+      <div class="card-body">
+        <div class="row mb-3 align-items-end">
+          <div class="col-auto">
+            <label class="form-label mb-1"><small>
+              <span data-i18n="field.data_envio">
+              Data de Envio
+              </span>
+            </small></label>
+            <select id="selectDiaLote" class="form-control form-control-sm" style="min-width:150px;">
+              <option value="">
+                <span data-i18n="field.sem_envios_planeados">
+                Sem envios planeados
+                </span>
+              </option>
+            </select>
+          </div>
+          <div class="col-auto">
+            <label class="form-label mb-1"><small>
+              <span data-i18n="field.destino">
+              Destino
+              </span>
+            </small></label>
+            <select id="selectDestinoLote" class="form-control form-control-sm" style="min-width:200px;">
+              <option value="">—</option>
+            </select>
+          </div>
+          <div class="col-auto" style="margin-left:auto; display:flex; gap:8px;">
+            <button id="btnEnviarEmailLote" class="btn btn-primary btn-sm" disabled>
+                <i class="fas fa-envelope"></i>
+            </button>
+            <button id="btnConfirmarLote" class="btn btn-success btn-sm" disabled>
+              <span data-i18n="field.confirmar_envios">
+              Confirmar Envios
+              </span>
+            </button>
+          </div>
+        </div>
+    
+        <table id="tblLotes" class="table table-striped table-bordered w-100">
+          <thead>
+            <tr>
+              <th>
+                <span data-i18n="field.referencia">
+                Referência
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.tipo_volume">
+                Tipo Volume
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.peso">
+                Peso (kg)
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.dimensoes">
+                Dimensões (CxLxA) cm
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.email_enviado">
+                Email Enviado
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.notes">
+                Observações
+                </span>
+              </th>
+              <th>
+                <span data-i18n="field.acoes">
+                Ações
+                </span>
+              </th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    
+      <!-- Modal emails de envio -->
+      <div class="modal fade" id="emailEnvioModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title"><span data-i18n="field.email">Email</span></h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+              <div id="emailEnvioList" class="list-group"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.plugin.addimage.min.js"></script>
+<script src="{{ url_for('static', filename='js/plugin/select2/select2.full.min.js') }}"></script>
+
+<script id="localizacoes-data" type="application/json">
+  {{ localizacoes|tojson }}
+</script>
+
+<script>
+let dtPendentes, dtLotes;
+
+function exportarexcel() {
+  try {
+    const selDia = document.getElementById('selectDiaLote');
+    const selDest = document.getElementById('selectDestinoLote');
+
+    const datahora = selDia?.value || '';
+    const destinoNome = selDest?.selectedIndex >= 0
+      ? (selDest.options[selDest.selectedIndex].text || '').trim()
+      : '';
+
+    if (!datahora || !destinoNome || !dtLotes) {
+      mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.data_envio') + ' ' + i18n.t('field.e') + ' ' + i18n.t('field.destino'), 'warning');
+      return;
+    }
+
+    const linhas = dtLotes.rows().data().toArray() || [];
+    if (!linhas.length) {
+      mostrarNotificacao(i18n.t('field.sem_dados'), 'warning');
+      return;
+    }
+
+    // Só as 4 colunas pedidas
+    const dados = linhas.map(r => ({
+      [i18n.t('field.tipo_embalagem')]: r.tipovolumeae || '',
+      [i18n.t('field.referencia')]: r.referencia || '',
+      [i18n.t('field.dimensoes')]: r.dimensoes || '',
+      [i18n.t('field.peso')]: r.peso ?? ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dados, {
+      header: [i18n.t('field.tipo_embalagem'), i18n.t('field.referencia'), i18n.t('field.dimensoes'), i18n.t('field.peso')]
+    });
+
+    // Ajuste de largura das colunas ao conteúdo
+    const headers = [i18n.t('field.tipo_embalagem'), i18n.t('field.referencia'), i18n.t('field.dimensoes'), i18n.t('field.peso')];
+    ws['!cols'] = headers.map(h => {
+      let max = String(h).length;
+      for (const row of dados) {
+        const len = String(row[h] ?? '').length;
+        if (len > max) max = len;
+      }
+      return { wch: Math.min(Math.max(max + 2, 10), 60) };
+    });
+
+    // Borda simples em todas as células (funciona se o build SheetJS suportar estilos)
+    const range = XLSX.utils.decode_range(ws['!ref']);
+    for (let r = range.s.r; r <= range.e.r; r++) {
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const addr = XLSX.utils.encode_cell({ r, c });
+        if (!ws[addr]) continue;
+        ws[addr].s = {
+          border: {
+            top: { style: 'thin', color: { rgb: '000000' } },
+            right: { style: 'thin', color: { rgb: '000000' } },
+            bottom: { style: 'thin', color: { rgb: '000000' } },
+            left: { style: 'thin', color: { rgb: '000000' } }
+          },
+          font: r === 0 ? { bold: true } : undefined
+        };
+      }
+    }
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, i18n.t('field.envios_planeados'));
+
+    const dataFmt = datahora.replace('T', '_').replace(/:/g, '-');
+    const destFmt = destinoNome.replace(/[\\/:*?"<>|]/g, '_');
+    const nomeFicheiro = `EnviosPlaneados_${dataFmt}_${destFmt}.xlsx`;
+
+    XLSX.writeFile(wb, nomeFicheiro, { cellStyles: true });
+  } catch (e) {
+    console.error(e);
+    mostrarNotificacao(i18n.t('msg.erro_exportar'), 'error');
+  }
+}
+
+
+function escaparHtml(valor) {
+  return String(valor || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
+}
+
+function tooltipReferencia(row) {
+  const linhas = [
+  `${i18n.t('field.componente')}: ${row.componente_nome || '-'}`,
+  `${i18n.t('field.status')}: ${row.estado_nome || '-'}`,
+  `${i18n.t('field.responsavel')}: ${row.responsavel_nome || '-'}`,
+  `${i18n.t('field.tipo_volume')}: ${row.tipovolume_nome || row.tipovolumeae || '-'}`
+];
+  return escaparHtml(linhas.join('\n'));
+}
+
+function carregarDatasPlaneadas() {
+  fetch('/api/movimentosae/datas_planeadas')
+    .then(r => r.json())
+    .then(datas => {
+      const sel = document.getElementById('selectDiaLote');
+      const valorAtual = sel.value;
+
+      sel.innerHTML = datas.length
+        ? datas.map(d => {
+            const [datePart, timePart] = d.datahora.split('T');
+            const [y, m, dia] = datePart.split('-');
+            return `<option value="${d.datahora}">${dia}/${m}/${y} ${timePart}</option>`;
+          }).join('')
+        : '<option value=""><span data-i18n="field.sem_envios_planeados">Sem envios planeados</span></option>';
+
+      if (datas.length) {
+        sel.value = datas.some(d => d.datahora === valorAtual) ? valorAtual : datas[0].datahora;
+        carregarDestinosPorDatahora(sel.value);
+      } else {
+        sel.value = '';
+        carregarDestinosPorDatahora('');
+      }
+    });
+}
+
+
+function carregarDestinosPorDatahora(datahora) {
+  const selDest = document.getElementById('selectDestinoLote');
+  if (!datahora) {
+    selDest.innerHTML = '<option value="">—</option>';
+    document.getElementById('btnConfirmarLote').disabled = true;
+    document.getElementById('btnEnviarEmailLote').disabled = true;
+    carregarReferenciasLote('', '');
+    return;
+  }
+
+  fetch(`/api/movimentosae/destinos_por_datahora?datahora=${encodeURIComponent(datahora)}`)
+    .then(r => r.json())
+    .then(destinos => {
+      const valorAtual = selDest.value;
+      selDest.innerHTML = destinos.length
+        ? destinos.map(d => `<option value="${d.id}">${d.nome}</option>`).join('')
+        : '<option value=""><span data-i18n="field.sem_dados">Sem dados</span></option>';
+
+      if (destinos.length) {
+        selDest.value = destinos.some(d => String(d.id) === valorAtual) ? valorAtual : String(destinos[0].id);
+        carregarReferenciasLote(datahora, selDest.value);
+      } else {
+        selDest.value = '';
+        carregarReferenciasLote(datahora, '');
+      }
+    });
+}
+
+
+function carregarReferenciasLote(datahora, destinoId) {
+  const btnConfirmar = document.getElementById('btnConfirmarLote');
+  const btnEmail = document.getElementById('btnEnviarEmailLote');
+
+  if (!datahora || !destinoId) {
+    if ($.fn.DataTable.isDataTable('#tblLotes')) {
+      dtLotes.destroy();
+    }
+    $('#tblLotes tbody').html('<tr><td colspan="7" class="text-center text-muted"><span data-i18n="msg.selecione">Selecione</span> <span data-i18n="field.data">data</span> <span data-i18n="field.e">e</span> <span data-i18n="field.destino">destino</span></td></tr>');
+    btnConfirmar.disabled = true;
+    btnEmail.disabled = true;
+    return;
+  }
+
+  if ($.fn.DataTable.isDataTable('#tblLotes')) {
+    dtLotes.destroy();
+  }
+
+  dtLotes = $('#tblLotes').DataTable({
+    ajax: {
+      url: `/api/movimentosae/referencias_lote?datahora=${encodeURIComponent(datahora)}&destino_id=${encodeURIComponent(destinoId)}`,
+      dataSrc: ''
+    },
+    columns: [
+      {
+        data: null,
+        render: row => `<a href="/armazem_externo?rid=${row.referenciaae_id}"
+                           title="${tooltipReferencia(row)}">
+                          ${row.referencia}
+                        </a>`
+      },
+      { data: 'tipovolumeae' },
+      { data: 'peso' },
+      { data: 'dimensoes' },
+      {
+        data: null,
+        orderable: false,
+        render: row => row.email_enviado
+          ? `<span title="${row.emailenviado_em || ''}" data-i18n="status.yes">Sim</span>`
+          : `<span data-i18n="status.no">Não</span>`
+      },
+      {
+        data: null,
+        render: row => `
+          <input type="text"
+                 class="form-control form-control-sm obs-lote"
+                 data-id="${row.mov_id}"
+                 value="${(row.observacoes || '').replace(/"/g, '&quot;')}">
+        `
+      },
+      {
+        data: null,
+        orderable: false,
+        searchable: false,
+        className: 'text-nowrap acoes-envio',
+        render: row => `
+          <a href="#" class="text-warning me-2 acao-desprogramar" data-id="${row.mov_id}" title="Voltar aos pendentes" data-i18n="action.update_laboratories" data-i18n-attr="title">
+            <i class="fas fa-undo"></i>
+          </a>
+          <a href="#" class="text-dark acao-etiqueta-ref" data-ref="${row.referencia}" title="Etiqueta" data-i18n="field.voltar_pendentes" data-i18n-attr="title">
+            <i class="fas fa-tag"></i>
+          </a>
+        `
+      }
+    ],
+    language: { url: i18n.getDataTablesLanguageUrl() },
+    drawCallback: function() {
+      const temLinhas = this.api().rows().count() > 0;
+      btnConfirmar.disabled = !temLinhas || !datahora || !destinoId;
+      btnEmail.disabled = !temLinhas || !datahora || !destinoId;
+    }
+  });
+}
+
+$(document).on('blur', '.obs-lote', function () {
+  const id = $(this).data('id');
+  const obs = $(this).val() || '';
+
+  fetch(`/api/movimentosae/${id}/observacoes`, {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    body: new URLSearchParams({ observacoes: obs })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) {
+      mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar') + ' ' + i18n.t('field.observacoes'), 'error');
+      return;
+    }
+    mostrarNotificacao(i18n.t('msg.dados_guardados_sucesso'), 'success');
+  })
+  .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar') + ' ' + i18n.t('field.observacoes'), 'error'));
+});
+
+// Quando data muda → atualiza destinos
+document.getElementById('selectDiaLote').addEventListener('change', function() {
+  carregarDestinosPorDatahora(this.value);
+});
+
+// Quando destino muda → atualiza tabela
+document.getElementById('selectDestinoLote').addEventListener('change', function() {
+  const datahora = document.getElementById('selectDiaLote').value;
+  carregarReferenciasLote(datahora, this.value);
+});
+
+// Desprogramar (voltar aos pendentes)
+$(document).on('click', '.acao-desprogramar', function(e) {
+  e.preventDefault();
+  const id = $(this).data('id');
+  fetch(`/api/movimentosae/${id}/desprogramar`, {
+    method: 'POST',
+    headers: { Accept: 'application/json' }
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) return mostrarNotificacao(res.error || 'Erro.', 'error');
+    mostrarNotificacao(res.message || i18n.t('msg.ref_enviada_pendentes'), 'success');
+    const datahora = document.getElementById('selectDiaLote').value;
+    const dest = document.getElementById('selectDestinoLote').value;
+    carregarDatasPlaneadas();   
+    carregarPendentes();
+  })
+  .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+});
+
+// Confirmar lote
+document.getElementById('btnConfirmarLote').addEventListener('click', function() {
+ 
+  const datahora = document.getElementById('selectDiaLote').value;
+  const destId = document.getElementById('selectDestinoLote').value;
+
+  if (!datahora || !destId) {
+    return mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.data_envio') + ' ' + i18n.t('field.e') + ' ' + i18n.t('field.destino'), 'warning');
+  }
+
+  fetch('/api/movimentosae/lotes/confirmar', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    body: new URLSearchParams({
+      datahora,
+      localizacao_origem_id: 0,
+      localizacao_destino_id: destId
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) {
+      return mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+    }
+
+    mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+    carregarPendentes();
+    carregarDatasPlaneadas();
+  })
+  .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+
+});
+
+document.getElementById('btnEnviarEmailLote').addEventListener('click', function() {
+ 
+    const datahora = document.getElementById('selectDiaLote').value;
+    const destId = Number(document.getElementById('selectDestinoLote').value);
+    const destNome = document.getElementById('selectDestinoLote').options[
+        document.getElementById('selectDestinoLote').selectedIndex
+    ]?.text || '';
+
+    if (!datahora || !destId) {
+        return mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.data_envio') + ' ' + i18n.t('field.e') + ' ' + i18n.t('field.destino'), 'warning');
+    }
+
+    // Recolher as referências do lote que aparecem na tabela
+    const referencias = dtLotes.rows().data().toArray().map(r => r.referencia);
+
+    fetch('/api/movimentosae/render-email-envio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            datahora,
+            destino_id: destId,
+            destino_nome: destNome,
+            referencias
+        })
+    })
+    .then(r => r.json())
+    .then(emailData => {
+        if (!emailData || !emailData.emails) {
+            return mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'warning');
+        }
+
+        const emails = emailData.emails;
+
+       
+        fetch('/api/movimentosae/marcar-email-enviado', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                datahora,
+                destino_id: destId
+            })
+        });
+
+        if (emails.length === 1) {
+            abrirEmailOutlook(emails[0]);
+        } else {
+            renderEmailEnvioList(emails);
+            const modal = new bootstrap.Modal(document.getElementById('emailEnvioModal'));
+            modal.show();
+        }
+    })
+    .catch(() => mostrarNotificacao(i18n.t('msg.erro_gerar'), 'error'));
+
+    carregarPendentes();
+    carregarDatasPlaneadas();
+
+});
+
+function abrirEmailOutlook(cfg) {
+  const to = (cfg.to_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+  const cc = (cfg.cc_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+  const subject = encodeURIComponent(cfg.assunto || '');
+  const body = encodeURIComponent(cfg.texto || '');
+  let mailto = `mailto:${encodeURIComponent(to)}?subject=${subject}&body=${body}`;
+  if (cc) mailto += `&cc=${encodeURIComponent(cc)}`;
+  window.location.href = mailto;
+}
+
+function renderEmailEnvioList(emails) {
+  const list = document.getElementById('emailEnvioList');
+  list.innerHTML = '';
+  emails.forEach((cfg, idx) => {
+    const to = (cfg.to_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+    const cc = (cfg.cc_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+    const item = document.createElement('div');
+    item.className = 'list-group-item';
+    item.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center gap-2">
+        <div>
+          <div><strong>${idx + 1}. ${cfg.config_nome || ''}</strong></div>
+          <div><small><strong><span data-i18n="field.assunto">Assunto</span>:</strong> ${cfg.assunto || ''}</small></div>
+          <div><small><strong><span data-i18n="field.para">Para</span>:</strong> ${to || '-'}</small></div>
+          ${cc ? `<div><small><strong><span data-i18n="field.cc">CC</span>:</strong> ${cc}</small></div>` : ''}
+        </div>
+        <button type="button" class="btn btn-sm btn-primary"><span data-i18n="action.open">Abrir</span></button>
+      </div>`;
+    item.querySelector('button').addEventListener('click', () => abrirEmailOutlook(cfg));
+  
+    list.appendChild(item);
+  });
+}
+
+
+
+function opcoesLocalizacaoHtml(origemId) {
+  const raw = document.getElementById('localizacoes-data')?.textContent || '[]';
+  const locs = JSON.parse(raw);
+  const origem = String(origemId || '');
+  return locs
+    .filter(l => String(l.id) !== origem)
+    .map(l => `<option value="${l.id}">${l.nome}</option>`)
+    .join('');
+}
+
+function carregarPendentes() {
+    if ($.fn.DataTable.isDataTable('#tblPendentes')) {
+        dtPendentes.ajax.reload(null, false);
+        return;
+    }
+
+    dtPendentes = $('#tblPendentes').DataTable({
+        ajax: { url: '/api/movimentosae/pendentes', dataSrc: '' },
+        columns: [
+            { data: 'id', visible:false },
+                        {
+              data: null,
+              render: function(_, __, row) {
+                return `<a href="/armazem_externo?rid=${row.referenciaae_id}"
+                           title="${tooltipReferencia(row)}">
+                          ${row.referencia}
+                        </a>`;
+              }
+            },
+            { data: 'origem_nome' },
+                        {
+              data: null,
+              render: function(_, __, row) {
+                const opcoes = opcoesLocalizacaoHtml(row.localizacao_origem_id);
+                return `<select class="form-control form-control-sm destino" data-id="${row.id}">
+                  ${opcoes || '<option value=""></option>'}
+                </select>`;
+              }
+            },
+            {
+                data: null,
+                render: row => `<input type="datetime-local" class="form-control form-control-sm datahora" data-id="${row.id}">`
+            },
+            {
+                data: null,
+                render: row => `<input type="text" class="form-control form-control-sm obs" data-id="${row.id}" value="${row.observacoes || ''}">`
+            },
+            {
+              data: null,
+              orderable: false,
+              searchable: false,
+              className: 'text-nowrap acoes-envio',
+              render: row => `
+                <a href="#" class="text-primary mr-2 acao-planear" data-id="${row.id}" title="Planear" data-i18n="field.planear" data-i18n-attr="title">
+                  <i class="fas fa-calendar-check"></i>
+                </a>
+                <a href="#" class="text-danger mr-2 acao-cancelar" data-id="${row.id}" title="Cancelar" data-i18n="action.cancel" data-i18n-attr="title">
+                  <i class="fas fa-times"></i>
+                </a>
+                <a href="#" class="text-dark acao-etiqueta-ref" data-ref="${row.referencia}" title="Etiqueta" data-i18n="action.label" data-i18n-attr="title">
+                  <i class="fas fa-tag"></i>
+                </a>
+              `
+            }
+        ],
+        language: { url: i18n.getDataTablesLanguageUrl() }
+    });
+}
+
+function opcoesLocalizacaoHtml(origemId) {
+  const raw = document.getElementById('localizacoes-data')?.textContent || '[]';
+  const locs = JSON.parse(raw);
+  const origem = String(origemId || '');
+
+  return locs
+    .filter(l => String(l.id) !== origem)
+    .map((l, idx) => `
+      <option value="${l.id}" ${idx === 0 ? 'selected' : ''}>${l.nome}</option>
+    `)
+    .join('');
+}
+
+$(document).on('click', '.acao-planear', function(e) {
+  e.preventDefault();
+  const id = $(this).data('id');
+  const destino = $(`.destino[data-id="${id}"]`).val();
+  const datahora = $(`.datahora[data-id="${id}"]`).val();
+  const obs = $(`.obs[data-id="${id}"]`).val();
+
+  if (!destino || !datahora) {
+    mostrarNotificacao(i18n.t('field.destino') + ' ' + i18n.t('field.e') + ' ' + i18n.t('field.data') + ' ' + i18n.t('msg.erro_obrigatorio'), 'warning');
+    return;
+  }
+
+  fetch(`/api/movimentosae/${id}/planear`, {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    body: new URLSearchParams({
+      localizacao_destino_id: destino,
+      data_planeada: datahora,
+      observacoes: obs || ''
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) return mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+    mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+    carregarPendentes();
+    carregarDatasPlaneadas()
+  })
+  .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+});
+
+$(document).on('click', '.acao-confirmar-lote', function(e) {
+  e.preventDefault();
+  const datahora = $(this).data('datahora');
+  const origem = $(this).data('origem');
+  const destino = $(this).data('destino');
+
+  fetch('/api/movimentosae/lotes/confirmar', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    body: new URLSearchParams({
+      datahora,
+      localizacao_origem_id: origem,
+      localizacao_destino_id: destino
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) return mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+    mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+    carregarPendentes();
+   
+  })
+  .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+});
+
+$(document).on('click', '.acao-etiqueta-ref', function(e) {
+  e.preventDefault();
+  const ref = ($(this).data('ref') || '').toString().trim();
+  if (!ref) return mostrarNotificacao(i18n.t('field.referencia') + ' ' + i18n.t('msg.invalido'), 'warning');
+  imprimirEtiquetaTexto(ref);
+});
+
+$(document).on('click', '.acao-cancelar', function(e) {
+  e.preventDefault();
+  const $btn = $(this);
+  const id = $btn.data('id');
+
+  fetch(`/api/movimentosae/${id}/cancelar`, {
+    method: 'POST',
+    headers: { Accept: 'application/json' }
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) return mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+
+    mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+
+    // Remove só a linha clicada (sem reload completo)
+    if ($.fn.DataTable.isDataTable('#tblPendentes')) {
+      dtPendentes.row($btn.closest('tr')).remove().draw(false);
+    } else {
+      $btn.closest('tr').remove();
+    }
+
+    // Atualiza datas/destinos dos planeados (caso necessário)
+    carregarDatasPlaneadas();
+  })
+  .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+});
+
+$(document).on('click', '.acao-cancelar-lote', function(e) {
+  e.preventDefault();
+  const dia = $(this).data('dia');
+  const origem = $(this).data('origem');
+  const destino = $(this).data('destino');
+
+  fetch('/api/movimentosae/lotes/cancelar', {
+    method: 'POST',
+    headers: { Accept: 'application/json' },
+    body: new URLSearchParams({
+      datahora,
+      localizacao_origem_id: origem,
+      localizacao_destino_id: destino
+    })
+  })
+  .then(r => r.json())
+  .then(res => {
+    if (!res.success) return mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+    mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+    carregarPendentes();
+   
+  })
+  .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+});
+
+
+// ae_envios.html - reutilizar a mesma lógica de etiqueta (como em armazemexterno.html)
+function imprimirEtiquetaTexto(texto) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+  const W = doc.internal.pageSize.getWidth();
+  const H = doc.internal.pageSize.getHeight();
+  const margin = 10, innerPad = 8, maxTextWidth = W - 2 * margin - 2 * innerPad;
+
+  doc.setLineWidth(0.5);
+  doc.rect(margin, margin, W - 2 * margin, H - 2 * margin);
+
+  doc.setFont('helvetica', 'bold');
+  let fontSize = 48;
+  doc.setFontSize(fontSize);
+  while (fontSize > 8 && doc.getTextWidth(texto) > maxTextWidth) {
+    fontSize -= 1;
+    doc.setFontSize(fontSize);
+  }
+
+  doc.text(texto, W / 2, H / 2, { align: 'center', baseline: 'middle' });
+  doc.output('dataurlnewwindow');
+}
+
+$(document).on('click', '.btn-planear', function() {
+    const id = $(this).data('id');
+    const destino = $(`.destino[data-id="${id}"]`).val();
+    const datahora = $(`.datahora[data-id="${id}"]`).val();
+    const obs = $(`.obs[data-id="${id}"]`).val();
+
+    if (!destino || !datahora) {
+        mostrarNotificacao(i18n.t('field.destino') + ' ' + i18n.t('field.e') + ' ' + i18n.t('field.data') + ' ' + i18n.t('msg.erro_obrigatorio'), 'warning');
+        return;
+    }
+
+    fetch(`/api/movimentosae/${id}/planear`, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new URLSearchParams({
+            localizacao_destino_id: destino,
+            data_planeada: datahora,
+            observacoes: obs || ''
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (!res.success) {
+            mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+            return;
+        }
+        mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+        carregarPendentes();
+       
+    })
+    .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+});
+
+$(document).on('click', '.btn-confirmar-lote', function() {
+    const datahora = $(this).data('datahora');
+    const origem = $(this).data('origem');
+    const destino = $(this).data('destino');
+
+    fetch('/api/movimentosae/lotes/confirmar', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new URLSearchParams({
+            datahora: datahora,
+            localizacao_origem_id: origem,
+            localizacao_destino_id: destino
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (!res.success) {
+            mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guardar'), 'error');
+            return;
+        }
+        mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+        carregarPendentes();
+        
+    })
+    .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+});
+
+$(document).ready(function() {
+    carregarPendentes();
+   carregarDatasPlaneadas();
+});
+
+
+
+</script>
+
+{% endblock %}
+

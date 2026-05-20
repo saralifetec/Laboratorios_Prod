@@ -1,0 +1,2400 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.hours_person">Horas Pessoa</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="nav.hours_person">Horas Pessoa</span></h4>
+{% endblock %}
+
+
+
+
+{% block content %}
+
+<style>
+
+
+
+#tabelaHorasDiaTable th, #tabelaHorasDiaTable td {
+  white-space: normal;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  max-width: 200px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.1em 0.5em !important;
+    font-size: 0.85em !important;
+    min-width: 1.5em !important;
+    height: 1.8em !important;
+    border-radius: 0.2em !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #e9ecef !important;
+    color: #333 !important;
+    border: 1px solid #bdbdbd !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #f1f1f1 !important;
+    color: #222 !important;
+}
+
+/* Isolar completamente a tabela dos ensaios disponíveis */
+.ensaiosdisponiveis-table.dataTable {
+    font-size: 10px !important;
+}
+
+.ensaiosdisponiveis-table.dataTable td,
+.ensaiosdisponiveis-table.dataTable th {
+    padding: 4px 5px !important;
+    font-size: 10px !important;
+    font-weight: 200 !important;
+    white-space: nowrap !important;
+}
+
+.ensaiosdisponiveis-table.dataTable thead th {
+    font-size: 10px !important;
+    font-weight: 200 !important;
+}
+
+
+.tabelas-page table td {
+  font-size: 0.85em !important;
+  white-space: normal; /* permite quebra de linha */
+  padding-top: 5px !important;
+  padding-bottom: 5px !important;
+  margin-top: 0px !important;
+}
+
+#tabelaHorasDia table th {
+  font-size: 0.85em !important;
+  width: 1.5em;
+  text-align: center;
+}
+
+#tabelaHorasDia table td {
+  font-size: 0.85em !important;
+  font-weight: normal !important;
+}
+
+#calendarioHoras table td {
+  font-size: 0.9em !important;
+  font-weight: normal !important;
+}
+
+#calendarioHorasAuto table td {
+  font-size: 0.9em !important;
+  font-weight: normal !important;
+}
+
+.tabelas-page table th {
+  font-size: 0.8em !important;   /* ou experimenta 0.95em, 0.9em, etc. */
+  font-weight: 500;
+}
+
+#avisosHoras { font-size: 0.9em; margin-bottom: 10px;; margin-top: 10px; }
+#avisosHoras .text-danger { font-weight: bold; }
+
+
+#calendarioHoras td, #calendarioHoras th {
+    padding: 4px !important;
+    height: 38px !important;
+}
+#calendarioHoras th {
+    font-size: 0.9em;
+}
+
+#calendarioHorasAuto td, #calendarioHorasAuto th {
+    padding: 4px !important;
+    height: 38px !important;
+}
+#calendarioHorasAuto th {
+    font-size: 0.9em;
+}
+
+#calendarioGerarAuto table {
+    font-size: 0.85em;
+    max-width: 400px !important;
+}
+#calendarioGerarAuto td, #calendarioGerarAuto th {
+    padding: 2px !important;
+    height: 28px !important;
+}
+
+
+/* Select2 com a mesma cara dos form-control-sm */
+.select2-container--default .select2-selection--single {
+  height: calc(1.5em + .5rem + 2px) !important;
+  min-height: calc(1.5em + .5rem + 2px) !important;
+  border: 1px solid #ced4da !important;
+  border-radius: .2rem !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered,
+.select2-container--default .select2-selection--single .select2-selection__placeholder,
+.select2-results__option,
+.select2-search--dropdown .select2-search__field {
+  font-family: "Public Sans", sans-serif !important;
+  font-size: .875rem !important;   /* igual ao form-control-sm */
+  line-height: 1.5 !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+  padding-left: .5rem !important;
+  padding-right: 1.5rem !important;
+  line-height: calc(1.5em + .5rem) !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+  height: calc(1.5em + .5rem + 2px) !important;
+}
+
+
+</style>
+
+
+
+
+<div class="tabelas-page">
+	<div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+                    <div class="row align-items-center">
+							<div class="d-flex align-items-center gap-3" style="width:100%">
+								<h6><span data-i18n="field.nome">Nome</span></h6>
+								<select class="form-control form-control-sm" id="tecnico_id" name="tecnico_id" required style="width:150px;">
+									{% if user.funcao_id == 1 %}
+                                        <option value="{{ user.id }}">{{ user.full_name }}</option>
+                                    {% else %}
+                                        {% for tecnico in tecnicos %}
+                                        <option value="{{ tecnico.id }}">{{ tecnico.full_name }}</option>
+                                        {% endfor %}
+                                    {% endif %}
+								</select>
+                                <input type="hidden" id="user_funcao_id" value="{{ user.funcao_id }}">
+								<div class="input-group input-group-sm ms-2" style="max-width: 220px;">
+									<button class="btn btn-outline-secondary btn-sm px-2 py-0" type="button" id="prevDay" title="Anterior" data-i18n="field.anterior" data-i18n-attr="title">
+										<i class="fas fa-chevron-left"></i>
+									</button>
+									<input type="date" class="form-control" id="data_horas" name="data_horas" value="{{ current_date }}">
+									<button class="btn btn-outline-secondary btn-sm px-2 py-0" type="button" id="nextDay" title="Seguinte" data-i18n="field.seguinte" data-i18n-attr="title">
+										<i class="fas fa-chevron-right"></i>
+									</button>
+								</div>
+								<div class="dropdown ms-auto">
+									<button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+									<i class="fas fa-bars"></i> <span data-i18n="field.acoes"> Ações</span>
+									</button>
+									<ul class="dropdown-menu" aria-labelledby="menuAcoes">
+										<li>
+											<a class="dropdown-item" href="#" onclick="abrirModalNovoHora(); return false;" data-bs-toggle="modal" data-bs-target="#dateTechnicianModal">
+                                                <i class="fas fa-clock"></i> <span data-i18n="field.inserir_horas">Inserir Horas </span>
+                                            </a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#" onclick="generateExcelFile()">
+												<i class="fas fa-file-excel"></i> <span data-i18n="action.export">Exportar</span>
+											</a>
+										</li>
+										<li>
+											<a class="dropdown-item" href="#" onclick="verificarPermissaoGerarAuto(); return false;">
+												<i class="fas fa-magic"></i> <span data-i18n="field.gerar_automaticamente">Gerar Auto</span>
+											</a>
+										</li>
+									</ul>
+								</div>
+							</div>
+            			</div>
+						
+						<div class="row">
+                    		<div class="col-md-4">
+								<br>
+                                <div class="row">
+                        		<div id="calendarioHoras"></div>
+                                </div>
+                                <div class="row">
+									<div id="legendaCalendario" style="max-width:350px;">
+										<div style="display:flex;align-items:center;margin-top:8px;">
+											<div style="width:15px;height:15px;background:#b7e1cd;border:1px solid #ccc;margin-right:6px;"></div>
+											
+										</div>
+										<div style="display:flex;align-items:center;margin-top:4px;">
+											<div style="width:15px;height:15px;background:#ffe5b4;border:1px solid #ccc;margin-right:6px;"></div>
+											
+										</div>
+										<div style="display:flex;align-items:center;margin-top:4px;">
+											<div style="width:15px;height:15px;background:#b3d1ff;border:1px solid #ccc;margin-right:6px;"></div>
+											
+										</div>
+										<div style="display:flex;align-items:center;margin-top:4px;">
+											<div style="width:15px;height:15px;background:#dddddd;border:1px solid #ccc;margin-right:6px;"></div>
+											
+										</div>
+									</div>
+                                </div>
+
+
+							</div>
+							<div class="col-md-8">
+                                <br>
+								<h6 class="fw-bold mb-0" style="white-space: nowrap;">
+                                    &nbsp; <span data-i18n="field.horas_inseridas_comp">Horas Inseridas</span>
+                                </h6>
+								<div id="tabelaHorasDia">
+                                    <table id="tabelaHorasDiaTable" class="table table-sm table-bordered align-middle" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th><span data-i18n="field.ensaio">Ensaio</span></th>
+                                                <th><span data-i18n="field.net_codg">Net/Cód G</span></th>
+                                                <th><span data-i18n="field.descricao">Descrição</span></th>
+                                                <th><span data-i18n="field.teste">Teste</span></th>
+                                                <th><span data-i18n="field.horas">Horas</span></th>
+                                                <th><span data-i18n="field.notes">Observações</span></th>
+                                                <th></th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Preenchido dinamicamente pelo JS -->
+                                        </tbody>
+                                    </table>
+                                </div>
+							</div>
+
+
+						</div>
+                        <br>
+                        <div class="row">
+                           
+                    		<div class="col-md-12">
+                                <div class="d-flex align-items-center gap-3 flex-wrap">
+
+                                    <h6 class="fw-bold mb-0" style="white-space: nowrap;">
+                                        <span data-i18n="field.ensaios_disponiveis">Ensaios Disponíveis</span>
+                                    </h6>
+                                    &nbsp; &nbsp; &nbsp;
+                                    <!-- Label -->
+                                    <label for="laboratorio" class="form-label mb-0" style="white-space: nowrap;">
+                                        <span data-i18n="field.laboratorio"><b>Laboratório</b></span>
+                                    </label>
+
+                                    <!-- Combo -->
+                                    <select class="form-control form-control-sm" 
+                                            id="laboratorio" 
+                                            name="laboratorio"
+                                            style="width:150px;">
+                                    </select>
+
+                                    <button class="btn btn-sm btn-warning ms-auto" type="button" onclick="abrirModalHorasExtra()">
+                                        <i class="fas fa-plus-circle"></i> <span data-i18n="field.pedir_horas_extra">Pedir Horas Extra</span>
+                                    </button>
+
+                                </div>
+                                <br>
+                                <table id="ensaiosdisponiveisTable" class="table table-striped table-bordered table-hover table-sm ensaiosdisponiveis-table" style="width:100%">
+                                    <thead>
+                                        <tr>
+                                        <th><span data-i18n="field.ensaio">Ensaio</span></th>
+                                        <th><span data-i18n="field.teste">Teste</span></th>
+                                        <th><span data-i18n="field.data_inicio">Data Início</span></th>
+                                        <th><span data-i18n="field.data_fim">Data Fim</span></th>
+                                        <th><span data-i18n="field.horas_maximas">Horas Máximas</span></th>
+                                        <th><span data-i18n="field.horas_colocadas">Horas Colocadas</span></th>
+                                        <th><span data-i18n="field.horas_disponiveis">Horas Disponíveis</span></th>
+                                        <th><span data-i18n="field.inserir_horas">Inserir Horas</span></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>    
+
+                            </div>
+                        </div>
+
+        			
+			</div>
+            </div>
+		</div>
+	</div>
+
+
+</div>
+
+
+<!-- Modal Pedido Horas Extra -->
+<div class="modal fade" id="modalHorasExtra" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span data-i18n="field.pedir_horas_extra">
+                    Pedir Horas Extra
+                    </span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formHorasExtra">
+                
+                    <div class="mb-2 row align-items-center">
+                        <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.nome">Nome</label>
+                        <div class="col-9">
+                            <input type="text" class="form-control form-control-sm" id="heNomeTecnico" disabled>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-center">
+                        <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.data">Data</label>
+                        <div class="col-9">
+                            <input type="date" class="form-control form-control-sm" id="heData" required>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-center">
+                        <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.laboratorio">Laboratório</label>
+                        <div class="col-9">
+                            <select class="form-control form-control-sm" id="heLaboratorio">
+                                <option value="todos"><span data-i18n="common.all">Todos</span></option>
+                            </select>
+                        </div>
+                    </div>
+                
+                    
+                
+                    <div class="mb-2 row align-items-center">
+                        <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.teste">Teste</label>
+                        <div class="col-9">
+                            <select class="form-control form-control-sm" id="heTeste" required>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="mb-2 row align-items-center">
+                        <div class="col-3"></div>
+                        <div class="col-9">
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="heSoPendentes" checked>
+                                <label class="form-check-label" for="heSoPendentes" data-i18n="field.so_pendentes">Só pendentes</label>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-center">
+                        <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.horas">Horas</label>
+                        <div class="col-9">
+                            <input type="time" class="form-control form-control-sm" id="heHoras" required>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-start">
+                        <label class="col-3 col-form-label col-form-label-sm" data-i18n="field.justificacao">Justificação</label>
+                        <div class="col-9">
+                            <textarea class="form-control form-control-sm" id="heJustificacao" rows="2"></textarea>
+                        </div>
+                    </div>
+                
+                    <div class="modal-footer px-0 pb-0">
+                        <button type="submit" class="btn btn-warning btn-sm">
+                            <i class="fas fa-paper-plane"></i> <span data-i18n="action.save">Guardar</span>
+                        </button>
+                    </div>
+                
+                </form>
+
+  
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal de Inserção de Horas do Técnico -->
+<div class="modal fade" id="dateTechnicianModal" tabindex="-1" role="dialog" aria-labelledby="dateTechnicianModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="dateTechnicianModalLabel">
+                    <span data-i18n="field.inserir_horas">
+                        Inserir Horas
+                    </span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="dateTechnicianForm">
+                    <div class="mb-2 row align-items-center">
+                        <label for="modalDate" class="col-3 col-form-label col-form-label-sm" data-i18n="field.data">Data</label>
+                        <div class="col-9">
+                            <input type="date" class="form-control form-control-sm" id="modalDate" name="modalDate" required>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-center">
+                        <label for="modalTechnician" class="col-3 col-form-label col-form-label-sm" data.i18n="field.nome">Nome</label>
+                        <div class="col-9">
+                            <select class="form-control form-control-sm" id="modalTechnician" name="modalTechnician" required style="width:150px">
+                                {% if user.funcao_id == 1 %}
+                                    <option value="{{ user.id }}">{{ user.full_name }}</option>
+                                {% else %}
+                                    {% for tecnico in tecnicos %}
+                                    <option value="{{ tecnico.id }}">{{ tecnico.full_name }}</option>
+                                    {% endfor %}
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-center">
+                        <label for="modal_tipo" class="col-3 col-form-label col-form-label-sm" data-i18n="field.tipo">Tipo</label>
+                        <div class="col-9">
+                            <select class="form-control form-control-sm" id="modal_tipo" name="modal_tipo" required>
+                                <option value="ensaio"><span data-i18n="field.ensaio">Ensaio</span></option>
+                                <option value="codigog"><span data-i18n="field.codigo_g">Cód. Gerais</span></option>
+                                <option value="manual"><span data-i18n="field.manual">Manual</span></option>
+                            </select>
+                        </div>
+                    </div>
+                
+                    <div id="modal_ensaio_fields" style="display:none;">
+                        <div class="mb-2 row align-items-center">
+                            <label for="modal_informe" class="col-3 col-form-label col-form-label-sm"  data-i18n="field.ensaio">Ensaio</label>
+                            <div class="col-9">
+                                <select class="form-control form-control-sm" id="modal_informe" name="modal_ensaio"></select>
+                            </div>
+                        </div>
+                
+                        <div class="mb-2 row align-items-center">
+                            <div class="col-3"></div>
+                            <div class="col-9">
+                                <div class="form-check">
+                                    <input type="checkbox" class="form-check-input" id="soPendentes" checked>
+                                    <label class="form-check-label" for="soPendentes" data-i18n="field.so_pendentes">So Pendentes</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div id="modal_codigog_fields" style="display:none;">
+                        <div class="mb-2 row align-items-center">
+                            <label for="modal_codigog" class="col-3 col-form-label col-form-label-sm" data-i18n="field.codigo_g">Cód. Gerais</label>
+                            <div class="col-9">
+                                <select class="form-control form-control-sm" id="modal_codigog" name="modal_codigog"></select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="modal_manual_fields" style="display:none;">
+                        <div class="mb-2 row align-items-center">
+                            <label for="modal_manual" class="col-3 col-form-label col-form-label-sm" data-i18n="field.pep_networks">PEP/Network</label>
+                            <div class="col-9">
+                                <input type="text" class="form-control form-control-sm" id="modal_manual" name="modal_manual">
+                                <small id="modal_manual_error" class="text-danger" style="display:none;">
+                                    <span data-i18n="field.network">Network</span>: 88xxxxxxxx/84xxxxxxxx &nbsp;|&nbsp;
+                                    <span data-i18n="field.pep">PEP</span>: E.xxxxx.xxxx.(917|752).2.10
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                
+                    <div class="mb-3 row align-items-center">
+                        <label for="modalEnsaios" class="col-3 col-form-label col-form-label-sm" data-i18n="field.teste">Teste</label>
+                        <div class="col-9">
+                            <select class="form-control form-control-sm" id="modalEnsaios" name="modalEnsaios">
+                                <option value="" selected disabled></option>
+                            </select>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-center">
+                        <label for="modalHours" class="col-3 col-form-label col-form-label-sm" data-i18n="field.horas">Horas</label>
+                        <div class="col-9">
+                            <input type="time" class="form-control form-control-sm" id="modalHours" name="modalHours" required>
+                        </div>
+                    </div>
+                
+                    <div class="mb-2 row align-items-start">
+                        <label for="modalObservations" class="col-3 col-form-label col-form-label-sm" data-i18n="field.observacoes">Observações</label>
+                        <div class="col-9">
+                            <textarea class="form-control form-control-sm" id="modalObservations" name="modalObservations" rows="3"></textarea>
+                        </div>
+                    </div>
+                
+                    <div class="modal-footer justify-content-end">
+                        <button type="submit" class="btn btn-success btn-sm"><span data-i18n="action.save">Guardar</span></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!--MODAL HORAS AUTO-->
+<div class="modal fade" id="modalGerarAuto" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+            <span data-i18n="field.gerar_horas_auto">
+            Gerar Horas Automaticamente
+            </span>
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="calendarioHorasAuto"></div>
+      </div>
+
+      <div class="modal-footer">
+       <div class="modal-footer justify-content-end">
+            <button type="button" class="btn btn-success btn-sm" onclick="confirmarGeracaoAuto()"><span data-i18n="field.gerar">Gerar</span></button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+
+<!--Modal horas ensaios disponiveis-->
+<div class="modal fade" id="inserirHorasModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <span data-i18n="field.inserir_horas">
+                    Inserir Horas
+                    </span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <form id="formInserirHoras">
+
+                    <input type="hidden" id="modalTesteId">
+                    <input type="hidden" id="modalEnsaioId">
+
+                    <div class="mb-2">
+                        <label class="form-label" data-i18n="field.nome">
+                           
+                            Nome
+                            
+                        </label>
+                        <input type="text" class="form-control" id="modalTecnicoNome" disabled>
+                        <input type="hidden" id="modalTecnicoId">
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" data-i18n="field.data">
+                           
+                            Data
+                           
+                        </label>
+                        <input type="date" class="form-control" id="modalDate2" required>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" data-i18n="field.ensaio">
+                            
+                            Ensaio
+                           
+                        </label>
+                        <input type="text" class="form-control" id="modalEnsaio" disabled>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" data-i18n="field.teste">
+                            
+                            Teste
+                           
+                        </label>
+                        <input type="text" class="form-control" id="modalTeste" disabled>
+                    </div>
+
+            
+                    <div class="mb-2">
+                        
+                        <input type="text" class="form-control" id="modalHorasDisponiveis" disabled hidden>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" data-i18n="field.horas">Horas</label>
+                        <input type="time" class="form-control" id="modalHoras" required>
+                    </div>
+
+                    <div class="mb-2">
+                        <label class="form-label" data-i18n="field.observacoes">Observações</label>
+                        <textarea class="form-control" id="modalObs" rows="2"></textarea>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <span data-i18n="action.save">
+                            Guardar
+                            </span>
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script src="{{ url_for('static', filename='js/plugin/select2/select2.full.min.js') }}"></script>
+
+<script>
+let ensaiosDisponiveisTable
+
+
+
+
+
+////////////////////////////
+//abrir modal
+$('#ensaiosdisponiveisTable').on('click', '.inserir-horas', function () {
+    const row = ensaiosDisponiveisTable.row($(this).closest('tr')).data();
+    
+
+    // Preencher modal
+    $('#modalEnsaio').val(row.ensaio);
+    $('#modalTeste').val(row.teste);
+    $('#modalHorasDisponiveis').val(row.horas_disponiveis);
+    document.getElementById('modalDate2').value = document.getElementById('data_horas').value;
+
+    
+    const $icon = $(this);
+    const ensaioId = row.ensaio_id ?? $icon.data('ensaio-id');
+    const testeId  = row.teste_id  ?? $icon.data('teste-id');
+
+    $('#modalEnsaioId').val(ensaioId);
+    $('#modalTesteId').val(testeId);
+
+
+    // guardar IDs invisíveis
+    $('#modalTesteId').val(row.teste_id);
+    $('#modalEnsaioId').val(row.ensaio_id);
+
+    // técnico atual
+    fetch("/api/me").then(r => r.json()).then(me => {
+        $('#modalTecnicoNome').val(me.full_name);
+        $('#modalTecnicoId').val(me.id);
+    });
+
+    // reset campo horas
+    $('#modalHoras').val("");
+
+    // abrir modal
+    const modal = new bootstrap.Modal(document.getElementById('inserirHorasModal'));
+    modal.show();
+});
+
+document.getElementById('modalHoras').addEventListener('input', function () {
+    const max = parseFloat(document.getElementById('modalHorasDisponiveis').value);
+    const val = timeToFloat(this.value);
+
+    if (val > max) {
+        this.value = "";
+        mostrarNotificacao(i18n.t('msg.exceder_horas_disponiveis'),'error');
+    }
+});
+
+function timeToFloat(timeStr) {
+    if (!timeStr) return 0;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h + (m/60);
+}
+
+document.getElementById('formInserirHoras').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const body = {
+        ensaio_id: Number($('#modalEnsaioId').val()),
+        teste_id: Number($('#modalTesteId').val()),
+        tecnico_id: $('#modalTecnicoId').val(),
+        data: $('#modalDate2').val(),
+        horas: timeToFloat($('#modalHoras').val()),
+        obs: $('#modalObs').val()
+    };
+
+    const res = await fetch('/horas/inserir', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(body)
+    });
+
+    const data = await res.json();
+
+    if (data.error) {
+        mostrarNotificacao(data.error, 'error');
+        return;
+    }
+
+    mostrarNotificacao(i18n.t('msg.dados_guardados_sucesso'), "success");
+
+    // fechar modal
+    bootstrap.Modal.getInstance(document.getElementById('inserirHorasModal')).hide();
+
+    // atualizar tabela
+   
+
+    const tecnicoPrincipal = document.getElementById('tecnico_id').value;
+    const dataPrincipal = document.getElementById('data_horas').value;
+    preencherTabelaHoras(tecnicoPrincipal, dataPrincipal);
+    atualizarCalendarioAtual();
+
+    ensaiosDisponiveisTable.ajax.reload();
+
+});
+
+
+/////////////////////////
+//carregar laboratorios
+document.addEventListener('DOMContentLoaded', async function () {
+
+    const selectLab = document.getElementById('laboratorio');
+    selectLab.innerHTML = '<option value="" disabled></option>';
+
+    try {
+        // Buscar labs + info do user autenticado
+        const [labsRes, meRes] = await Promise.all([
+            fetch('/laboratorios/ativos'),
+            fetch('/api/me')
+        ]);
+
+        const labs = await labsRes.json();
+        const me = await meRes.json();
+
+        const userLab  = String(me.laboratorio_id);
+        const userFunc = Number(me.funcao_id);  // 1 = técnico, NÃO pode alterar
+
+        // Limpar select
+        selectLab.innerHTML = '';
+
+        
+
+        // Preencher lista
+        selectLab.innerHTML = '<option value="todos"><span data-i18n="common.all">Todos</span></option>';
+        labs.forEach(lab => {
+            const opt = document.createElement('option');
+            opt.value = String(lab.id);
+            opt.textContent = lab.laboratorio;
+            selectLab.appendChild(opt);
+        });
+
+        // Ver se o laboratório do user está na lista de ativos
+        const existsInList = [...selectLab.options].some(o => o.value === userLab);
+
+        if (existsInList) {
+            selectLab.value = userLab;
+        } else {
+           
+            selectLab.value = 'todos';
+        }
+
+        sortSelectOptionsAlphabetically(selectLab, true);
+        initSelect2Combo('#laboratorio');
+        $('#laboratorio').trigger('change.select2');
+
+        
+
+    } catch (err) {
+        console.error("Erro ao carregar laboratórios:", err);
+        selectLab.innerHTML = '<option value=""><span data-i18n=common.error_loading">Erro ao carregar</span></option>';
+        selectLab.disabled = true;
+    }
+
+    ////////////////////////////////////////////////////////
+    // CARREGAR TABELA DAS HORAS DISPONÍVEIS
+   
+    ensaiosDisponiveisTable = $('#ensaiosdisponiveisTable').DataTable({
+        ajax: {
+        url: '/ensaios/disponiveis',
+        data: function (d) {
+            const val = document.getElementById('laboratorio').value;
+            d.lab_id = (val && val !== 'todos') ? val : undefined;
+        },
+        dataSrc: function (json) {
+            const tolerancia = 0.05;
+            // Só retorna linhas com horas_disponiveis >= tolerancia (positivo ou negativo)
+            return json.filter(row => (Number(row.horas_disponiveis) || 0) >= tolerancia);
+        }
+        },
+        columns: [
+            {   // Ensaio com link
+                data: 'link',
+                render: function(link, type, row) {
+                    if (type === 'display' && link) {
+                        return `<a href="${link}" class="text-decoration-none">${row.ensaio}</a>`;
+                    }
+                    return row.ensaio || '';
+                }
+            },
+            { data: 'teste' },
+            { data: 'datainicio' },
+            { data: 'datafim' },
+            {
+                data: 'horas_max',
+                render: function (data, type) {
+                    if (type === 'display' || type === 'filter') return decimalToHHMM(data);
+                    return Number(data) || 0; // sort/type
+                }
+            },
+            {
+                data: 'horas_colocadas',
+                render: function (data, type) {
+                    if (type === 'display' || type === 'filter') return decimalToHHMM(data);
+                    return Number(data) || 0;
+                }
+            },
+            {
+                data: 'horas_disponiveis',
+                render: function (data, type) {
+                    if (type === 'display' || type === 'filter') return decimalToHHMM(data);
+                    return Number(data) || 0;
+                }
+            },
+            {   // ícone de inserir horas
+                data: 'inserir',
+                orderable: false,
+                searchable: false
+            }
+        ],
+        order: [[2, 'desc']],  // mais horas disponíveis no topo
+        pageLength: 10,
+        language: { url: i18n.getDataTablesLanguageUrl() },
+        dom: '<"top"lf>rt<"bottom"ip><"clear">',
+        createdRow: function(row, data) {
+            if (data.horas_disponiveis <= 0) {
+                $(row).addClass("table-danger");
+            }
+        }
+    });
+
+    //////////////////////////////////////////////////////////
+    // AO MUDAR LAB → recarregar a tabela (usa os novos parâmetros)
+    $('#laboratorio').on('change', function() {
+        ensaiosDisponiveisTable.ajax.reload(); // já envia o novo lab_id via ajax.data
+    });
+
+});
+
+function decimalToHHMM(value) {
+    const n = Number(value) || 0;
+    const sign = n < 0 ? '-' : '';
+    const totalMin = Math.round(Math.abs(n) * 60);
+    const hh = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    return `${sign}${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const tecnicoSelect = document.getElementById('tecnico_id');
+    const dataInput = document.getElementById('data_horas');
+
+    // garante que existe no DOM
+    if (tecnicoSelect) {
+        tecnicoSelect.addEventListener('change', function () {
+            preencherTabelaHoras(tecnicoSelect.value, dataInput.value);
+            atualizarCalendarioAtual();
+        });
+    }
+});
+
+
+////////////////////////////////////////////////////////////////
+//BOTÃO GERAR AUTO
+function verificarPermissaoGerarAuto() {
+    const tecnicoId = document.getElementById("tecnico_id").value;
+
+    // Chamar o teu endpoint Flask
+    fetch(`/api/confhorasauto/${tecnicoId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data.success) {
+                alert(i18n.t('msg.conf_nao_encontrada'));
+                return;
+            }
+
+            // campo "auto" vem como 1 ou 0 
+            if (data.auto === 1) {
+                // Tem permissão → abrir modal
+                abrirModalGerarAuto();
+            } else {
+                // Não tem permissão
+                alert(i18n.t('msg.sem_aut'));
+            }
+        })
+        .catch(err => {
+            alert(i18n.t('msg.erro_dados'));
+        });
+}
+
+//CALENDÁRIO GERAR AUTO
+function abrirModalGerarAuto() {
+    const tecnicoId = document.getElementById("tecnico_id").value;
+
+    // Obter ano e mês atual
+    const hoje = new Date();
+    const dataSelecionada = document.getElementById('data_horas').value;
+    const dataObj = new Date(dataSelecionada);
+
+    const ano = dataObj.getFullYear();
+    const mes = dataObj.getMonth() + 1;
+
+    renderCalendarioAuto(ano, mes, tecnicoId);
+    
+    const modal = new bootstrap.Modal(document.getElementById('modalGerarAuto'));
+    modal.show();
+}
+
+function renderCalendarioAuto(ano, mes, tecnico_id) {
+
+    // 1) Buscar configuração (horasdia)
+    fetch(`/api/confhorasauto/${tecnico_id}`)
+        .then(r => r.json())
+        .then(conf => {
+
+            const horasDiaConfig = Number(conf.horasdia || 8);
+            const TOLERANCE_HOURS = 0.05;
+            const limiteSuperior = horasDiaConfig + TOLERANCE_HOURS;
+            const limiteInferior = horasDiaConfig - TOLERANCE_HOURS;
+
+            // 2) Buscar horas já existentes
+            fetch(`/horas_mensal?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
+                .then(r => r.json())
+                .then(horasPorDia => {
+
+                    const diasSemana = [
+                        i18n.t('day.sun'),
+                        i18n.t('day.mon'),
+                        i18n.t('day.tue'),
+                        i18n.t('day.wed'),
+                        i18n.t('day.thu'),
+                        i18n.t('day.fri'),
+                        i18n.t('day.sat')
+                        ];
+                    const data = new Date(ano, mes - 1, 1);
+                    const ultimoDia = new Date(ano, mes, 0).getDate();
+                    const hoje = new Date();
+
+                    let html = `
+                    <table class="table table-bordered text-center align-middle">
+                        <thead><tr>
+                    `;
+
+                    // Cabeçalho
+                    diasSemana.forEach(d => html += `<th>${d}</th>`);
+                    html += `</tr></thead><tbody><tr>`;
+
+                    // Espaços antes do 1º dia
+                    for (let i = 0; i < data.getDay(); i++)
+                        html += `<td></td>`;
+
+                    // Dias
+                    for (let dia = 1; dia <= ultimoDia; dia++) {
+
+                        const dt = new Date(ano, mes - 1, dia);
+                        const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+                        const horas = horasPorDia[dia] ?? 0;
+
+                        // === MESMA LÓGICA DE CORES DO TEU CALENDÁRIO ORIGINAL ===
+                        let bg = '';
+                        let color = '';
+
+                        const isDiaPassado =
+                            dt.getFullYear() < hoje.getFullYear() ||
+                            (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() < hoje.getMonth()) ||
+                            (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() === hoje.getMonth() && dt.getDate() <= hoje.getDate());
+
+                        if (isWeekend) {
+                            bg = 'background:#dddddd;';
+                        } else if (isDiaPassado && parseFloat(horas) > limiteSuperior) {
+                            bg = 'background:#b7e1cd;';
+                        } else if (isDiaPassado && parseFloat(horas) < limiteInferior) {
+                            bg = 'background:#ffe5b4;';
+                        }
+
+                        // Caso especial "_g"
+                        if (!isWeekend && horasPorDia[dia + '_g'] && horasPorDia[dia + '_g'] > limiteSuperior) {
+                            bg = 'background:#b3d1ff;'; // azul claro
+                            color = 'color:#003366;';  // texto azul
+                        }
+
+                        // === LÓGICA PARA CHECKBOX ===
+                        const devePreSelecionar =
+                            !isWeekend &&
+                            isDiaPassado &&
+                            parseFloat(horas) < limiteInferior;
+
+                        const dataDia = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+
+                        html += `
+                        <td style="height:38px; ${bg} ${color}">
+                            <div><strong>${dia}</strong></div>
+                            ${isWeekend ? '' : `<div>${horas.toFixed(2)}h</div>`}
+                            ${!isWeekend ? `
+                                <div>
+                                    <input type="checkbox" class="chk-auto-dia"
+                                           data-dia="${dataDia}"
+                                           ${devePreSelecionar ? 'checked' : ''}>
+                                </div>
+                            ` : ''}
+                        </td>
+                        `;
+
+                        if (dt.getDay() === 6 && dia !== ultimoDia)
+                            html += `</tr><tr>`;
+                    }
+
+                    // Preencher últimos quadrados
+                    const lastDay = new Date(ano, mes - 1, ultimoDia).getDay();
+                    for (let i = lastDay + 1; i <= 6; i++)
+                        html += `<td></td>`;
+
+                    html += `</tr></tbody></table>`;
+                    document.getElementById('calendarioHorasAuto').innerHTML = html;
+
+                });
+        });
+}
+
+
+async function confirmarGeracaoAuto() {
+    const tecnicoId = document.getElementById("tecnico_id").value;
+
+    const diasSelecionados = [...document.querySelectorAll('.chk-auto-dia:checked')]
+        .map(c => c.dataset.dia);
+
+    if (!diasSelecionados.length) {
+        alert(i18n.t('msg.selec_um'));
+        return;
+    }
+
+    // 1) Verificar configuração
+    const rConf = await fetch(`/api/confhorasauto/${tecnicoId}`);
+    const conf = await rConf.json();
+    if (!conf.success || conf.tipo.toLowerCase() !== "horas") {
+        alert(i18n.t('msg.conf_nao_encontrada'));
+        return;
+    }
+
+    // 2) GERAR HORAS GERAIS
+    const rGerais = await fetch("/api/gerar_horas_auto_gerais", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            tecnico_id: tecnicoId,
+            dias: diasSelecionados
+        })
+    });
+    const outGerais = await rGerais.json();
+
+    if (!outGerais.success) {
+        alert(outGerais.error || i18n.t('msg.erro_gerar') + ' ' + i18n.t('field.codigo_g'));
+        return;
+    }
+
+    // 3) GERAR HORAS DE ENSAIOS
+    const rEnsaios = await fetch("/api/gerar_horas_auto_ensaios", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            tecnico_id: tecnicoId,
+            dias: diasSelecionados
+        })
+    });
+
+    const outEnsaios = await rEnsaios.json();
+
+    if (!outEnsaios.success) {
+        alert(outEnsaios.error || i18n.t('msg.erro_gerar') + ' ' + i18n.t('field.horas') + ' ' + i18n.t('field.ensaios'));
+        return;
+    }
+
+    // 4) Fechar modal
+    const modal = bootstrap.Modal.getInstance(document.getElementById("modalGerarAuto"));
+    modal.hide();
+
+    // 5) Atualizar tabela do ecrã
+    const tecnicoPrincipal = document.getElementById('tecnico_id').value;
+    const dataPrincipal = document.getElementById('data_horas').value;
+    preencherTabelaHoras(tecnicoPrincipal, dataPrincipal);
+    atualizarCalendarioAtual();
+
+    ensaiosDisponiveisTable.ajax.reload();
+    
+   
+}
+
+
+
+
+
+////////////////////////////////////////////////////////////////////
+//GERAR FICHEIRO EXCEL HORAS
+async function generateExcelFile() {
+    const tecnicoNome = document.getElementById('tecnico_id').selectedOptions[0].text;
+    const tecnicoId = document.getElementById('tecnico_id').value;
+
+    const resp = await fetch('/api/exportar_horas', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({tecnico_id: tecnicoId})
+    });
+    const horas = await resp.json();
+
+    if (!horas.length) {
+        alert(i18n.t('msg.sem_horas'));
+        return;
+    }
+
+    // Agrupa por tipo, mês, e informe/codigog
+    let projetosPorMes = {}, codigosGPorMes = {};
+
+    // Agrupa por tipo, mês e chave (network/pep/codigog)
+horas.forEach(h => {
+    const mes = h.mes;
+
+    if (!projetosPorMes[mes]) projetosPorMes[mes] = {};
+    if (!codigosGPorMes[mes]) codigosGPorMes[mes] = {};
+
+    // --- ENSAIO: folha de projetos ---
+    if (h.tipo === 'ensaio') {
+        const network = h.network || h.ensaio; // chave
+        if (!projetosPorMes[mes][network]) {
+            projetosPorMes[mes][network] = {
+                network: network,
+                horasDias: Array(31).fill(''),
+                laboratorio_elmact: h.laboratorio_elmact || '',
+                laboratorio_act:   h.laboratorio_act   || ''
+            };
+        }
+        const atual = parseFloat(projetosPorMes[mes][network].horasDias[h.dia - 1]) || 0;
+        projetosPorMes[mes][network].horasDias[h.dia - 1] = atual + h.horas;
+        return;
+    }
+
+    // --- CÓDIGO G real: folha de códigos G ---
+    if (h.tipo === 'codigog' && h.codigog) {
+        if (!codigosGPorMes[mes][h.codigog]) {
+            codigosGPorMes[mes][h.codigog] = Array(31).fill('');
+        }
+        const atual = parseFloat(codigosGPorMes[mes][h.codigog][h.dia - 1]) || 0;
+        codigosGPorMes[mes][h.codigog][h.dia - 1] = atual + h.horas;
+        return;
+    }
+
+    // --- PEP (quando pepnet == 'pep'): também na folha de códigos G ---
+    // h.network contém o PEP devolvido pelo backend
+    if (h.tipo === 'codigog-pep' && h.network) {
+        const pep = h.network;
+        if (!codigosGPorMes[mes][pep]) {
+            codigosGPorMes[mes][pep] = Array(31).fill('');
+        }
+        const atual = parseFloat(codigosGPorMes[mes][pep][h.dia - 1]) || 0;
+        codigosGPorMes[mes][pep][h.dia - 1] = atual + h.horas;
+        return;
+    }
+});
+
+    // Cria o workbook
+    let wb = XLSX.utils.book_new();
+
+  
+    // Folhas de projetos
+    Object.keys(projetosPorMes).forEach(mes => {
+        let ws_data = [];
+
+
+        Object.values(projetosPorMes[mes]).forEach(proj => {
+            let row = [
+                'O8MTCZ',
+                proj.network,
+                proj.laboratorio_elmact || '',
+                proj.laboratorio_act || '',
+                '', '', ''
+            ];
+            let horasDiasArr = Array.isArray(proj.horasDias) ? proj.horasDias : Array(31).fill('');
+            row = row.concat(horasDiasArr.map(h => h ? h.toFixed(2).replace('.', ',') : ''));
+            ws_data.push(row);
+        });
+
+        if (ws_data.length > 0) {
+            let ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, `ZPLME-${mes}`);
+        }
+    });
+
+    // Folhas de códigos G
+    Object.keys(codigosGPorMes).forEach(mes => {
+        let ws_data = [];
+
+        Object.entries(codigosGPorMes[mes]).forEach(([codigog, horasDias]) => {
+            let row = ['O8MTCZ', codigog, '', '', '', '', ''];
+            row = row.concat(horasDias.map(h => h ? h.toFixed(2).replace('.', ',') : ''));
+            ws_data.push(row);
+        });
+
+        if (ws_data.length > 0) {
+            let ws = XLSX.utils.aoa_to_sheet(ws_data);
+            XLSX.utils.book_append_sheet(wb, ws, `ZOSS1-${mes}`);
+        }
+    });
+
+    // Nome do ficheiro
+    const dataExport = new Date();
+    const dia = String(dataExport.getDate()).padStart(2, '0');
+    const mes = String(dataExport.getMonth() + 1).padStart(2, '0');
+    const ano = dataExport.getFullYear();
+    const filename = `${tecnicoNome}_${ano}-${mes}-${dia}.xlsx`;
+
+    const folhasCriadas = Object.keys(projetosPorMes).length + Object.keys(codigosGPorMes).length;
+    if (folhasCriadas === 0) {
+        alert( i18n.t('field.sem_horas'));
+        return;
+    }
+
+    XLSX.writeFile(wb, filename);
+}
+
+
+
+
+///////////////////////////////////////////////////////////
+//ELIMINAR HORAS
+function eliminarHora(id) {
+    if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.registo'))) return;
+    fetch(`/horas/${id}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            const tecnicoPrincipal = document.getElementById('tecnico_id').value;
+            const dataPrincipal = document.getElementById('data_horas').value;
+            preencherTabelaHoras(tecnicoPrincipal, dataPrincipal);
+            atualizarCalendarioAtual();
+            if (ensaiosDisponiveisTable && ensaiosDisponiveisTable.ajax) {
+                ensaiosDisponiveisTable.ajax.reload(null, false);
+            }
+        } else {
+            alert(data.error || i18n.t('msg.error_delete'));
+        }
+    })
+    .catch(err => {
+        alert(i18n.t('msg.error_delete'));
+        console.error(err);
+    });
+
+   
+    
+}
+
+function limparFormularioHorasModal() {
+    const form = document.getElementById('dateTechnicianForm');
+    if (form) form.reset();
+
+    document.getElementById('modal_informe').innerHTML = '<option value="" disabled selected></option>';
+    document.getElementById('modalEnsaios').innerHTML = '<option value="" selected disabled></option>';
+    document.getElementById('modal_codigog').innerHTML = '<option value="" disabled selected></option>';
+
+    const manualInput = document.getElementById('modal_manual');
+    const manualErr = document.getElementById('modal_manual_error');
+    if (manualInput) { manualInput.value = ''; manualInput.classList.remove('is-invalid'); }
+    if (manualErr) manualErr.style.display = 'none';
+
+    document.getElementById('modal_tipo').value = 'ensaio';
+    document.getElementById('soPendentes').checked = true;
+    window.editHoraId = null;
+
+    // forçar visibilidade das secções para o estado default (ensaio)
+    document.getElementById('modal_ensaio_fields').style.display = '';
+    document.getElementById('modal_codigog_fields').style.display = 'none';
+    document.getElementById('modal_manual_fields').style.display = 'none';
+    document.getElementById('modalEnsaios').closest('.mb-3').style.display = '';
+}
+
+/////////////////////////////////////////////////////////////////////////
+//LIMPAR MEMORIA AO FECHAR O MODAL
+document.getElementById('dateTechnicianModal').addEventListener('hidden.bs.modal', function () {
+    limparFormularioHorasModal();
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+});
+
+
+//////////////////////////////////////////////////////////////
+//AO ABRIR O MODAL
+function abrirModalNovoHora() {
+    // LIMPAR CAMPOS
+    limparFormularioHorasModal();
+
+    document.getElementById('modalDate').value = document.getElementById('data_horas').value;
+    document.getElementById('modalDate').removeAttribute('readonly');
+    let tecnicoSelect = document.getElementById('modalTechnician');
+    const tecnicoValor = document.getElementById('tecnico_id').value;
+    tecnicoSelect.value = tecnicoValor;
+    tecnicoSelect.removeAttribute('disabled');
+    // Notificar o Select2 que o valor mudou
+    if (window.jQuery && $(tecnicoSelect).data('select2')) {
+        $(tecnicoSelect).val(tecnicoValor).trigger('change.select2');
+    }
+
+    // Detectar funcao_id do utilizador (passado do backend via JS ou template)
+    var funcaoId = null;
+    if (window.userFuncaoId !== undefined) {
+        funcaoId = window.userFuncaoId;
+    } else if (typeof user !== 'undefined' && user.funcao_id !== undefined) {
+        funcaoId = user.funcao_id;
+    } else if (document.getElementById('user_funcao_id')) {
+        funcaoId = document.getElementById('user_funcao_id').value;
+    }
+
+    if (funcaoId == 1) {
+        document.getElementById('modal_tipo').value = 'codigog';
+        document.getElementById('modal_tipo').setAttribute('disabled', 'disabled');
+        document.getElementById('modal_ensaio_fields').style.display = 'none';
+        document.getElementById('modal_codigog_fields').style.display = '';
+        document.getElementById('modalEnsaios').closest('.mb-3').style.display = 'none';
+        document.getElementById('modal_codigog').innerHTML = '';
+        preencherListaCodigosG();
+    } else {
+        document.getElementById('modal_tipo').value = 'ensaio';
+        document.getElementById('modal_tipo').removeAttribute('disabled');
+        document.getElementById('modal_ensaio_fields').style.display = '';
+        document.getElementById('modal_codigog_fields').style.display = 'none';
+        document.getElementById('modalEnsaios').closest('.mb-3').style.display = '';
+        document.getElementById('modal_informe').innerHTML = '';
+        document.getElementById('modalEnsaios').innerHTML = '<option value="" selected disabled></option>';
+        document.getElementById('modal_codigog').innerHTML = '';
+        preencherListaEnsaiosComCallback();
+    }
+    document.getElementById('modalHours').value = '';
+    document.getElementById('modalHours').removeAttribute('readonly');
+    document.getElementById('modalObservations').value = '';
+    document.getElementById('modalObservations').removeAttribute('readonly');
+    // Abrir modal
+    var modal = new bootstrap.Modal(document.getElementById('dateTechnicianModal'));
+    modal.show();
+}
+
+
+
+//PREENCHER ENSAIOS       
+function preencherListaEnsaiosComCallback(callback) {
+    var soPendentes = document.getElementById('soPendentes').checked;
+    var selectInforme = document.getElementById('modal_informe');
+    selectInforme.innerHTML = '<option value="" disabled selected></option>';
+    fetch(`/api/ensaios?sopendentes=0`)
+        .then(r => r.json())
+        .then(ensaios => {
+            selectInforme.innerHTML = '<option value="" disabled selected></option>';
+            if (ensaios.length === 0) {
+                selectInforme.innerHTML = '<option value="" disabled><span data-i18n="field.sem_dados">Sem dados</span></option>';
+            } else {
+                ensaios.forEach(e => {
+                    selectInforme.innerHTML += `<option value="${e.ensaio}">${e.ensaio} - ${e.projeto_codigo} ${e.projeto_descricao}</option>`;
+                });
+                sortSelectOptionsAlphabetically(selectInforme, true);
+                $('#modal_informe').trigger('change.select2');
+            }
+            if (typeof callback === 'function') callback();
+        })
+        .catch(() => {
+            selectInforme.innerHTML = '<option value="" disabled><span data-i18n="common.error_loading">Erro ao carregar</span></option>';
+            if (typeof callback === 'function') callback();
+        });
+}
+
+
+//PREENCHER TESTES DO ENSAIO
+function preencherTestesDoEnsaio(ensaioId, testeIdSelecionar) {
+    let testesSelect = document.getElementById('modalEnsaios');
+    if (testesSelect && ensaioId) {
+        fetch(`/testes/${ensaioId}`)
+            .then(r => r.json())
+            .then(testes => {
+                testesSelect.innerHTML = '<option value="" disabled selected></option>';
+                if (!testes.length) {
+                    testesSelect.innerHTML = '<option value="" disabled><span data-i18n="field.sem_dados">Sem dados</span></option>';
+                } else {
+                    testes.forEach(t => {
+                        let option = document.createElement('option');
+                        option.value = t.id;
+
+                        if (t.teste_id) {
+                            option.textContent = '[a carregar tipo] - ' + (t.nome || t.descricao);
+                            fetch(`/testes/tipo/${t.teste_id}`)
+                                .then(r => r.json())
+                                .then(data => {
+                                    if (data.teste) {
+                                        option.textContent = `${data.teste}${t.nome || t.descricao ? ' - ' + (t.nome || t.descricao) : ''}`;
+                                    }
+                                });
+                        } else {
+                            option.textContent = t.nome || t.descricao;
+                        }
+                        testesSelect.appendChild(option);
+                    });
+                    sortSelectOptionsAlphabetically(testesSelect, true);
+                    $('#modalEnsaios').trigger('change.select2');
+                    if (testeIdSelecionar) {
+                        testesSelect.value = testeIdSelecionar;
+                    }
+                }
+            });
+        testesSelect.removeAttribute('disabled');
+    }
+}
+
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    var tecnicoSelect = document.getElementById('tecnico_id');
+    var dataInput = document.getElementById('data_horas');
+    var usernameSpan = document.getElementById('username');
+    var form = document.getElementById('dateTechnicianForm');
+    var tipoSelect = document.getElementById('modal_tipo');
+    var ensaioFields = document.getElementById('modal_ensaio_fields');
+    var codigogFields = document.getElementById('modal_codigog_fields');
+    var testeField = document.getElementById('modalEnsaios').closest('.mb-3');
+    var manualFields = document.getElementById('modal_manual_fields');
+    var ensaioSelect = document.getElementById('modal_informe');
+    var testesSelect = document.getElementById('modalEnsaios');
+    var modalDateInput = document.getElementById('modalDate');
+    var dataPrincipalInput = document.getElementById('data_horas');
+    var soPendentesCheck = document.getElementById('soPendentes');
+    var modalInforme = document.getElementById('modal_informe');
+    var modalCodigog = document.getElementById('modal_codigog');
+    var modalDate = document.getElementById('modalDate');
+
+    if (tecnicoSelect && dataInput) {
+        preencherTabelaHoras(tecnicoSelect.value, dataInput.value);
+    }
+
+    if (tipoSelect && modalDate) {
+        tipoSelect.addEventListener('change', function() {
+            if (tipoSelect.value === 'ensaio') preencherListaEnsaios();
+            if (tipoSelect.value === 'codigog') preencherListaCodigosG();
+        });
+        if (soPendentesCheck && modalInforme) {
+            soPendentesCheck.addEventListener('change', preencherListaEnsaios);
+            document.getElementById('modalTechnician').addEventListener('change', preencherListaEnsaios);
+        }
+        modalDate.addEventListener('change', function() {
+            if (tipoSelect.value === 'codigog') preencherListaCodigosG();
+        });
+        // Preencher ao abrir modal
+        if (tipoSelect.value === 'ensaio') preencherListaEnsaios();
+        if (tipoSelect.value === 'codigog') preencherListaCodigosG();
+    }
+
+
+
+
+    tecnicoSelect.addEventListener('change', atualizarCalendarioAtual);
+
+    
+
+    dataInput.addEventListener('change', function() {
+        var [ano, mes] = getAnoMesFromInput();
+        renderCalendario(ano, mes, tecnicoSelect.value);
+        preencherTabelaHoras(tecnicoSelect.value, dataInput.value); 
+    });
+
+    if (tipoSelect && ensaioFields && codigogFields && testeField) {
+        function atualizarCamposModal() {
+            if (tipoSelect.value === 'ensaio') {
+                ensaioFields.style.display = '';
+                codigogFields.style.display = 'none';
+                if (manualFields) manualFields.style.display = 'none';
+                testeField.style.display = '';
+            } else if (tipoSelect.value === 'codigog') {
+                ensaioFields.style.display = 'none';
+                codigogFields.style.display = '';
+                if (manualFields) manualFields.style.display = 'none';
+                testeField.style.display = 'none';
+            } else if (tipoSelect.value === 'manual') {
+                ensaioFields.style.display = 'none';
+                codigogFields.style.display = 'none';
+                if (manualFields) manualFields.style.display = '';
+                testeField.style.display = 'none';
+            }
+        }
+        tipoSelect.addEventListener('change', atualizarCamposModal);
+        atualizarCamposModal();
+
+        document.getElementById('modal_manual').addEventListener('input', function () {
+            const err = document.getElementById('modal_manual_error');
+            const val = this.value.trim();
+            if (val && !validarManual(val)) {
+                err.style.display = '';
+                this.classList.add('is-invalid');
+            } else {
+                err.style.display = 'none';
+                this.classList.remove('is-invalid');
+            }
+        });
+
+    }
+
+    // Preselect user
+    if (tecnicoSelect && usernameSpan) {
+        var nomeUsuario = usernameSpan.textContent.trim();
+        for (var i = 0; i < tecnicoSelect.options.length; i++) {
+            if (tecnicoSelect.options[i].text.trim() === nomeUsuario) {
+                tecnicoSelect.selectedIndex = i;
+                break;
+            }
+        }
+    }
+    function getAnoMesFromInput() {
+        var val = dataInput.value;
+        if (!val) return [null, null];
+        var parts = val.split('-');
+        return [parseInt(parts[0]), parseInt(parts[1])];
+    }
+    if (tecnicoSelect && dataInput) {
+        var [ano, mes] = getAnoMesFromInput();
+        renderCalendario(ano, mes, tecnicoSelect.value);
+        tecnicoSelect.addEventListener('change', function() {
+            var [ano, mes] = getAnoMesFromInput();
+            renderCalendario(ano, mes, tecnicoSelect.value);
+        });
+        dataInput.addEventListener('change', function() {
+            var [ano, mes] = getAnoMesFromInput();
+            renderCalendario(ano, mes, tecnicoSelect.value);
+        });
+    }
+    document.getElementById('prevDay').addEventListener('click', function() {
+        if (!dataInput.value) return;
+        var d = new Date(dataInput.value);
+        d.setDate(d.getDate() - 1);
+        dataInput.value = d.toISOString().slice(0,10);
+        dataInput.dispatchEvent(new Event('change'));
+    });
+
+    document.getElementById('nextDay').addEventListener('click', function() {
+        if (!dataInput.value) return;
+        var d = new Date(dataInput.value);
+        d.setDate(d.getDate() + 1);
+        dataInput.value = d.toISOString().slice(0,10);
+        dataInput.dispatchEvent(new Event('change'));
+    });
+
+
+    if (ensaioSelect && testesSelect) {
+        ensaioSelect.addEventListener('change', function() {
+            var ensaioId = ensaioSelect.value;
+            if (!ensaioId) {
+                testesSelect.innerHTML = '<option value="" selected disabled></option>';
+                return;
+            }
+        sortSelectOptionsAlphabetically(testesSelect, true);
+        $('#modalEnsaios').trigger('change.select2');
+        testesSelect.innerHTML = '<option value="" disabled selected></option>';
+            fetch(`/testes/${ensaioSelect.value}`)
+                .then(r => r.json())
+                .then(testes => {
+                    testesSelect.innerHTML = '<option value="" selected></option>';
+                    if (!testes.length) {
+                        testesSelect.innerHTML = '<option value="" disabled><span data-i18n="field.sem_dados">Sem dados</span></option>';
+                    } else {
+                        testes.forEach(t => {
+                            if (t.teste_id) {
+                                let option = document.createElement('option');
+                                option.value = t.id;
+                                option.textContent = `[carregando tipo] - ${t.nome || t.descricao}`;
+                                testesSelect.appendChild(option);
+                                fetch(`/testes/tipo/${t.teste_id}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data.teste) {
+                                            option.textContent = `${data.teste}${t.nome || t.descricao ? ' - ' + (t.nome || t.descricao) : ''}`;
+                                        }
+                                    });
+                            } else {
+                                let option = document.createElement('option');
+                                option.value = t.id;
+                                option.textContent = t.nome || t.descricao ;
+                                testesSelect.appendChild(option);
+                            }
+                        });
+                    }
+                });
+        });
+    }
+
+    if (tecnicoSelect && usernameSpan) {
+        var nomeUsuario = usernameSpan.textContent.trim();
+        for (var i = 0; i < tecnicoSelect.options.length; i++) {
+            if (tecnicoSelect.options[i].text.trim() === nomeUsuario) {
+                tecnicoSelect.selectedIndex = i;
+                break;
+            }
+        }
+    }
+
+    modalDateInput.value = dataPrincipalInput.value;
+
+
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const tecnico_id = document.getElementById('modalTechnician').value;
+            const data = document.getElementById('modalDate').value;
+            const horasStr = document.getElementById('modalHours').value;
+            const obs = document.getElementById('modalObservations').value;
+            const tipo = document.getElementById('modal_tipo').value;
+            let ensaio_id = null, codigog_id = null, teste_id = null, manual = null;
+            if (tipo === 'ensaio') {
+                const ensaio_numero = document.getElementById('modal_informe').value;
+                // Buscar o id do ensaio pelo número
+                const res = await fetch(`/api/ensaio_by_numero?numero=${encodeURIComponent(ensaio_numero)}`);
+                const ensaio = await res.json();
+                ensaio_id = ensaio.id ? ensaio.id : null;
+                teste_id = document.getElementById('modalEnsaios').value;
+            }
+            else if (tipo === 'codigog') {
+                codigog_id = document.getElementById('modal_codigog').value;
+            }
+            else if (tipo === 'manual') {
+                manual = document.getElementById('modal_manual').value.trim();
+            }
+            let horas = null;
+            if (horasStr) {
+                const [h, m] = horasStr.split(':');
+                horas = parseInt(h) + (parseInt(m) / 60);
+            }
+            // Apenas data, técnico, horas e (ou ensaio ou código G) são obrigatórios
+            if (!tecnico_id || !data || !horas) {
+                alert(i18n.t('msg.preencher_campos_obrigatorios'));
+                return;
+            }
+            if (tipo === 'ensaio' && !ensaio_id) {
+                alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'));
+                return;
+            }
+            if (tipo === 'codigog' && !codigog_id) {
+                alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.codigo_g'));
+                return;
+            }
+
+            if (tipo === 'manual' && (!manual || !validarManual(manual))) {
+                alert(i18n.t('field.pep_networks') + ' ' + i18n.t('msg.invalido'));
+                return;
+            }
+
+            let url = '/horas';
+            let method = 'POST';
+            if (window.editHoraId) {
+                url = `/horas/${window.editHoraId}`;
+                method = 'PUT';
+            }
+            try {
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        tecnico_id,
+                        data,
+                        horas,
+                        ensaio_id: ensaio_id || null,
+                        codigog_id: codigog_id || null,
+                        teste_id: teste_id || null,
+                        manual: manual || null,
+                        obs
+                    })
+                });
+                const result = await res.json();
+                if (result.success) {
+                    document.getElementById('modalHours').value = '';
+                    document.getElementById('modalObservations').value = '';
+                    var testesSelect = document.getElementById('modalEnsaios');
+                    if (testesSelect) testesSelect.selectedIndex = 0;
+                    const dataPrincipal = document.getElementById('data_horas').value;
+                    const tecnicoPrincipal = document.getElementById('tecnico_id').value;
+                    preencherTabelaHoras(tecnicoPrincipal, dataPrincipal);
+                    var modal = bootstrap.Modal.getInstance(document.getElementById('dateTechnicianModal'));
+                    if (modal) modal.hide();
+                    
+                    atualizarCalendarioAtual() ;
+                } else {
+                    alert(result.error || i18n.t('msg.erro_ao_guardar'));
+                }
+            } catch (err) {
+                alert(i18n.t('msg.erro_ao_guardar'));
+                console.error(err);
+            }
+        });
+    }
+
+    
+    
+});
+
+
+function atualizarCalendarioAtual() {
+    const tecnicoPrincipal = document.getElementById('tecnico_id').value;
+    const dataPrincipal = document.getElementById('data_horas').value;
+    if (!dataPrincipal || !tecnicoPrincipal) return;
+    var parts = dataPrincipal.split('-');
+    if (parts.length < 2) return;
+    var ano = parseInt(parts[0]);
+    var mes = parseInt(parts[1]);
+    if (ano && mes && tecnicoPrincipal) {
+        renderCalendario(ano, mes, tecnicoPrincipal);
+    }
+}
+
+
+
+
+
+ 
+
+function preencherTabelaHoras(tecnico_id, data) {
+    fetch(`/horas_dia?tecnico_id=${tecnico_id}&data=${data}`)
+        .then(r => r.json())
+        .then(linhas => {
+            let tabelaDiv = document.getElementById('tabelaHorasDia');
+            tabelaDiv.innerHTML = '<table id="tabelaHorasDiaTable" class="table table-sm table-bordered align-middle" style="width:100%"></table>';
+            let table = $('#tabelaHorasDiaTable');
+            if ($.fn.DataTable.isDataTable('#tabelaHorasDiaTable')) {
+                table.DataTable().destroy();
+            }
+            table.DataTable({
+                data: linhas,
+                columns: [
+                    { data: 'ensaio', title: i18n.t('field.ensaio'), defaultContent: '' },
+                    { data: 'network', title: i18n.t('field.net_codg') },
+                    { data: 'projeto', title: i18n.t('field.descricao') },
+                    { data: 'teste', title: i18n.t('field.teste') },
+                    { 
+                      data: 'horas',
+                      title: i18n.t('field.horas'),
+                      render: function(data, type, row) {
+                        const horasNum = Number(data);
+                        const horasSafe = Number.isFinite(horasNum) ? horasNum : 0;
+                        const horasFmt = decimalToHHMM(horasSafe); // só visual
+                    
+                        return `<span class="hora-valor" data-id="${row.id}" data-original="${horasSafe}">${horasFmt}</span>`;
+                      }
+                    },
+                    { 
+                        data: 'observacoes', 
+                        title: i18n.t('field.notes'),
+                        render: function(data, type, row) {
+                            return `<span class="obs-valor" data-id="${row.id}">${data || ''}</span>`;
+                        }
+                    },
+                    {
+                        data: null,
+                        title: '',
+                        orderable: false,
+                        render: function(data, type, row) {
+                            return `<button class="btn btn-link btn-sm p-0 m-0 align-middle" title="Editar" data-i18n="action.edit" data-i18n-attr="title" onclick="editarHora(${row.id})" style="border:none; min-width:20px; height:20px;"><i class="fas fa-edit text-primary" style="font-size:0.95em;"></i></button><button class="btn btn-link btn-sm p-0 m-0 align-middle" title="Eliminar" data-i18n="action.delete" data-i18n-attr="title" onclick="eliminarHora(${row.id})" style="border:none; min-width:20px; height:20px;"><i class="fas fa-trash text-danger" style="font-size:0.95em;"></i></button>`;
+                        }
+                    }
+                ],
+                paging: true,
+                searching: false,
+                info: false,
+                pageLength: 5,
+                autoWidth: true,
+                language: { url: i18n.getDataTablesLanguageUrl() },
+                ordering: false,
+                pagingType: "simple_numbers",
+                responsive: true,
+                dom: '<"top"f>rt<"bottom"ip><"clear">',
+          
+            });
+        });
+}
+
+///////////////////////////////////////////////////////////
+//EDITAR HORAS
+function decimalToInputTime(decimalHours) {
+    const totalMin = Math.round((Number(decimalHours) || 0) * 60);
+    const hh = Math.floor(totalMin / 60);
+    const mm = totalMin % 60;
+    return `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+
+function inputTimeToDecimal(timeStr) {
+    if (!timeStr) return NaN;
+    const [h, m] = timeStr.split(':').map(Number);
+    return h + (m / 60);
+}
+
+function editarHora(id) {
+    const horaSpan = document.querySelector(`.hora-valor[data-id="${id}"]`);
+    const obsSpan = document.querySelector(`.obs-valor[data-id="${id}"]`);
+    if (!horaSpan || !obsSpan) return;
+
+    const horaOriginal = parseFloat(horaSpan.dataset.original);
+    const obsOriginal = obsSpan.textContent;
+
+    // input de hora (visual)
+    const horaInput = document.createElement('input');
+    horaInput.type = 'time';
+    horaInput.step = 60; // minutos
+    horaInput.value = decimalToInputTime(horaOriginal);
+    horaInput.className = 'form-control form-control-sm';
+    horaInput.style.width = '110px';
+    horaInput.style.display = 'inline-block';
+
+    const obsInput = document.createElement('input');
+    obsInput.type = 'text';
+    obsInput.value = obsOriginal;
+    obsInput.className = 'form-control form-control-sm';
+    obsInput.style.width = '100%';
+
+    horaSpan.replaceWith(horaInput);
+    obsSpan.replaceWith(obsInput);
+
+    async function guardarAlteracoes() {
+        const novasHoras = inputTimeToDecimal(horaInput.value); // decimal para guardar
+        const novasObs = obsInput.value;
+
+        if (!Number.isFinite(novasHoras)) {
+            alert(i18n.t('field.horas') + ' ' + i18n.t('msg.invalido'));
+            return;
+        }
+
+        if (novasHoras > horaOriginal) {
+            alert(i18n.t('msg.aumentar_horas'));
+            horaInput.value = decimalToInputTime(horaOriginal);
+            return;
+        }
+
+        if (novasHoras === horaOriginal && novasObs === obsOriginal) {
+            horaInput.replaceWith(horaSpan);
+            obsInput.replaceWith(obsSpan);
+            return;
+        }
+
+        const res = await fetch(`/horas/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                horas: novasHoras, // continua decimal
+                obs: novasObs
+            })
+        });
+
+        const data = await res.json();
+        if (data.success) {
+            horaSpan.textContent = decimalToHHMM(novasHoras); // visual
+            horaSpan.dataset.original = novasHoras; // decimal
+            obsSpan.textContent = novasObs;
+            horaInput.replaceWith(horaSpan);
+            obsInput.replaceWith(obsSpan);
+            atualizarCalendarioAtual();
+            if (ensaiosDisponiveisTable && ensaiosDisponiveisTable.ajax) {
+                ensaiosDisponiveisTable.ajax.reload(null, false);
+            }
+        } else {
+            alert(data.error || i18n.t('msg.erro_ao_guardar'));
+            horaInput.replaceWith(horaSpan);
+            obsInput.replaceWith(obsSpan);
+        }
+    }
+
+    horaInput.addEventListener('blur', () => setTimeout(() => {
+        if (document.activeElement !== obsInput) guardarAlteracoes();
+    }, 100));
+
+    obsInput.addEventListener('blur', () => setTimeout(() => {
+        if (document.activeElement !== horaInput) guardarAlteracoes();
+    }, 100));
+
+    horaInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); obsInput.focus(); }
+        if (e.key === 'Escape') { horaInput.replaceWith(horaSpan); obsInput.replaceWith(obsSpan); }
+    });
+
+    obsInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); guardarAlteracoes(); }
+        if (e.key === 'Escape') { horaInput.replaceWith(horaSpan); obsInput.replaceWith(obsSpan); }
+    });
+}
+function preencherListaCodigosG() {
+    var selectCodigog = document.getElementById('modal_codigog');
+    var dataInput = document.getElementById('modalDate');
+    selectCodigog.innerHTML = '<option value="" disabled selected></option>';
+    if (!dataInput.value) {
+        selectCodigog.innerHTML = '<option value="" disabled></option>';
+        return;
+    }
+    var ano = new Date(dataInput.value).getFullYear();
+    fetch('/codigosg')
+        .then(r => r.json())
+        .then(res => {
+            let codigos = res.data || res;
+            let filtrados = codigos.filter(r => r.ano == ano);
+            selectCodigog.innerHTML = '';
+            if (filtrados.length === 0) {
+                selectCodigog.innerHTML = '<option value="" disabled><span data-i18n="field.sem_dados">Sem dados</span></option>';
+            } else {
+                filtrados.forEach(r => {
+                    selectCodigog.innerHTML += `<option value="${r.id}">${r.codigog} - ${r.descricao}</option>`;
+                });
+                sortSelectOptionsAlphabetically(selectCodigog, false);  // ← add
+                $('#modal_codigog').trigger('change.select2');           // ← add
+            }
+        });
+}
+
+
+let regrasValidacaoManual = [];
+
+async function carregarRegrasValidacaoManual() {
+    const res = await fetch('/api/confvalidacaomanual');
+    const all = await res.json();
+    regrasValidacaoManual = (all || []).filter(r => Number(r.obsoleto) === 0);
+}
+
+function validarManual(valor) {
+    if (!valor || !regrasValidacaoManual.length) return false;
+    return regrasValidacaoManual.some(r => {
+        try {
+            return new RegExp(r.regex).test(valor);
+        } catch (_) {
+            return false;
+        }
+    });
+}
+
+function renderCalendario(ano, mes, tecnico_id) {
+    const TOLERANCE_HOURS = 0.05; 
+    
+    // Buscar configuração do técnico
+    fetch(`/api/confhorasauto/${tecnico_id}`)
+        .then(r => r.json())
+        .then(conf => {
+            const horasdia = conf.horasdia || 8;
+            const horasgerais = conf.horasgerais || 10;
+            const limite_verde = horasdia + TOLERANCE_HOURS;
+            const limite_laranja = horasdia - TOLERANCE_HOURS;
+            const limite_azul = horasgerais + TOLERANCE_HOURS; 
+            
+            // Depois buscar as horas do mês
+            fetch(`/horas_mensal?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
+                .then(r => r.json())
+                .then(horasPorDia => {
+                    const diasSemana = [
+                    i18n.t('day.sun'),
+                    i18n.t('day.mon'),
+                    i18n.t('day.tue'),
+                    i18n.t('day.wed'),
+                    i18n.t('day.thu'),
+                    i18n.t('day.fri'),
+                    i18n.t('day.sat')
+                    ];
+                    const data = new Date(ano, mes - 1, 1);
+                    const ultimoDia = new Date(ano, mes, 0).getDate();
+
+                    let html = '<table class="table table-bordered text-center align-middle"><thead><tr>';
+                    for (let d = 0; d < 7; d++) html += `<th>${diasSemana[d]}</th>`;
+                    html += '</tr></thead><tbody><tr>';
+
+                    for (let i = 0; i < data.getDay(); i++) html += '<td></td>';
+
+                    const hoje = new Date();
+                    for (let dia = 1; dia <= ultimoDia; dia++) {
+                        const dt = new Date(ano, mes - 1, dia);
+                        const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
+                        const horas = horasPorDia[dia] !== undefined ? parseFloat(horasPorDia[dia]) : 0;
+                        const horasTxt = decimalToHHMM(horas);
+                        let bg = '';
+                        let color = '';
+                        const isDiaPassado = (
+                            dt.getFullYear() < hoje.getFullYear() ||
+                            (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() < hoje.getMonth()) ||
+                            (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() === hoje.getMonth() && dt.getDate() <= hoje.getDate())
+                        );
+                        
+                        if (isWeekend) {
+                            bg = 'background:#dddddd;';
+                        } else if (isDiaPassado) {
+                            const horasG = parseFloat(horasPorDia[dia + '_g']) || 0;
+                            const pctGerais = horas > 0 ? (horasG / horas) * 100 : 0;
+                        
+                            if (pctGerais > limite_azul) {
+                                bg = 'background:#b3d1ff;';
+                                color = 'color:#003366;';
+                            } else if (horas < limite_laranja) {
+                                bg = 'background:#ffe5b4;';
+                            } else if (horas > limite_verde) {
+                                bg = 'background:#b7e1cd;';
+                            }
+                        }
+                        
+                        html += `<td style="height:38px;${bg}${color}" class="cal-dia" data-dia="${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}">
+                            <div><strong>${dia}</strong></div>
+                            <div>${(!isWeekend || horas > 0) ? horasTxt : ''}</div>
+                        </td>`;
+                        if (dt.getDay() === 6 && dia !== ultimoDia) html += '</tr><tr>';
+                    }
+
+                    const lastDay = new Date(ano, mes - 1, ultimoDia).getDay();
+                    for (let i = lastDay + 1; i <= 6; i++) html += '<td></td>';
+
+                    html += '</tr></tbody></table>';
+                    document.getElementById('calendarioHoras').innerHTML = html;
+
+                    // Atualizar legenda dinamicamente
+                    document.getElementById('legendaCalendario').innerHTML = `
+                        <div style="display:flex;align-items:center;margin-top:8px;">
+                            <div style="width:15px;height:15px;background:#b7e1cd;border:1px solid #ccc;margin-right:6px;"></div>
+                            <span style="font-size:0.6em;" data-i18n="field.mais_de">Mais de ${horasdia.toFixed(2)}h</span>
+                        </div>
+                        <div style="display:flex;align-items:center;margin-top:4px;">
+                            <div style="width:15px;height:15px;background:#ffe5b4;border:1px solid #ccc;margin-right:6px;"></div>
+                            <span style="font-size:0.6em;" data-i18n="field.menos_de">Menos de ${horasdia.toFixed(2)}h</span>
+                        </div>
+                        <div style="display:flex;align-items:center;margin-top:4px;">
+                            <div style="width:15px;height:15px;background:#b3d1ff;border:1px solid #ccc;margin-right:6px;"></div>
+                            <span style="font-size:0.6em;" ><span data-i18n="mais_de">Mais de </span>${horasgerais}% <span data-i18n="field.codigo_g">Cód. Gerais</span></span>
+                        </div>
+                        <div style="display:flex;align-items:center;margin-top:4px;">
+                            <div style="width:15px;height:15px;background:#dddddd;border:1px solid #ccc;margin-right:6px;"></div>
+                            <span style="font-size:0.6em;" data-i18n="field.fim_semana">Fim de semana</span>
+                        </div>
+                    `;
+
+                    document.querySelectorAll('.cal-dia').forEach(td => {
+                        td.style.cursor = 'pointer';
+                        td.addEventListener('click', function() {
+                            const dataSelecionada = this.getAttribute('data-dia');
+                            document.getElementById('data_horas').value = dataSelecionada;
+                            document.getElementById('data_horas').dispatchEvent(new Event('change'));
+                            const tecnico_id = document.getElementById('tecnico_id').value;
+                            preencherTabelaHoras(tecnico_id, dataSelecionada);
+                        });
+                    });
+                });
+        })
+        .catch(err => {
+            console.error("Erro ao carregar configuração do técnico:", err);
+        });
+}
+
+
+
+
+
+function preencherListaEnsaios() {
+    var soPendentes = document.getElementById('soPendentes').checked;
+    var selectInforme = document.getElementById('modal_informe');
+    selectInforme.innerHTML = '<option value="" disabled selected></option>';
+    fetch(`/api/ensaios?sopendentes=${soPendentes ? 1 : 0}`)
+        .then(r => r.json())
+        .then(ensaios => {
+            selectInforme.innerHTML = '<option value="" disabled selected></option>';
+            if (ensaios.length === 0) {
+                selectInforme.innerHTML = '<option value="" disabled><span data-i18n="field.sem_dados">Sem dados</span></option>';
+            } else {
+                ensaios.forEach(e => {
+                    selectInforme.innerHTML += `<option value="${e.ensaio}">${e.ensaio} - ${e.projeto_codigo} ${e.projeto_descricao}</option>`;
+                });
+                sortSelectOptionsAlphabetically(selectInforme, true);
+                $('#modal_informe').trigger('change.select2');
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var tipoSelect = document.getElementById('modal_tipo');
+    var soPendentesCheck = document.getElementById('soPendentes');
+    var modalInforme = document.getElementById('modal_informe');
+    var modalCodigog = document.getElementById('modal_codigog');
+    var modalDate = document.getElementById('modalDate');
+    if (tipoSelect && modalDate) {
+        tipoSelect.addEventListener('change', function() {
+            if (tipoSelect.value === 'ensaio') preencherListaEnsaios();
+            if (tipoSelect.value === 'codigog') preencherListaCodigosG();
+        });
+        if (soPendentesCheck && modalInforme) {
+            soPendentesCheck.addEventListener('change', preencherListaEnsaios);
+            document.getElementById('modalTechnician').addEventListener('change', preencherListaEnsaios);
+        }
+        modalDate.addEventListener('change', function() {
+            if (tipoSelect.value === 'codigog') preencherListaCodigosG();
+        });
+        // Preencher ao abrir modal
+        if (tipoSelect.value === 'ensaio') preencherListaEnsaios();
+        if (tipoSelect.value === 'codigog') preencherListaCodigosG();
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const tecnicoNome = params.get('tecnico');
+    if (tecnicoNome) {
+        const select = document.getElementById('tecnico_id');
+        const dataInput = document.getElementById('data_horas');
+        if (select) {
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].text.trim() === decodeURIComponent(tecnicoNome).trim()) {
+                    select.selectedIndex = i;
+                    if (typeof preencherTabelaHoras === 'function' && dataInput) {
+                        preencherTabelaHoras(select.value, dataInput.value);
+                    }
+                    if (typeof atualizarCalendarioAtual === 'function') {
+                        atualizarCalendarioAtual();
+                    }
+                    if (window.ensaiosDisponiveisTable && typeof window.ensaiosDisponiveisTable.ajax === 'object') {
+                        window.ensaiosDisponiveisTable.ajax.reload();
+                    }
+                    select.dispatchEvent(new Event('change'));
+                    break;
+                }
+            }
+        }
+    }
+
+    carregarRegrasValidacaoManual();
+
+
+});
+
+// ===== PEDIR HORAS EXTRA =====
+async function abrirModalHorasExtra() {
+    const [meRes, labsRes] = await Promise.all([
+        fetch('/api/me'),
+        fetch('/laboratorios/ativos')
+    ]);
+    const me = await meRes.json();
+    const labs = await labsRes.json();
+
+    document.getElementById('heNomeTecnico').value = me.full_name;
+    document.getElementById('heData').value = document.getElementById('data_horas').value;
+
+    const selectLab = document.getElementById('heLaboratorio');
+    selectLab.innerHTML = '<option value="todos"><span data-i18n="common.all">Todos</span></option>';
+    labs.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = String(l.id);
+        opt.textContent = l.laboratorio;
+        selectLab.appendChild(opt);
+    });
+    const userLab = String(me.laboratorio_id);
+    selectLab.value = [...selectLab.options].some(o => o.value === userLab) ? userLab : 'todos';
+
+    document.getElementById('heSoPendentes').checked = true;
+    document.getElementById('heHoras').value = '';
+    document.getElementById('heJustificacao').value = '';
+
+    await carregarTestesHorasExtra();
+
+    new bootstrap.Modal(document.getElementById('modalHorasExtra')).show();
+}
+
+async function carregarTestesHorasExtra() {
+    const labId = document.getElementById('heLaboratorio').value;
+    const soPendentes = document.getElementById('heSoPendentes').checked ? '1' : '0';
+    const select = document.getElementById('heTeste');
+    select.innerHTML = '<option value="" disabled selected></option>';
+    try {
+        const res = await fetch(`/api/testes_por_lab?lab_id=${encodeURIComponent(labId)}&so_pendentes=${soPendentes}`);
+        const testes = await res.json();
+        select.innerHTML = '<option value="" disabled selected></option>';
+        if (!testes.length) {
+            select.innerHTML = '<option value="" disabled><span data-i18n="field.sem_dados">Sem dados</span></option>';
+            return;
+        }
+        testes.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = `${t.ensaio} — ${t.teste}`;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        select.innerHTML = '<option value="" disabled><span data-i18n="common.error_loading">Erro ao carregar</span></option>';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.getElementById('heLaboratorio').addEventListener('change', carregarTestesHorasExtra);
+    document.getElementById('heSoPendentes').addEventListener('change', carregarTestesHorasExtra);
+
+    document.getElementById('formHorasExtra').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const horasStr = document.getElementById('heHoras').value;
+        if (!horasStr) { alert(i18n.t('msg.preencha') + ' ' + i18n.t('field.horas')); return; }
+        const [h, m] = horasStr.split(':').map(Number);
+        const horas = h + (m / 60);
+        const testeId = document.getElementById('heTeste').value;
+        if (!testeId) { alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.teste')); return; }
+
+        const body = {
+            teste_id: Number(testeId),
+            data: document.getElementById('heData').value,
+            horas: horas,
+            justificacao: document.getElementById('heJustificacao').value
+        };
+
+        const res = await fetch('/api/pedido_horas_extra', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        if (data.success) {
+            mostrarNotificacao(i18n.t('msg.dados_guardados_sucesso'), 'success');
+            bootstrap.Modal.getInstance(document.getElementById('modalHorasExtra')).hide();
+        } else {
+            mostrarNotificacao(data.error || i18n.t('msg.erro_ao_guardar'), 'error');
+        }
+    });
+});
+
+
+function initHeTesteSelect2() {
+    if (!window.jQuery || !$.fn.select2) return;
+
+    const $heTeste = $('#heTeste');
+    if (!$heTeste.length) return;
+
+    // evita reinicializar
+    if ($heTeste.data('select2')) return;
+
+    $heTeste.select2({
+        width: '100%',
+        dropdownParent: $('#modalHorasExtra')
+    });
+
+    // garante eventos change normais (se precisares no futuro)
+    $heTeste.on('select2:select select2:unselect select2:clear', function () {
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    // inicializa ao carregar
+    initHeTesteSelect2();
+
+    // reforca ao abrir o modal (caso tenha sido destruido pelo Bootstrap DOM flow)
+    $('#modalHorasExtra').on('shown.bs.modal', function () {
+        initHeTesteSelect2();
+        const search = document.querySelector('.select2-container--open .select2-search__field');
+        if (search) search.focus();
+    });
+
+    const tecnico = document.getElementById('tecnico_id');
+    sortSelectOptionsAlphabetically(tecnico, false); // sem placeholder fixo
+    initSelect2Combo('#tecnico_id');
+
+    const modalTec = document.getElementById('modalTechnician');
+    sortSelectOptionsAlphabetically(modalTec, false);
+    initSelect2Combo('#modalTechnician', { dropdownParent: $('#dateTechnicianModal') });
+
+    const modalInforme = document.getElementById('modal_informe');
+    sortSelectOptionsAlphabetically(modalInforme, true);
+    initSelect2Combo('#modal_informe', {
+        width: '100%',
+        dropdownParent: $('#dateTechnicianModal')
+    });
+    initSelect2Combo('#modal_codigog', {
+        width: '100%',
+        dropdownParent: $('#dateTechnicianModal')
+    });
+    const modalEnsaios = document.getElementById('modalEnsaios');
+    sortSelectOptionsAlphabetically(modalEnsaios, true);
+    initSelect2Combo('#modalEnsaios', {
+        width: '100%',
+        dropdownParent: $('#dateTechnicianModal')
+    });
+
+
+
+});
+
+function sortSelectOptionsAlphabetically(selectEl, keepFirstOption) {
+    if (!selectEl) return;
+
+    const selectedValue = selectEl.value;
+    const options = Array.from(selectEl.options);
+
+    let fixed = [];
+    let sortable = options;
+
+    if (keepFirstOption && options.length > 0) {
+        fixed = [options[0]];          
+        sortable = options.slice(1);
+    }
+
+    sortable.sort((a, b) =>
+        (a.textContent || '').trim().localeCompare((b.textContent || '').trim(), 'pt', { sensitivity: 'base' })
+    );
+
+    selectEl.innerHTML = '';
+    [...fixed, ...sortable].forEach(opt => selectEl.appendChild(opt));
+
+    if (selectedValue) {
+        selectEl.value = selectedValue;
+    }
+}
+
+function initSelect2Combo(selector, opts) {
+    if (!window.jQuery || !$.fn.select2) return;
+
+    const $el = $(selector);
+    if (!$el.length) return;
+
+    // evita reinicializar
+    if ($el.data('select2')) return;
+
+    const config = Object.assign(
+        {
+            width: 'style'
+        },
+        opts || {}
+    );
+
+    $el.select2(config);
+
+    // mantém o comportamento normal de change já existente no teu código
+    $el.on('select2:select select2:unselect select2:clear', function () {
+        this.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+
+    // foco automático no campo de pesquisa ao abrir
+    $el.on('select2:open', function () {
+        setTimeout(() => {
+            document.querySelector('.select2-container--open .select2-search__field')?.focus();
+        }, 0);
+    });
+}
+
+$('#heTeste').on('select2:open', function () {
+    setTimeout(() => {
+        document.querySelector('.select2-container--open .select2-search__field')?.focus();
+    }, 0);
+});
+
+</script>
+
+{% endblock %}

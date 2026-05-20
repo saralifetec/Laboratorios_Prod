@@ -1,0 +1,1337 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="field.referencias">Referências </span> <span data-i18n="field.arm_externo">Armazém Externo</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="field.arm_externo">Armazém Externo</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+a.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tabela referências: compacta e estável */
+#tabelaReferenciasAE_wrapper {
+  width: 100%;
+  overflow-x: auto; /* nunca sai da página */
+}
+
+#tabelaReferenciasAE {
+  width: 100% !important;
+  table-layout: auto; /* largura conforme conteúdo */
+}
+
+#tabelaReferenciasAE thead th,
+#tabelaReferenciasAE tbody td {
+  vertical-align: middle !important;
+  padding: 8px 6px !important;  /* menos espaço entre linhas */
+  line-height: 1.2 !important;
+}
+
+/* Evita "texto em cima de texto" */
+#tabelaReferenciasAE th,
+#tabelaReferenciasAE td {
+  white-space: nowrap;
+}
+
+/* Colunas com texto potencialmente longo podem quebrar */
+#tabelaReferenciasAE td:nth-child(4), /* Projeto */
+#tabelaReferenciasAE td:nth-child(5), /* Componente */
+#tabelaReferenciasAE td:nth-child(8) { /* Localização */
+  white-space: normal;
+  word-break: break-word;
+  overflow-wrap: anywhere;
+}
+
+/* Inputs de filtro mais compactos */
+#tabelaReferenciasAE thead input.form-control-sm {
+  height: 26px !important;
+  padding: 2px 6px !important;
+  line-height: 1.1 !important;
+}
+
+select:disabled,
+input:disabled {
+    cursor: not-allowed;
+    background-color: #f0f0f0 !important;
+    opacity: 0.65 !important;
+    color: #6c757d;
+}
+
+.select2-container--default.select2-container--disabled .select2-selection--single {
+background-color: #f0f0f0 !important;
+opacity: 0.65 !important;
+cursor: not-allowed !important;
+}
+
+.select2-container--default.select2-container--disabled .select2-selection__rendered {
+color: #6c757d !important;
+}
+
+.select2-container--disabled .select2-selection {
+    background-color: #f0f0f0 !important;
+    opacity: 0.65 !important;
+}
+/* Select2 Height Fix */
+.select2-container--default:not(.select2-container--disabled) .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    min-height: 38px !important;
+}
+
+.select2-container--default:not(.select2-container--disabled) .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5 !important;
+    padding: 0.375rem 0.75rem !important;
+}
+
+.select2-container--default:not(.select2-container--disabled) .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    top: 0 !important;
+}
+
+/* Select2: opções numa única linha + scroll horizontal no dropdown */
+.select2-container--default .select2-results > .select2-results__options {
+    white-space: nowrap;
+    overflow-x: auto !important;
+}
+
+.select2-container--default .select2-results__option {
+    white-space: nowrap;
+}
+
+/* Garante que a largura acompanha o conteúdo */
+.select2-container--default .select2-results {
+    min-width: max-content;
+}
+
+/* Select2 com fundo totalmente opaco */
+.select2-container--default .select2-selection--single,
+.select2-container--open .select2-dropdown,
+.select2-container--default .select2-results,
+.select2-container--default .select2-results > .select2-results__options,
+.select2-container--default .select2-results__option {
+    background-color: #fff !important;
+    opacity: 1 !important;
+}
+
+/* Manter legibilidade no hover/seleção */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+
+table.dataTable {
+    border-collapse: collapse;
+    width: 100% !important;
+    background: #fff;
+    color: #212529;
+    font-size: 12px !important;
+    margin-bottom: 1rem;
+}
+table.dataTable th, table.dataTable td {
+    border: 0px solid #dee2e6;
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+table.dataTable tbody td[contenteditable="true"]:focus {
+    outline: 1px solid #ced4da;
+    border-radius: 3px;
+    background: #f8f9fa;
+}
+
+table.dataTable thead th {
+    background: #f8f9fa;
+	font-size: 10px !important;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+table.dataTable tbody tr:nth-child(even) {
+    background: #f6f6f6;
+}
+table.dataTable tbody tr:hover {
+    background: #e9ecef;
+}
+table.dataTable tbody tr {
+    transition: background 0.2s;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td input,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm,
+table.dataTable thead th input,
+table.dataTable thead th .form-control,
+table.dataTable thead th .form-control-sm {
+    font-size: 11px !important;
+    line-height: 1 !important;
+    height: auto !important;
+}
+
+table.dataTable tbody td {
+    font-size: 11px !important;
+}
+
+/* Header de filtros compacto e estável */
+#tabelaReferenciasAE thead tr:nth-child(2) th {
+  padding: 2px 4px !important;
+  vertical-align: middle !important;
+}
+
+#tabelaReferenciasAE thead tr:nth-child(2) input.form-control-sm {
+  height: 22px !important;
+  min-height: 22px !important;
+  padding: 1px 6px !important;
+  line-height: 1.1 !important;
+  font-size: 11px !important;
+  margin: 0 !important;
+}
+
+/* Evita que DataTables "estique" o header */
+#tabelaReferenciasAE_wrapper .dataTables_scrollHead th,
+#tabelaReferenciasAE_wrapper .dataTables_scrollBody td {
+  white-space: nowrap;
+}
+
+</style>
+
+<div class="tabelas-page">
+
+	<form method="POST" action="" enctype="multipart/form-data" id="formReferencias">
+		<input type="hidden" id="referencia_id" name="referencia_id" value="">
+		<div class="tabelas-page">
+			<div class="row">    
+				<div class="col-md-12">
+					<div class="card">
+						<div class="card-header">
+							<div class="row align-items-center">
+								
+								<div class="col-md-1">
+									<h7><span data-i18n="field.referencia">Referência</span></h7>
+								</div>
+								<div class="col-md-4">
+									<input type="text" class="form-control" id="referencia" name="referencia" placeholder="" list="referencias_list" value="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}>
+								</div>
+                                <div class="col-md-1">
+                                    <button type="button" class="btn btn-info btn-sm" style="border-radius: 0;" onclick="adicionarAoPendentes()" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                        <i class="fas fa-truck"></i>
+                                    </button>
+                                </div>
+								<div class="col-md-5">
+									
+								</div>
+								<div class="col-md-1" style="text-align:right;">
+									<div class="dropdown">
+										<button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+										<i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+										</button>
+										<ul class="dropdown-menu" aria-labelledby="menuAcoes">
+											
+                                            <a class="dropdown-item" href="#" onclick="etiqueta()">
+                                            <i class="fas fa-tag"></i> <span data-i18n="action.label">Etiqueta</span>
+                                            </a>
+											
+										</ul>
+									</div>
+								</div>
+							</div>	
+
+	 						<div class="card-body">
+								<div class="row">
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="laboratorio" class="col-md-3 col-form-label"><span data-i18n="field.assignado">Assignado a</span></label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="laboratorio_id" name="laboratorio_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+													<option value="" selected disabled></option>
+													{% for laboratorio in laboratorios %}
+														<option value="{{ laboratorio.id }}">{{ laboratorio.laboratorio }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+                                        <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                                            <label for="tipo" class="col-md-3 col-form-label"><span data-i18n="field.tipo">Tipo</span> *</label>
+                                            <div class="col-md-12 p-0">
+                                                <select class="form-control" id="tipo" name="tipo" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                                    <option value="projeto" selected><span data-i18n="field.projeto">Projeto</span></option>
+                                                    <option value="generico"><span data-i18n="field.generico">Genérico</span></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-lg-2" id="projeto_container">
+                                        <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                                            <label for="codprojecto" class="col-md-3 col-form-label"><span data-i18n="field.projeto">Projeto</span> *</label>
+                                            <div class="col-md-12 p-0">
+                                                <select class="form-control" id="projeto_id" name="projeto_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                                    <option value="" selected disabled></option>
+                                                    {% for projeto in projetos %}    
+                                                        <option value="{{ projeto.id }}"
+                                                            data-tipopeca-id="{{ projeto.tipopeca_id }}"
+                                                            data-descricao="{{ projeto.descricao }}">
+                                                          {{ projeto.codigo }} - {{ projeto.descricao }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-lg-2" id="codificacao_container" style="display:none;">
+                                        <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                                            <label for="codificacaoae_id" class="col-md-3 col-form-label"><span data-i18n="field.codificacao">Codificação</span> *</label>
+                                            <div class="col-md-12 p-0">
+                                                <select class="form-control" id="codificacaoae_id" name="codificacaoae_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                                    <option value="" selected disabled></option>
+                                                    {% for codificacao in codificacao_ae %}
+                                                        <option value="{{ codificacao.id }}"
+                                                            data-descricao="{{ codificacao.nome }}">
+                                                          {{ codificacao.nome }}
+                                                        </option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-lg-2" id="tipopeca_container">
+                                        <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                                            <label for="tipopeca_id" class="col-md-3 col-form-label"><span data-i18n="field.tipo_peca">Tipo Peça</span> *</label>
+                                            <div class="col-md-12 p-0">
+                                                <select class="form-control" id="tipopeca_id" name="tipopeca_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                                    <option value="" selected disabled></option>
+                                                    {% for tipopeca in tipopecas %}
+                                                        <option value="{{ tipopeca.id }}">{{ tipopeca.tipopeca }}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="componente_id" class="col-md-3 col-form-label">
+												<span data-i18n="field.componente">Componente</span> *
+											</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="componente_id" name="componente_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+													<option value="" selected disabled></option>
+													{% for componente_ae in componentes_ae %}
+														<option value="{{ componente_ae.id }}" data-codigo="{{ componente_ae.codigo }}">
+                                                          {{ componente_ae.codigo }} {{ componente_ae.nome }}
+                                                        </option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="estado" class="col-md-3 col-form-label"><span data-i18n="field.status">Estado</span> *</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="estado_id" name="estado_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+													<option value="00" selected>NA</option>
+													<option value="01">Usado</option>
+													<option value="02">Novo</option>
+												</select>
+											</div>
+										</div>
+									</div>
+                                    
+									
+								</div>
+								<div class="row">
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="solicitante" class="col-md-3 col-form-label"><span data-i18n="field.responsavel">Responsável</span></label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="solicitante_id" name="solicitante_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+													<option value="" selected disabled></option>
+													{% for solicitante in solicitantes %}
+														<option value="{{ solicitante.id }}">{{ solicitante.nome }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="tipovolume_id" class="col-md-3 col-form-label"><span data-i18n="field.tipo_volume">Tipo Volume</span> *</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="tipovolume_id" name="tipovolume_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+													<option value="" selected disabled></option>
+													{% for volume in tipovolume %}
+														<option value="{{ volume.id }}">{{ volume.nome }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="peso" class="col-md-3 col-form-label"><span data-i18n="field.peso">Peso (Kg)</span> *</label>
+											<div class="col-md-12 p-0">
+												<input type="number" step="0.01" class="form-control" id="peso" name="peso" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="dimensoes" class="col-md-3 col-form-label"><span data-i18n="field.dimensoes">Dimensões (CxLxA) cm</span> *</label>
+											<div class="col-md-12 p-0">
+												<input type="text" class="form-control" id="dimensoes" name="dimensoes" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="localizacao" class="col-md-3 col-form-label"><span data-i18n="field.localizacao">Localização</span> *</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="localizacao_id" name="localizacao_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                                    <option value="" selected disabled></option>
+                                                    {% for localizacao in localizacoes %}
+                                                        <option value="{{ localizacao.id }}">{{ localizacao.nome }}</option>
+                                                    {% endfor %}
+                                                </select>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="data_limite_armazenamento" class="col-md-3 col-form-label" data-i18n="field.storage_deadline">Data Limite Armazenamento</label>
+											<div class="col-md-12 p-0">
+												<input type="date" class="form-control" id="data_limite_armazenamento" name="data_limite_armazenamento" {% if user.funcao_id == 1 %}readonly enabled{% endif %}>
+											</div>
+										</div>
+									</div>
+								</div>
+								<div class="row">
+									
+                                    <div class="col-md-2 col-lg-12">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="observacoes" class="col-md-3 col-form-label" data-i18n="field.observacoes">Observações</label>
+											<div class="col-md-12 p-0">
+												<textarea class="form-control input-full" id="observacoes" name="observacoes" {% if user.funcao_id == 1 %}readonly enabled{% endif %}></textarea>
+											</div>
+										</div>
+									</div>
+                                   
+								</div>
+                                <div class="row">
+                                     <div class="col-md-2 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											
+											<div class="col-md-12 p-0">
+                                                <input type="checkbox" id="obsoleto" name="obsoleto" style="margin-right: 5px;" {% if user.funcao_id == 1 %}readonly enabled{% endif %}>
+                                                <label for="obsoleto" style="margin-bottom:0;" data-i18n="field.obsolete">Obsoleto</label>
+                                            </div>
+										</div>
+									</div>
+                                </div>
+								
+								<div class="row">
+									<div class="col-md-1">
+										<button type="button" class="btn btn-warning btn-sm" onclick="clearFormFields()" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                            <span data-i18n="action.clear">
+											Limpar
+                                            </span>
+										</button>
+									</div>
+									
+									<div class="col-md-10"></div>
+									
+									<div class="col-md-1 align-right">
+										<button type="submit" class="btn btn-success btn-sm" name="save_componente" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                                            <span data-i18n="action.save">
+											Guardar
+                                            </span>
+										</button>
+									</div>
+									
+								</div>
+
+                                <div class="mt-2">
+                                    <small class="text-muted" style="font-size: 11px;">
+                                        <span data-i18n="field.required_fields">
+                                        * Campos de preenchimento obrigatório
+                                        </span>
+                                    </small>
+                                </div>
+
+							</div>
+						
+					
+	</form>
+
+    <hr class="mt-4 mb-3">
+    
+    <!-- Tabela de referências -->
+    
+      
+     <h6><span data-i18n="field.referencias">Referências</span></h6>
+        <table id="tabelaReferenciasAE" class="table table-striped table-bordered w-100">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th><span data-i18n="field.referencia">Referência</span></th>
+                <th><span data-i18n="field.assignado">Assignado</span></th>
+                <th><span data-i18n="field.projeto">Projeto</span></th>
+                <th><span data-i18n="field.componente">Componente</span></th>
+                <th><span data-i18n="field.status">Estado</span></th>
+                <th><span data-i18n="field.tipo_volume">Tipo Volume</span></th>
+                <th><span data-i18n="field.localizacao">Localização</span></th>
+                <th><span data-i18n="field.observacoes">Observações</span></th>
+                <th><span data-i18n="field.obsolete">Obsoleto</span></th>
+                <th><span data-i18n="field.acoes">Ações</span></th>
+            </tr>
+            <tr>
+              <th></th>
+              <th><input data-col="1" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="2" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="3" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="4" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="5" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="6" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="7" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="8" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th><input data-col="9" type="text" class="form-control form-control-sm" placeholder="Filtrar" data-i18n-placeholder="field.filtrar"></th>
+              <th></th>
+            </tr>
+        </thead>
+        </table>
+      </div>
+    </div>
+
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.plugin.addimage.min.js"></script>
+<script src="{{ url_for('static', filename='js/plugin/select2/select2.full.min.js') }}"></script>
+
+<script>
+/////////////////////////////////////////////////
+//pendente envio
+function adicionarMovimentoAoPendentes(referenciaId, localizacaoId) {
+    if (!referenciaId) {
+        mostrarNotificacao(i18n.t('field.referencia') + ' ' + i18n.t('msg.invalido'), 'warning');
+        return;
+    }
+    if (!localizacaoId) {
+        mostrarNotificacao(i18n.t('msg.ref_sem_local'), 'warning');
+        return;
+    }
+
+    fetch('/api/movimentosae', {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new URLSearchParams({
+            referenciaae_id: referenciaId,
+            localizacao_origem_id: localizacaoId
+        })
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            mostrarNotificacao(res.message || i18n.t('msg.ref_enviada_pendentes'), 'success');
+        } else {
+            mostrarNotificacao(res.error || i18n.t('msg.erro_pendentes'), 'warning');
+        }
+    })
+    .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guarda'), 'error'));
+}
+
+function adicionarAoPendentes() {
+    const referenciaId = document.getElementById('referencia_id')?.value?.trim();
+    const localizacaoId = document.getElementById('localizacao_id')?.value?.trim();
+    adicionarMovimentoAoPendentes(referenciaId, localizacaoId);
+}
+
+// Chamada desde a tabela
+$(document).on('click', '.acao-enviar-pendente', function(e) {
+    e.preventDefault();
+    const referenciaId = $(this).data('referencia-id');
+    const localizacaoId = $(this).data('localizacao-id');
+    adicionarMovimentoAoPendentes(referenciaId, localizacaoId);
+});
+
+//////////////////////////////////////////////////////
+//etiqueta
+function etiqueta() {
+    const referencia = document.getElementById('referencia')?.value?.trim();
+    if (!referencia) {
+        mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.referencia'), 'warning');
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+
+    const W = doc.internal.pageSize.getWidth();   // 210mm
+    const H = doc.internal.pageSize.getHeight();  // 148mm
+    const margin = 10;
+    const innerPad = 8; // padding inside the border
+    const maxTextWidth = W - 2 * margin - 2 * innerPad;
+
+    // Borda
+    doc.setLineWidth(0.5);
+    doc.rect(margin, margin, W - 2 * margin, H - 2 * margin);
+
+    // Auto-size: começa em 48pt e reduz até caber
+    doc.setFont('helvetica', 'bold');
+    let fontSize = 48;
+    doc.setFontSize(fontSize);
+    while (fontSize > 8 && doc.getTextWidth(referencia) > maxTextWidth) {
+        fontSize -= 1;
+        doc.setFontSize(fontSize);
+    }
+
+    doc.text(referencia, W / 2, H / 2, { align: 'center', baseline: 'middle' });
+
+    doc.output('dataurlnewwindow');
+}
+
+
+///////////////////////////////////////////////////
+//submeter formulário
+document.getElementById('formReferencias').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
+        e.preventDefault();
+    }
+});
+
+function clearFormFields() {
+    const form = document.getElementById('formReferencias');
+    if (!form) return;
+
+    form.reset();
+
+    const idInput = document.getElementById('referencia_id');
+    if (idInput) idInput.value = '';
+
+    desabilitarCamposReferencia(false); 
+
+
+    const tipoSel = document.getElementById('tipo');
+    if (tipoSel) tipoSel.value = 'projeto';
+
+    const projetoContainer = document.getElementById('projeto_container');
+    const codificacaoContainer = document.getElementById('codificacao_container');
+    const tipopecaContainer = document.getElementById('tipopeca_container');
+
+    if (projetoContainer) projetoContainer.style.display = 'block';
+    if (codificacaoContainer) codificacaoContainer.style.display = 'none';
+    if (tipopecaContainer) tipopecaContainer.style.display = 'block';
+
+    if (window.jQuery) {
+        [
+            '#laboratorio_id', '#tipo', '#projeto_id', '#codificacaoae_id', '#tipopeca_id',
+            '#componente_id', '#estado_id', '#solicitante_id', '#tipovolume_id', '#localizacao_id'
+        ].forEach(sel => {
+            const el = $(sel);
+            if (el.length && el.data('select2')) {
+                el.val(null).trigger('change.select2');
+            }
+        });
+        $('#tipo').val('projeto').trigger('change');
+        $('#estado_id').val('00').trigger('change');
+    }
+
+    
+}
+
+async function carregarReferenciaPorNome() {
+    const refInput = document.getElementById('referencia');
+    const nome = (refInput?.value || '').trim();
+    if (!nome) return;
+
+    try {
+        const r = await fetch(`/api/referenciaae_by_nome?referencia=${encodeURIComponent(nome)}`);
+        if (!r.ok) return; 
+
+        const data = await r.json();
+        if (data && data.id) {
+            fillReferenciaAEForm(data);
+        }
+    } catch (_) {}
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const refInput = document.getElementById('referencia');
+    if (!refInput) return;
+
+    refInput.addEventListener('blur', carregarReferenciaPorNome);
+    refInput.addEventListener('paste', () => setTimeout(carregarReferenciaPorNome, 60));
+    refInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            carregarReferenciaPorNome();
+        }
+    });
+});
+
+function fillReferenciaAEForm(data) {
+    document.getElementById('referencia_id').value = data.id || '';
+    document.getElementById('referencia').value = data.referencia || '';
+    document.getElementById('tipo').value = data.tipo || 'projeto';
+    document.getElementById('laboratorio_id').value = data.laboratorio_id || '';
+    document.getElementById('projeto_id').value = data.projeto_id || '';
+    document.getElementById('codificacaoae_id').value = data.codificacaoae_id || '';
+    document.getElementById('tipopeca_id').value = data.tipopeca_id || '';
+    document.getElementById('componente_id').value = data.componente_id || '';
+    document.getElementById('estado_id').value = data.estado_codigo || '00';
+    document.getElementById('solicitante_id').value = data.solicitante_id || '';
+    document.getElementById('tipovolume_id').value = data.tipovolumeae_id || '';
+    document.getElementById('peso').value = data.peso || '';
+    document.getElementById('dimensoes').value = data.dimensoes || '';
+    document.getElementById('localizacao_id').value =
+    data.localizacao_atual_id !== null && data.localizacao_atual_id !== undefined
+        ? data.localizacao_atual_id
+        : '';
+    document.getElementById('data_limite_armazenamento').value = data.data_limite_armazenamento || '';
+    document.getElementById('observacoes').value = data.observacoes || '';
+    document.getElementById('obsoleto').checked = !!data.obsoleto;
+
+    document.getElementById('tipo').dispatchEvent(new Event('change', { bubbles: true }));
+
+    if (window.jQuery) {
+        [
+            '#laboratorio_id', '#tipo', '#projeto_id', '#codificacaoae_id', '#tipopeca_id',
+            '#componente_id', '#estado_id', '#solicitante_id', '#tipovolume_id', '#localizacao_id'
+        ].forEach(sel => {
+            const el = $(sel);
+            if (el.length && el.data('select2')) {
+                el.trigger('change.select2');
+            }
+        });
+    }
+
+    desabilitarCamposReferencia(true);  
+
+   
+}
+
+
+
+function validarFormularioAE() {
+    const tipo = document.getElementById('tipo')?.value;
+
+    const campos = [
+        { id: 'referencia',     label: i18n.t('field.referencia') },
+        { id: 'componente_id',  label: i18n.t('field.componente') },
+        { id: 'tipovolume_id',  label: i18n.t('field.tipo_volume') },
+        {id: 'peso', label: i18n.t('field.peso')},
+        {id: 'dimensoes', label: i18n.t('field.dimencoes')},
+        {id: 'localizacao_id',  label: i18n.t('field.localizacao') },
+    ];
+
+    if (tipo === 'projeto') {
+        campos.push({ id: 'projeto_id',  label: i18n.t('field.projeto') });
+        campos.push({ id: 'tipopeca_id', label: i18n.t('field.tipo_peca') });
+    } else {
+        campos.push({ id: 'codificacaoae_id', label: i18n.t('field.codificacao') });
+    }
+
+    for (const campo of campos) {
+        const el = document.getElementById(campo.id);
+        if (!el || !el.value || el.value.trim() === '') {
+            mostrarNotificacao("${campo.label}" + ' ' + i18n.t('msg.erro_obrigatorio'), 'warning', 4000);
+            el?.focus();
+            return false;
+        }
+    }
+    return true;
+}
+
+
+
+document.getElementById('formReferencias').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!validarFormularioAE()) return; 
+
+
+    const id = document.getElementById('referencia_id').value;
+    const url = id ? `/referenciasae/update/${id}` : '/referenciasae';
+
+    const formData = new FormData(this);
+    const data = {};
+    formData.forEach((value, key) => {
+        data[key] = value;
+    });
+    data.obsoleto = document.getElementById('obsoleto').checked ? 1 : 0;
+    data.localizacao_atual_id = data.localizacao_id || null;
+    data.estado_codigo = data.estado_id || '00';
+
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Accept': 'application/json' },
+        body: new URLSearchParams(data)
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.success) {
+            mostrarNotificacao(res.message || i18n.t('msg.dados_guardados_sucesso'), 'success');
+            if ($.fn.DataTable.isDataTable('#tabelaReferenciasAE')) {
+                $('#tabelaReferenciasAE').DataTable().ajax.reload(null, false);
+            }
+            if (!id && res.id) {
+                document.getElementById('referencia_id').value = res.id;
+            }
+        } else {
+            mostrarNotificacao(res.error || i18n.t('msg.erro_ao_guarda'), 'error');
+        }
+    })
+    .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guarda'), 'error'));
+});
+
+$(document).ready(function () {
+
+    const USER_FUNCao_ID = {{ user.funcao_id }};
+    
+    const disabledClass = USER_FUNCao_ID === 1 ? 'disabled' : '';
+    const disabledAttr  = USER_FUNCao_ID === 1 ? 'aria-disabled="true"' : '';
+
+
+    $('#tabelaReferenciasAE').DataTable({
+        ajax: { url: '/api/referenciasae', dataSrc: '' },
+        columns: [
+          { data: 'id', visible: false },
+          {
+            data: 'referencia',
+            render: function(data, type, row) {
+              if (type === 'display') {
+                return `<a href="#" class="selecionar-referencia-ae" data-id="${row.id}">${data || ''}</a>`;
+              }
+              return data;
+            }
+          },
+          { data: 'laboratorio_nome' },
+          {
+            data: null,
+            render: function(data, type, row) {
+                if (row.tipo === 'projeto') {
+                return row.projeto_descricao || '';
+                } else {
+                return row.codificacao_nome || '';
+                }
+            }
+        },
+          { data: 'componente_nome' },
+          { data: 'estado_nome' },
+          { data: 'tipovolume_nome' },
+          { data: 'localizacao_nome' },
+          { data: 'observacoes' },
+          {
+            data: 'obsoleto',
+            render: d => d ? i18n.t('status.yes') : i18n.t('status.no')
+          },
+        {
+          data: null,
+          orderable: false,
+          searchable: false,
+          className: 'text-center',
+          render: function(data, type, row) {
+            return `
+  <a href="#"
+     class="acao-enviar-pendente text-info ${disabledClass}"
+     data-referencia-id="${row.id}"
+     data-localizacao-id="${row.localizacao_atual_id || ''}"
+     title="Enviar para pendentes" data-i18n="field.enviar_pendentes" data-i18n-attr="title"
+     ${disabledAttr}>
+    <i class="fas fa-truck"></i>
+  </a>
+`;
+          }
+        }
+        ],
+    dom: '<"top"lf>rt<"bottom"ip><"clear">',
+    pagingType: 'simple_numbers',
+    orderCellsTop: true,
+    language: { url: i18n.getDataTablesLanguageUrl() },
+    autoWidth: false,
+    scrollX: false,
+    scrollCollapse: false,
+    initComplete: function () {
+      const api = this.api();
+      const $inputs = $('#tabelaReferenciasAE thead tr:eq(1) input[data-col]');
+    
+      $inputs.off('.colfilter');
+    
+      $inputs.on('input.colfilter change.colfilter', function () {
+        const col = Number($(this).attr('data-col'));
+        if (Number.isNaN(col)) return;
+        api.column(col).search(this.value || '', false, true).draw();
+      });
+    
+      $inputs.on('click.colfilter', function (e) {
+        e.stopPropagation();
+      });
+    }
+    });
+});
+
+
+
+document.addEventListener('DOMContentLoaded', async function () {
+  const rid = new URLSearchParams(window.location.search).get('rid');
+  if (!rid) return;
+
+  try {
+    const r = await fetch(`/api/referenciaae_by_id?id=${encodeURIComponent(rid)}`);
+    if (!r.ok) return;
+    const data = await r.json();
+    fillReferenciaAEForm(data);
+  } catch (_) {}
+});
+
+$(document).on('click', '.selecionar-referencia-ae', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+
+    fetch(`/api/referenciaae_by_id?id=${id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.id) {
+                fillReferenciaAEForm(data);
+            } else {
+                mostrarNotificacao(i18n.t('field.referencia') + ' ' + i18n.t('msg.nao_encontrado'), 'error');
+            }
+        })
+        .catch(() => mostrarNotificacao(i18n.t('common.error_loading') + ' ' + i18n.t('field.referencia'), 'error'));
+});
+
+
+////////////////////////////////////////////////////
+//selects com pesquisa
+document.addEventListener('DOMContentLoaded', function() {
+
+    refreshLaboratorioSelectUI(); 
+    refreshProjetoSelectUI(); 
+    refreshSolicitanteSelectUI(); 
+    refreshTipopecaSelectUI(); 
+    refreshLaboratorioSelectUI(); 
+    refreshComponenteSelectUI(); 
+    refreshTipovolumeSelectUI();
+    refreshLocalizacaoSelectUI();
+
+});
+
+function sortSelectOptionsAlphabetically(selectEl, keepFirstOption) {
+    if (!selectEl) return;
+
+    const selectedValue = selectEl.value;
+    const options = Array.from(selectEl.options);
+
+    let fixed = [];
+    let sortable = options;
+
+    if (keepFirstOption && options.length > 0) {
+    fixed = [options[0]];
+    sortable = options.slice(1);
+    }
+
+    sortable.sort((a, b) =>
+    (a.textContent || "").trim().localeCompare((b.textContent || "").trim(), "pt", { sensitivity: "base" })
+    );
+
+    selectEl.innerHTML = "";
+    [...fixed, ...sortable].forEach(opt => selectEl.appendChild(opt));
+
+    if (selectedValue) {
+    selectEl.value = selectedValue;
+    }
+}
+
+function initSelect2Combo(selector, opts) {
+    if (!window.jQuery || !$.fn.select2) return;
+
+    const $el = $(selector);
+    if (!$el.length) return;
+    if ($el.data("select2")) return;
+
+    const config = Object.assign({width: "100%"},opts || {}); 
+
+    $el.select2(config);
+
+    $el.on("select2:select select2:unselect select2:clear", function () {
+        // Evita duplo disparo no modal de stock (Select2 + dispatch manual)
+        if (this.id === "saidaStockReferencia" || this.id === "saidaLocalizacao") return;
+        this.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    $el.on("select2:open", function () {
+    setTimeout(() => {
+    document.querySelector(".select2-container--open .select2-search__field")?.focus();
+    }, 50);
+    });
+}
+
+function refreshLaboratorioSelectUI() {
+    const select = document.getElementById("laboratorio_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#laboratorio_id");
+    } else {
+    $("#laboratorio_id").trigger("change.select2");
+    }
+}
+
+function refreshTipovolumeSelectUI() {
+    const select = document.getElementById("tipovolume_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#tipovolume_id");
+    } else {
+    $("#tipovolume_id").trigger("change.select2");
+    }
+}
+
+function refreshLocalizacaoSelectUI() {
+    const select = document.getElementById("localizacao_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#localizacao_id");
+    } else {
+    $("#localizacao_id").trigger("change.select2");
+    }
+}
+
+
+function refreshProjetoSelectUI() {
+    const select = document.getElementById("projeto_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#projeto_id");
+    } else {
+    $("#projeto_id").trigger("change.select2");
+    }
+}
+
+function refreshTipopecaSelectUI() {
+    const select = document.getElementById("tipopeca_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#tipopeca_id");
+    } else {
+    $("#tipopeca_id").trigger("change.select2");
+    }
+}
+
+function refreshComponenteSelectUI() {
+    const select = document.getElementById("componente_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#componente_id");
+    } else {
+    $("#componente_id").trigger("change.select2");
+    }
+}
+
+function refreshSolicitanteSelectUI() {
+    const select = document.getElementById("solicitante_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#solicitante_id");
+    } else {
+    $("#solicitante_id").trigger("change.select2");
+    }
+}
+
+
+//selecionar tipo peça automaticamente ao selecionar projeto
+function sincronizarTipoPecaComProjeto() {
+    const projetoSelect = document.getElementById("projeto_id");
+    const tipopecaSelect = document.getElementById("tipopeca_id");
+    if (!projetoSelect || !tipopecaSelect) return;
+
+    projetoSelect.addEventListener("change", function () {
+        if (isReferenciaExistente()) return; // bloqueia sincronização em registos existentes
+
+        const selectedOption = this.options[this.selectedIndex];
+        const tipopecaId = selectedOption?.getAttribute("data-tipopeca-id");
+        if (!tipopecaId) return;
+
+        tipopecaSelect.value = String(tipopecaId);
+
+        if (window.jQuery && $(tipopecaSelect).data("select2")) {
+            $("#tipopeca_id").trigger("change.select2");
+        }
+        tipopecaSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    if (projetoSelect.value) {
+        projetoSelect.dispatchEvent(new Event("change", { bubbles: true }));
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    sincronizarTipoPecaComProjeto();
+});
+
+
+////////////////////////////////////////////////////////////////////
+//GERAR REFERENCIA AUTOMATICAMENTE
+
+let _prevValues = {};
+let _revertendo = false;
+
+function isReferenciaExistente() {
+    const el = document.getElementById("referencia_id");
+    return el && el.value.trim() !== "";
+}
+
+
+function desabilitarCamposReferencia(desabilitar = true) {
+const camposBloquear = [
+'tipo', 'projeto_id', 'tipopeca_id', 'componente_id', 'estado_id', 'codificacaoae_id', 'localizacao_id'
+];
+
+camposBloquear.forEach(id => {
+const el = document.getElementById(id);
+if (!el) return;
+
+// forma correta para Select2 4.x: desabilitar o <select>
+el.disabled = desabilitar;
+el.title = desabilitar
+? i18n.t('msg.erro_alterar_campo')
+: '';
+
+if (window.jQuery) {
+const $el = $(el);
+if ($el.data('select2')) {
+$el.prop('disabled', desabilitar).trigger('change.select2');
+}
+}
+});
+}
+
+
+
+
+function guardarValoresAnteriores() {
+    ['projeto_id', 'tipopeca_id', 'componente_id', 'estado_id'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) _prevValues[id] = el.value;
+    });
+}
+
+function reverteCampo(id) {
+    if (_revertendo) return;
+    _revertendo = true;
+    const el = document.getElementById(id);
+    if (el) {
+        const prev = _prevValues[id] ?? "";
+        el.value = prev;
+        if (window.jQuery && $(el).data("select2")) {
+            $(el).val(prev).trigger("change.select2");
+        }
+    }
+    _revertendo = false;
+}
+
+function onCampoReferenciaChanged(id) {
+    if (_revertendo) return;
+
+    if (isReferenciaExistente()) {
+        mostrarNotificacao(
+            i18n.t('msg.erro_alterar_campo'),
+            'warning', 5000
+        );
+        reverteCampo(id);
+        return;
+    }
+
+    // Nova referência: atualizar prev e regenerar
+    const el = document.getElementById(id);
+    if (el) _prevValues[id] = el.value;
+    autoPreencherReferencia(true);
+}
+
+function gerarPrefixoReferencia() {
+    const tipoSel = document.getElementById("tipo");
+    const tipo = tipoSel?.value;
+
+    if (tipo === "generico") {
+        const codificacaoSel = document.getElementById("codificacaoae_id");
+        const componenteSel = document.getElementById("componente_id");
+        const estadoSel = document.getElementById("estado_id");
+    
+        if (!codificacaoSel?.value || !componenteSel?.value || !estadoSel?.value) {
+            return null;
+        }
+    
+        const codificacao = codificacaoSel.options[codificacaoSel.selectedIndex]?.textContent.trim() || "";
+        const componenteCodigo = componenteSel.options[componenteSel.selectedIndex]?.getAttribute("data-codigo") || "";
+        const estado = estadoSel.value;
+    
+        if (!codificacao || !componenteCodigo || !estado) {
+            return null;
+        }
+    
+        // Formato pedido: codificacao_00_componente_estado
+        return `${codificacao}_00_${componenteCodigo}${estado}`;
+    } else {
+        // Tipo = "projeto" (padrão)
+        const projetoSel    = document.getElementById("projeto_id");
+        const tipopecaSel   = document.getElementById("tipopeca_id");
+        const componenteSel = document.getElementById("componente_id");
+        const estadoSel     = document.getElementById("estado_id");
+
+        if (!projetoSel.value || !tipopecaSel.value || !componenteSel.value || !estadoSel.value)
+            return null;
+
+        const descricao        = projetoSel.options[projetoSel.selectedIndex]?.getAttribute("data-descricao") || "";
+        const tipopeca         = tipopecaSel.options[tipopecaSel.selectedIndex]?.textContent.trim() || "";
+        const componenteCodigo = componenteSel.options[componenteSel.selectedIndex]?.getAttribute("data-codigo") || "";
+        const estado           = estadoSel.value;
+
+        if (!descricao || !tipopeca || !componenteCodigo || !estado) return null;
+
+        return `${descricao}_${tipopeca}_${componenteCodigo}${estado}`;
+    }
+}
+
+let _refTimer = null;
+async function autoPreencherReferencia(forcar = false) {
+    clearTimeout(_refTimer);
+    _refTimer = setTimeout(async () => {
+        const referenciaInput = document.getElementById("referencia");
+        if (!referenciaInput) return;
+        if (!forcar && referenciaInput.value.trim() !== "") return;
+
+        const prefixo = gerarPrefixoReferencia();
+        if (!prefixo) {
+            if (forcar) referenciaInput.value = "";
+            return;
+        }
+
+        try {
+            const resp = await fetch(`/api/referencias/proximo_numero?prefixo=${encodeURIComponent(prefixo)}`);
+            const data = await resp.json();
+            if (data.proximo) {
+                referenciaInput.value = `${prefixo}${data.proximo}`;
+            }
+        } catch (e) {
+            console.error("Erro ao gerar referência automaticamente:", e);
+        }
+    }, 80); // debounce para absorver a cascata projeto→tipopeca
+}
+
+// Escutar mudanças nos 4 campos (tipopeca inclui o auto-set pela sincronização com projeto)
+document.addEventListener("DOMContentLoaded", function () {
+    guardarValoresAnteriores();
+    sincronizarTipoPecaComProjeto();
+
+    ['projeto_id', 'tipopeca_id', 'componente_id', 'estado_id', 'codificacaoae_id'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', () => onCampoReferenciaChanged(id));
+    });
+});
+
+
+// ===== HANDLER PARA TIPO (Projeto/Genérico) =====
+function setupTipoHandler() {
+    const tipoSelect = document.getElementById("tipo");
+    if (!tipoSelect) return;
+
+    tipoSelect.addEventListener('change', function() {
+        const tipo = this.value;
+        const projetoContainer = document.getElementById("projeto_container");
+        const codificacaoContainer = document.getElementById("codificacao_container");
+        const tipopecaContainer = document.getElementById("tipopeca_container");
+        const referenciaInput = document.getElementById("referencia");
+
+        if (tipo === "generico") {
+            // Mostrar Codificação, esconder Projeto e TipoPeça
+            if (projetoContainer) projetoContainer.style.display = "none";
+            if (codificacaoContainer) codificacaoContainer.style.display = "block";
+            if (tipopecaContainer) tipopecaContainer.style.display = "none";
+            
+            // Atribuir valor "00" ao tipo peça
+            const tipopecaSel = document.getElementById("tipopeca_id");
+            if (tipopecaSel) {
+                tipopecaSel.value = "00";
+                if (window.jQuery && $(tipopecaSel).data("select2")) {
+                    $(tipopecaSel).val("00").trigger("change.select2");
+                }
+            }
+            
+            // Limpar selects de projeto
+            const projetoSel = document.getElementById("projeto_id");
+            if (projetoSel) projetoSel.value = "";
+            
+        } else {
+            // Mostrar Projeto e TipoPeça, esconder Codificação
+            if (projetoContainer) projetoContainer.style.display = "block";
+            if (codificacaoContainer) codificacaoContainer.style.display = "none";
+            if (tipopecaContainer) tipopecaContainer.style.display = "block";
+            
+            // Limpar selects de codificacao
+            const codificacaoSel = document.getElementById("codificacaoae_id");
+            if (codificacaoSel) codificacaoSel.value = "";
+        }
+        
+        // Regenerar referência automaticamente se estiver vazio
+        if (referenciaInput && !isReferenciaExistente()) {
+            autoPreencherReferencia(true);
+        }
+    });
+}
+
+// Inicializar setupTipoHandler ao carregar
+document.addEventListener("DOMContentLoaded", function() {
+    setupTipoHandler();
+});
+
+
+</script>
+
+{% endblock %}
+

@@ -1,0 +1,554 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="index.hours_summary">Resumo Horas</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="index.hours_summary">Resumo Horas</span></h4>
+{% endblock %}
+
+{% block content %}
+<style>
+
+
+
+.resumo-detail-row td { font-size: 0.82em !important; }
+.toggle-btn { cursor: pointer; background: none; border: none; padding: 0 4px; color: #666; line-height:1; }
+.toggle-btn:hover { color: #222; }
+
+/* Cabeçalho da tabela de detalhe (expandida) mais compacto */
+.resumo-detail-row .table thead th {
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  padding: 4px 6px !important;
+  line-height: 1.1 !important;
+  white-space: nowrap;
+}
+
+table.dataTable {
+    border-collapse: collapse;
+    width: 100% !important;
+    background: #fff;
+    color: #212529;
+    font-size: 12px !important;
+    margin-bottom: 1rem;
+}
+table.dataTable th, table.dataTable td {
+    border: 0px solid #dee2e6;
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+table.dataTable tbody td[contenteditable="true"]:focus {
+    outline: 1px solid #ced4da;
+    border-radius: 3px;
+    background: #f8f9fa;
+}
+
+table.dataTable thead th {
+    background: #f8f9fa;
+	font-size: 10px !important;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+table.dataTable tbody tr:nth-child(even) {
+    background: #f6f6f6;
+}
+table.dataTable tbody tr:hover {
+    background: #e9ecef;
+}
+table.dataTable tbody tr {
+    transition: background 0.2s;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td input,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    font-size: 10px !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+}
+
+/* Linhas de detalhe também mais baixas */
+.resumo-detail-row .table tbody td {
+  font-size: 0.76rem !important;
+  padding: 4px 6px !important;
+  line-height: 1.15 !important;
+}
+
+</style>
+
+<div class="tabelas-page">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="row mb-0 align-items-center">
+                        <div class="col-md-8">
+                            <div class="input-group input-group-sm" style="max-width: 360px;">
+                                <span class="input-group-text" data-i18n="field.ensaio">Ensaio</span>
+                                <input type="text" class="form-control" id="ensaio" name="ensaio"
+                                    placeholder="" value="">
+                                    <div class="col-md-4">
+                                        <div class="d-flex gap-2 justify-content-md-center mt-2 mt-md-0">
+                                            <select id="filtroAno" class="form-control form-control-sm" style="max-width:110px;"></select>
+                                    
+                                            <select id="filtroLaboratorio" class="form-control form-control-sm" style="max-width:220px;">
+                                                <option value="0"><span data-i18n="common.all">Todos</span></option>
+                                                {% for lab in laboratorios %}
+                                                    <option value="{{ lab.id }}" {% if user.laboratorio_id == lab.id %}selected{% endif %}>
+                                                        {{ lab.laboratorio }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>    
+                                <button type="button" class="btn btn-info" style="border-radius: 0;"
+                                    data-bs-toggle="modal" data-bs-target="#ensaiosModal">
+                                    <i class="fas fa-list"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button"
+                                    id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false"
+                                    style="border-radius: 0;">
+                                    <i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="exportarConsultaParaExcel(); return false;">
+                                            <i class="fas fa-file-excel"></i> <span data-i18n="action.export">Exportar</span>
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            <input type="file" class="form-control-file" id="excelFile" name="excelFile"
+                                accept=".xlsx, .xls" style="display:none;" onchange="uploadExcel()">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-body" id="resumoBody">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <h6 class="fw-bold mb-0" id="resumoTitulo"><span data-i18n="field.resumo_ensaio">Resumo do Ensaio</span></h6>
+                        <div>
+                            <a href="#" class="small me-3 text-decoration-none" onclick="expandirTodos(); return false;">
+                                <i class="fas fa-expand-alt fa-xs"></i> <span data-i18n="field.expandir_todos">Expandir Todos</span>
+                            </a>
+                            <a href="#" class="small text-decoration-none" onclick="recolherTodos(); return false;">
+                                <i class="fas fa-compress-alt fa-xs"></i> <span data-i18n="field.recolher_todos">Recolher Todos</span>
+                            </a>
+                        </div>
+                    </div>
+                    <table class="table table-sm table-bordered align-middle" id="resumoTable" style="width:100%;">
+                        <thead class="table-light">
+                            <tr>
+                                <th style="width:32px;"></th>
+                                <th><span data-i18n="field.teste">Teste</span></th>
+                                <th><span data-i18n="field.horas_maximas">Horas Máximas</span></th>
+                                <th><span data-i18n="field.horas_colocadas">Horas Colocadas</span></th>
+                                <th><span data-i18n="field.horas_disponiveis">Horas Disponíveis</span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="resumoTbody">
+                            <tr id="resumoPlaceholder">
+                                <td colspan="5" class="text-center text-muted fst-italic py-4">
+                                    <span data-i18n="msg.selecione">Selecione um/a </span><span data-i18n="field.ensaio">ensaio</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div id="resumoEmpty" class="text-center text-muted fst-italic py-3" style="display:none;">
+                        <span data-i18n="field.sem_dados">Sem dados</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de Seleção de Ensaios -->
+<div class="modal fade" id="ensaiosModal" tabindex="-1" aria-labelledby="ensaiosModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="ensaiosModalLabel"><span data-i18n="msg.selecione">Selecione um/a </span><span data-i18n="field.ensaio">ensaio</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <table id="ensaiosTable" class="table table-striped" style="width:100%">
+                    <thead>
+                        <tr>
+                            <th><span data-i18n="field.ensaio">Ensaio</span></th>
+                            <th><span data-i18n="field.laboratorio">Laboratório</span></th>
+                            <th><span data-i18n="field.projeto">Projeto</span></th>
+                            <th><span data-i18n="field.denominacao">Denominação</span></th>
+                            <th><span data-i18n="field.tipo_peca">Tipo de Peça</span></th>
+                            <th><span data-i18n="field.solicitante">Solicitante</span></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+<script>
+
+    function preencherFiltroAno() {
+        const select = document.getElementById('filtroAno');
+        const anoAtual = new Date().getFullYear();
+        const anoInicial = 2026;
+    
+        select.innerHTML = '';
+        for (let ano = anoAtual; ano >= anoInicial; ano--) {
+            const opt = document.createElement('option');
+            opt.value = String(ano);
+            opt.textContent = String(ano);
+            if (ano === anoAtual) opt.selected = true;
+            select.appendChild(opt);
+        }
+    
+        if (anoAtual < anoInicial) {
+            const opt = document.createElement('option');
+            opt.value = String(anoAtual);
+            opt.textContent = String(anoAtual);
+            opt.selected = true;
+            select.appendChild(opt);
+        }
+    }    
+$(document).ready(function () {
+    preencherFiltroAno();
+
+
+    // ── Ensaios modal DataTable ──────────────────────────────────────
+    const ensaiosTable = $('#ensaiosTable').DataTable({
+        data: [],
+        columns: [
+            {
+                data: 'ensaio',
+                render: function (data, type) {
+                    if (type === 'display') {
+                        return `<a href="#" class="ensaio-link">${data}</a>`;
+                    }
+                    return data;
+                }
+            },
+            { data: 'laboratorio' },
+            { data: 'codigo_projeto' },
+            { data: 'denominacao' },
+            { data: 'tipopeca' },
+            { data: 'solicitante' }
+        ],
+        paging: true, searching: true, ordering: true,
+        order: [[0, 'desc']]
+    });
+
+    $('#ensaiosModal').on('show.bs.modal', function () {
+        const ano = $('#filtroAno').val();
+        const laboratorioId = $('#filtroLaboratorio').val();
+    
+        const params = new URLSearchParams({
+            ano: ano || '',
+            laboratorio_id: laboratorioId || '0'
+        });
+    
+        fetch('/ensaios/todos?' + params.toString())
+            .then(r => r.json())
+            .then(data => {
+                ensaiosTable.clear();
+                data.forEach(e => {
+                    ensaiosTable.row.add({
+                        ensaio: e.ensaio,
+                        laboratorio: e.laboratorio,
+                        codigo_projeto: e.codigo_projeto,
+                        denominacao: e.denominacao_projeto,
+                        tipopeca: e.tipo_peca,
+                        solicitante: e.solicitante
+                    });
+                });
+                ensaiosTable.draw();
+            })
+            .catch(err => console.error(i18n.t('common.error_loading') + ':', err));
+    });
+
+    $('#ensaiosTable tbody').on('click', 'a.ensaio-link', function (e) {
+        e.preventDefault();
+        const ensaio = $(this).text().trim();
+        $('#ensaio').val(ensaio);
+        $('#ensaiosModal').modal('hide');
+        carregarResumo(ensaio);
+    });
+
+    // ── Ensaio input — Enter key ─────────────────────────────────────
+    $('#ensaio').on('keypress', function (e) {
+        if (e.which === 13) {
+            carregarResumo($(this).val().trim());
+        }
+    });
+});
+
+let resumoAtual = null;
+
+function carregarResumo(ensaio) {
+    if (!ensaio) {
+        resumoAtual = null;
+        document.getElementById('resumoTitulo').textContent = 'Resumo do Ensaio';
+        document.getElementById('resumoTbody').innerHTML = `
+            <tr id="resumoPlaceholder">
+                <td colspan="5" class="text-center text-muted fst-italic py-4">
+                    <span data-i18n="msg.selecione">Selecione um/a </span><span data-i18n="field.ensaio">ensaio</span>
+                </td>
+            </tr>
+        `;
+        document.getElementById('resumoTable').style.display = '';
+        document.getElementById('resumoEmpty').style.display = 'none';
+        return;
+    }
+
+    fetch('/api/resumo_horas_ensaio/' + encodeURIComponent(ensaio))
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                document.getElementById('resumoTitulo').textContent = data.error;
+                document.getElementById('resumoTbody').innerHTML = '';
+                document.getElementById('resumoTable').style.display = 'none';
+                document.getElementById('resumoEmpty').style.display = '';
+                return;
+            }
+            resumoAtual = data;
+            renderResumo(data);
+        })
+        .catch(err => console.error('Erro:', err));
+}
+
+function renderResumo(data) {
+    const tbody = document.getElementById('resumoTbody');
+    tbody.innerHTML = '';
+    document.getElementById('resumoTable').style.display = '';
+    document.getElementById('resumoEmpty').style.display = 'none';
+
+    if (!data.rows || data.rows.length === 0) {
+        document.getElementById('resumoEmpty').style.display = '';
+        document.getElementById('resumoTable').style.display = 'none';
+    }
+
+    data.rows.forEach((row, idx) => {
+        // Pintar vermelho se horas_disponiveis <= -0.25 (margem de 15 min)
+        const isOver = row.horas_disponiveis !== null && row.horas_disponiveis <= -0.25;
+
+        // ── Linha principal ──────────────────────────────────────────
+        const tr = document.createElement('tr');
+        if (isOver) tr.classList.add('table-danger');
+
+        const hdispCell = row.horas_disponiveis !== null
+            ? row.horas_disponiveis
+            : '<span class="text-muted" data-i18n="field.nd">N/D</span>';
+        const hmaxCell = row.horas_max !== null
+            ? row.horas_max
+            : '<span class="text-muted" data-i18n="field.nd">N/D</span>';
+
+        tr.innerHTML = `
+            <td class="text-center">
+                <button class="toggle-btn" data-idx="${idx}" title="Expandir/Recolher" data-i18n="field.expandir_recolher" data-i18n-attr="title">
+                    <i class="fas fa-chevron-right fa-xs"></i>
+                </button>
+            </td>
+            <td>${row.teste_nome}</td>
+            <td>${hmaxCell}</td>
+            <td>${row.horas_colocadas}</td>
+            <td>${hdispCell}</td>
+        `;
+        tbody.appendChild(tr);
+
+        // ── Linha de detalhe (oculta) ────────────────────────────────
+        const detailTr = document.createElement('tr');
+        detailTr.classList.add('resumo-detail-row', 'd-none');
+        detailTr.dataset.parent = idx;
+
+        let detailRows = '';
+        if (row.detalhes.length === 0) {
+            detailRows = '<tr><td colspan="6" class="text-center text-muted fst-italic"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>';
+        } else {
+            row.detalhes.forEach(d => {
+                const extraBadge  = d.extra ? i18n.t('status.yes'): '';
+                const autoBadge = d.auto ? i18n.t('status.yes') : '';
+                const tipoCell = (d.auto && d.tipo && d.tipo.toLowerCase() === 'pep')
+                    ? i18n.t('field.projeto')
+                    : i18n.t('field.network');
+                detailRows += `
+                    <tr>
+                        <td>${d.tecnico}</td>
+                        <td>${d.data}</td>
+                        <td>${d.horas}</td>
+                        <td>${extraBadge}</td>
+                        <td>${autoBadge}</td>
+                        <td>${tipoCell}</td>
+                    </tr>`;
+            });
+        }
+
+        detailTr.innerHTML = `
+            <td colspan="5" class="p-0">
+                <table class="table table-sm mb-0" style="background:#f8f9fa;">
+                    <thead class="table-secondary">
+                        <tr>
+                            
+                    <th>${i18n.t('field.nome')}</th>
+                    <th>${i18n.t('field.data')}</th>
+                    <th>${i18n.t('field.horas')}</th>
+                    <th>${i18n.t('field.pedido_extra')}</th>
+                    <th>${i18n.t('field.gerado_auto')}</th>
+                    <th>${i18n.t('field.network_projeto')}</th>
+
+                        </tr>
+                    </thead>
+                    <tbody>${detailRows}</tbody>
+                </table>
+            </td>`;
+        tbody.appendChild(detailTr);
+    });
+
+    document.getElementById('resumoTitulo').textContent =
+    i18n.t('field.ensaio', '', { ensaio: data.ensaio });
+
+    document.getElementById('resumoBody').style.display = '';
+
+    // Toggle individual
+    tbody.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const idx = this.dataset.idx;
+            const detailRow = tbody.querySelector(`.resumo-detail-row[data-parent="${idx}"]`);
+            const icon = this.querySelector('i');
+            const hidden = detailRow.classList.contains('d-none');
+            detailRow.classList.toggle('d-none', !hidden);
+            icon.classList.toggle('fa-chevron-right', !hidden);
+            icon.classList.toggle('fa-chevron-down', hidden);
+        });
+    });
+}
+
+function expandirTodos() {
+    document.querySelectorAll('#resumoTbody .resumo-detail-row').forEach(r => r.classList.remove('d-none'));
+    document.querySelectorAll('#resumoTbody .toggle-btn i').forEach(i => {
+        i.classList.remove('fa-chevron-right');
+        i.classList.add('fa-chevron-down');
+    });
+}
+
+function recolherTodos() {
+    document.querySelectorAll('#resumoTbody .resumo-detail-row').forEach(r => r.classList.add('d-none'));
+    document.querySelectorAll('#resumoTbody .toggle-btn i').forEach(i => {
+        i.classList.remove('fa-chevron-down');
+        i.classList.add('fa-chevron-right');
+    });
+}
+
+function exportarConsultaParaExcel() {
+    if (!resumoAtual || !Array.isArray(resumoAtual.rows) || resumoAtual.rows.length === 0) {
+        alert(i18n.t('field.sem_dados'));
+        return;
+    }
+
+    const ws_data = [
+        [
+            i18n.t('field.ensaio'),
+            i18n.t('field.teste'),
+            i18n.t('field.horas_maximas'),
+            i18n.t('field.horas_colocadas'),
+            i18n.t('field.horas_disponiveis'),
+            i18n.t('field.nome'),
+            i18n.t('field.data'),
+            i18n.t('field.horas'),
+            i18n.t('field.pedido_extra'),
+            i18n.t('field.gerado_auto'),
+            i18n.t('field.network_projeto')
+        ]
+    ];
+
+    resumoAtual.rows.forEach(row => {
+        const detalhes = Array.isArray(row.detalhes) ? row.detalhes : [];
+
+        if (detalhes.length === 0) {
+            ws_data.push([
+                resumoAtual.ensaio || '',
+                row.teste_nome || '',
+                row.horas_max ?? '',
+                row.horas_colocadas ?? '',
+                row.horas_disponiveis ?? '',
+                '',
+                '',
+                '',
+                '',
+                '',
+                ''
+            ]);
+            return;
+        }
+
+        detalhes.forEach((det, idx) => {
+            ws_data.push([
+                idx === 0 ? (resumoAtual.ensaio || '') : '',
+                idx === 0 ? (row.teste_nome || '') : '',
+                idx === 0 ? (row.horas_max ?? '') : '',
+                idx === 0 ? (row.horas_colocadas ?? '') : '',
+                idx === 0 ? (row.horas_disponiveis ?? '') : '',
+                det.tecnico || '',
+                det.data || '',
+                det.horas ?? '',
+                det.extra ? i18n.t('status.yes') : '',
+                det.auto ? i18n.t('status.yes') : '',
+                (det.auto && det.tipo && String(det.tipo).toLowerCase() === 'pep')
+                    ? i18n.t('field.projeto')
+                    : i18n.t('field.network')
+            ]);
+        });
+    });
+
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+
+    ws['!cols'] = [
+        { wch: 12 },
+        { wch: 22 },
+        { wch: 12 },
+        { wch: 16 },
+        { wch: 17 },
+        { wch: 24 },
+        { wch: 12 },
+        { wch: 10 },
+        { wch: 14 },
+        { wch: 14 },
+        { wch: 18 }
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, i18n.t('index.hours_summary'));
+
+    const nomeEnsaio = String(resumoAtual.ensaio || 'resumo').replace(/[\\/:*?"<>|]/g, '_');
+    XLSX.writeFile(wb, i18n.t('index.hours_summary') + `_${nomeEnsaio}.xlsx`);
+}
+
+</script>
+{% endblock %}

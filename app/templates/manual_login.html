@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <title>Login Manual</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        body {
+            background: url("{{ url_for('static', filename='../assets/img/fundo.jpg') }}") no-repeat center center fixed;
+            background-size: cover;
+        }
+        .login-container {
+            max-width: 400px;
+            margin: 80px auto;
+            padding: 32px 24px;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+        }
+        .login-title {
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-align: center;
+            color: #f36f21;
+        }
+        .btn-login {
+            background: #f36f21;
+            border: none;
+        }
+        .btn-login:hover {
+            background: #d65c1a;
+        }
+        .small-label { font-size: 0.8em; }
+    </style>
+</head>
+<body><br><br><br>
+    <div class="login-container">
+        <h2 class="login-title">Laboratório</h2>
+        {% if error %}
+            <div class="alert alert-danger">{{ error }}</div>
+        {% endif %}
+        <form method="post">
+            <div class="mb-3">
+                <label for="username" class="form-label">Username:</label>
+                <input type="text" name="username" id="username" class="form-control" required autofocus>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Password:</label>
+                <input type="password" name="password" id="password" class="form-control" required>
+            </div>
+                <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" id="remember" name="remember">
+                <label class="form-check-label small-label" for="remember">Lembrar-se de mim</label>
+            </div>
+            <button type="submit" class="btn btn-login w-100">Entrar</button>
+        </form>
+    </div>
+</body>
+</html>

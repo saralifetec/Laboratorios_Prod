@@ -1,0 +1,1009 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="index.hours_summary">Referências PLME</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="index.hours_summary">Referências PLME</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+table.dataTable {
+    border-collapse: collapse;
+    width: 100% !important;
+    background: #fff;
+    color: #212529;
+    font-size: 12px !important;
+    margin-bottom: 1rem;
+}
+table.dataTable th, table.dataTable td {
+    border: 0px solid #dee2e6;
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+table.dataTable tbody td[contenteditable="true"]:focus {
+    outline: 1px solid #ced4da;
+    border-radius: 3px;
+    background: #f8f9fa;
+}
+
+table.dataTable thead th {
+    background: #f8f9fa;
+	font-size: 10px !important;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+table.dataTable tbody tr:nth-child(even) {
+    background: #f6f6f6;
+}
+table.dataTable tbody tr:hover {
+    background: #e9ecef;
+}
+table.dataTable tbody tr {
+    transition: background 0.2s;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td input,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    font-size: 10px !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+}
+.col-md-1 h6 {
+  font-size: 1rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 0;
+}
+</style>
+
+<div class="tabelas-page">
+
+	<form method="POST" action="" enctype="multipart/form-data" id="formReferencias">
+		<input type="hidden" id="referencia_id" name="referencia_id" value="">
+		<div class="tabelas-page">
+			<div class="row">    
+				<div class="col-md-12">
+					<div class="card">
+						<div class="card-header">
+							<div class="row align-items-center">
+								
+								<div class="col-md-1">
+									<h6><span data-i18n="field.referencia">Referência</span></h6>
+								</div>
+								<div class="col-md-2">
+									<input type="text" class="form-control" id="referencia" name="referencia" placeholder="Referência" list="referencias_list" value="">
+								</div>
+								<div class="col-md-8">
+									<button type="button" class="btn btn-info btn-sm" style="border-radius: 0;"  data-bs-toggle="modal" data-bs-target="#referenciasModal">
+										<i class="fas fa-list"></i>
+									</button>
+								</div>
+								<div class="col-md-1" style="text-align:right;">
+									<div class="dropdown">
+										<button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+										<i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+										</button>
+										<ul class="dropdown-menu" aria-labelledby="menuAcoes">
+											
+										</ul>
+									</div>
+								</div>
+							</div>	
+
+	 						<div class="card-body">
+								<div class="row">
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="laboratorio" class="col-md-3 col-form-label" data-i18n="field.laboratorio">Laboratório</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="laboratorio_id" name="laboratorio_id">
+													<option value="" selected disabled></option>
+													{% for laboratorio in laboratorios %}
+														<option value="{{ laboratorio.id }}">{{ laboratorio.laboratorio }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-9 col-lg-8">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="descricao" class="col-md-3 col-form-label" data-i18n="field.descricao">Descrição</label>
+											<div class="col-md-12 p-0">
+												<input type="text" class="form-control input-full" id="descricao" name="descricao"/>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="stock" class="col-md-3 col-form-label" data-i18n="field.stock">Stock</label>
+											<div class="col-md-12 p-0">
+												<input type="text" class="form-control input-full" id="stock" name="stock" disabled/>
+											</div>
+										</div>
+									</div>
+									
+									
+								</div>
+								<div class="row">
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="estado" class="col-md-3 col-form-label" data-i18n="field.gestao_plme">Gestão PLME</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="plme" name="plme">
+													<option value="1" selected><span data-i18n="status.yes">Sim</span></option>
+													<option value="0"><span data-i18n="status.no">Não</span></option>
+												</select>
+											</div>
+										</div>
+									</div>
+                                    <div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="componente" class="col-md-3 col-form-label"  data-i18n="field.tipo_componente">Tipo Componente</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="componente_id" name="componente_id">
+													<option value="" selected disabled></option>
+													{% for componente in componentes %}
+														<option value="{{ componente.id }}">{{ componente.componente }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="codprojecto" class="col-md-3 col-form-label"  data-i18n="field.projeto">
+												Projeto
+												
+											</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="projeto_id" name="projeto_id">
+													<option value="" selected disabled></option>
+													{% for projeto in projetos %}
+														<option value="{{ projeto.id }}">{{ projeto.codigo }} - {{ projeto.descricao }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="solicitante" class="col-md-3 col-form-label"  data-i18n="field.responsavel">Responsável</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="solicitante_id" name="solicitante_id">
+													<option value="" selected disabled></option>
+													{% for solicitante in solicitantes %}
+														<option value="{{ solicitante.id }}">{{ solicitante.nome }}</option>
+													{% endfor %}
+												</select>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="stockminimo" class="col-md-3 col-form-label" data-i18n="field.stock_minimo">Stock Mínimo</label>
+											<div class="col-md-12 p-0">
+												<input type="text" class="form-control input-full" id="stockminimo" name="stockminimo" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+											</div>
+										</div>
+									</div>
+									<div class="col-md-3 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="estado" class="col-md-3 col-form-label" data-i18n="field.status">Estado</label>
+											<div class="col-md-12 p-0">
+												<select class="form-control" id="estado_id" name="estado_id">
+													<option value="NA" selected><span data-i18n="atatus.na">NA</span></option>
+													<option value="Usado"><span data-i18n="status.used">Usado</span></option>
+													<option value="Novo"><span data-i18n="status.new">Novo</span></option>
+												</select>
+											</div>
+										</div>
+									</div>
+									
+								</div>
+								<div class="row">
+									<div class="col-md-2 col-lg-2">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="obsoleto" class="col-md-3 col-form-label"></label>
+											<div class="col-md-12 p-0">
+                                                <input type="checkbox" id="obsoleto" name="obsoleto" style="margin-right: 5px;">
+                                                <label for="obsoleto" style="margin-bottom:0;" data-i18n="field.obsolete">Obsoleto</label>
+                                            </div>
+										</div>
+									</div>
+                                    <div class="col-md-9 col-lg-10">
+										<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+											<label for="observacoes" class="col-md-3 col-form-label" data-i18n="field.observacoes">Observações</label>
+											<div class="col-md-12 p-0">
+												<input type="text" class="form-control input-full" id="observacoes" name="observacoes" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+											</div>
+										</div>
+									</div>
+								</div>
+								<br><br>
+								<div class="row">
+									<div class="col-md-1">
+										<button type="button" class="btn btn-warning btn-sm" onclick="clearFormFields()">
+											<span data-i18n="action.clear">
+                                            Limpar
+                                            </span>
+										</button>
+									</div>
+									<div class="col-md-2">
+										
+									</div>
+									<div class="col-md-7"></div>
+									<div class="col-md-1 align-right">
+										<button type="button" class="btn btn-info btn-sm" name="duplicar" onclick="duplicarClearFields()">
+                                            <span data-i18n="action.duplicate">
+											Duplicar
+                                            </span>
+										</button>
+									</div>
+									<div class="col-md-1 align-right">
+										<button type="submit" class="btn btn-success btn-sm" name="save_componente">
+                                            <span data-i18n="action.save">
+											Guardar
+                                            </span>
+										</button>
+									</div>
+									
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</form>
+
+	<!--TABELA mOVIMENTOS-->
+	<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5>Movimentos</h5>
+                <button id="addStock" type="button" class="btn btn-success btn-sm text-white dt-btn-rounded" title="Adicionar Stock" data-i18n="field.mais_stock" data-i18n-attr="title">
+                    <i class="fas fa-plus"></i> 
+                </button>
+
+				<button id="remStock" type="button" class="btn btn-danger btn-sm text-white dt-btn-rounded" title="Remover Stock" data-i18n="field.menos_stock" data-i18n-attr="title">
+                    <i class="fas fa-minus"></i> 
+                </button>
+                
+            </div>
+            <div class="card-body">
+                <div style="overflow-x:auto;"></div>
+                <table id="testesTable">
+                    <thead>
+                        <tr>
+                            <th style="width:40px;"><center>ID</center></th>
+                            <th><center><span data-i18n="field.ensaio">Ensaio</span></center></th>
+							<th style="width:90px;"><center><span data-i18n="field.tipo_movimento">Tipo Movimento</span></center></th>
+                            <th style="width:90px;"><center><span data-i18n="field.qtd">Qtd</span></center></th>
+                            <th style="width:220px;"><center><span data-i18n="field.localizacao">Localização</span></center></th>
+                            <th><center><span data-i18n="field.observacoes">Observações</span></center></th>
+                            <th style="width:50px;"><center><span data-i18n="action.delete">Eliminar</span></center></th>
+                        </tr>
+                    </thead>
+                    <tbody id="testesTableBody">
+                        <!-- Linhas serão adicionadas dinamicamente -->
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+
+</div>
+
+
+<!--******************************************************************-->
+<!--MODAL REFERENCIAS-->
+<div class="modal fade" id="referenciasModal" tabindex="-1" aria-labelledby="referenciasModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="referenciasModalLabel"><span data-i18n="field.selecionar">Selecionar</span> <span data-i18n="field.referencia">Referência</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <table id="tabelaReferencias"  class="table table-striped" style="width:100%">
+          <thead>
+            <tr>
+              <th><span data-i18n="field.referencia">Referência</span></th>
+              <th><span data-i18n="field.descricao">Descrição</span></th>
+              <th><span data-i18n="field.projeto">Projeto</span></th>
+              <th><span data-i18n="field.denominação">Denominação</span></th>
+              <th><span data-i18n="field.tipo_peca">Tipo Peça</span></th>
+              <th><span data-i18n="field.stock">Stock</span></th>
+              <th><span data-i18n="field.laboratorio">Laboratório</span></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SAÍDA DE STOCK -->
+<div class="modal fade" id="saidaStockModal" tabindex="-1" aria-labelledby="saidaStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="saidaStockModalLabel"><span data-i18n="field.saida_stock">Saída de Stock</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="saidaStockForm">
+                    <div class="mb-3">
+                        <label for="saidaReferencia" class="form-label"  data-i18n="field.referencia">Referência</label>
+                        <input type="text" class="form-control" id="saidaReferencia" name="referencia" readonly>
+                    </div>
+                    <div class="mb-3">
+                        <label for="saidaEnsaio" class="form-label"><span data-i18n="field.ensaio">Ensaio</span> (<span data-i18n="field.opcional">opcional</span>)</label>
+                        <select class="form-control" id="saidaEnsaio" name="ensaio">
+                            <option value=""></option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="saidaQuantidade" class="form-label" data-i18n="field.quantidade">Quantidade</label>
+                        <input type="number" class="form-control" id="saidaQuantidade" name="quantidade" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                      <label for="saidaLocalizacao" class="form-label" data-i18n="field.localizacao">Localização</label>
+                      <select class="form-control" id="saidaLocalizacao" name="localizacao" required>
+                        <option value=""></option>
+                        <!-- opções serão preenchidas via JS -->
+                      </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="saidaObs" class="form-label" data-i18n="field.observacoes">Observações</label>
+                        <input type="text" class="form-control" id="saidaObs" name="obs">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer justify-content-end">
+                <button type="submit" class="btn btn-success btn-sm" id="confirmSaidaStock"><span data-i18n="action.save">Guardar</span></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- MODAL ENTRADA DE STOCK -->
+<div class="modal fade" id="entradaStockModal" tabindex="-1" aria-labelledby="entradaStockModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="entradaStockModalLabel"><span data-i18n="field.entrada_stock">Entrada de Stock</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <form id="entradaStockForm">
+          <div class="mb-3">
+            <label for="entradaReferencia" class="form-label" data-i18n="field.referencia">Referência</label>
+            <input type="text" class="form-control" id="entradaReferencia" name="referencia" readonly>
+          </div>
+
+          <div class="mb-3">
+            <label for="entradaQuantidade" class="form-label" data-i18n="field.quantidade">Quantidade</label>
+            <input type="number" class="form-control" id="entradaQuantidade" name="quantidade" min="1" required>
+          </div>
+
+        <div class="mb-3">
+        <label for="entradaLocalizacao" class="form-label" data-i18n="field.localizacao">Localização</label>
+        <select class="form-control" id="entradaLocalizacao" name="localizacao" required>
+            <option value=""></option>
+            <!-- opções serão preenchidas via JS -->
+        </select>
+        </div>
+
+          <div class="mb-3">
+            <label for="entradaObs" class="form-label" data-i18n="field.observacoes">Observações</label>
+            <input type="text" class="form-control" id="entradaObs" name="obs">
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer justify-content-end">
+        <button type="button" class="btn btn-success btn-sm" id="confirmEntradaStock"><span data-i18n="action.save">Guardar</span></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+<script>
+////////////////////////////////////
+//ENTRADA STOCK
+$('#addStock').on('click', function() {
+    // Preencher referência selecionada
+    const ref = $('#referencia').val();
+    const refId = $('#referencia_id').val();
+    if (!ref || !refId) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.referencia'));
+        return;
+    }
+    $('#entradaReferencia').val(ref);
+    $('#entradaQuantidade').val('');
+    $('#entradaObs').val('');
+
+    $('#entradaLocalizacao').empty().append('<option value=""></option>');
+    fetch('/api/localizacoes?obsoleto=0')
+        .then(r => r.json())
+        .then(localizacoes => {
+            localizacoes.forEach(loc => {
+                $('#entradaLocalizacao').append(`<option value="${loc.id}">${loc.nome}</option>`);
+            });
+        });
+
+    $('#entradaStockModal').modal('show');
+});
+
+// Submeter entrada de stock
+$('#confirmEntradaStock').on('click', function() {
+    const referenciaId = $('#referencia_id').val();
+    const quantidade = parseInt($('#entradaQuantidade').val(), 10);
+    const obs = $('#entradaObs').val();
+    if (!referenciaId) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.referencia'));
+        return;
+    }
+
+    if (!quantidade || quantidade < 1) {
+        alert(i18n.t('msg.preencha') + ' ' + i18n.t('field.quantidade'));
+        return;
+    }
+
+    const localizacaoId = $('#entradaLocalizacao').val();
+    if (!localizacaoId) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.localizacao'));
+        return;
+    }
+    
+    enviarEntradaStock(referenciaId, quantidade, obs, localizacaoId);
+    
+});
+
+function enviarEntradaStock(referenciaId, quantidade, obs, localizacaoId) {
+    fetch('/api/entrada_stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+            referencia_id: referenciaId,
+            quantidade: quantidade,
+            movimento: '+',
+            obs: obs,
+            localizacao_id: localizacaoId
+        })
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(i18n.t('msg.dados_guardados_sucesso'));
+            $('#entradaStockModal').modal('hide');
+            // Atualizar tabela de movimentos e stock
+            if ($.fn.DataTable.isDataTable('#testesTable')) {
+                $('#testesTable').DataTable().ajax.reload(null, false);
+            }
+            // Atualizar campo stock
+            fetch(`/api/referencia_by_id?id=${referenciaId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.stock !== undefined) {
+                        $('#stock').val(data.stock);
+                    }
+                });
+        } else {
+            alert(result.error || i18n.t('msg.erro_ao_guardar'));
+        }
+    })
+    .catch(() => alert(i18n.t('msg.erro_ao_guardar')));
+}
+
+
+//SAIDA STOCK
+// Abrir modal de saída de stock ao clicar no botão
+$('#remStock').on('click', function() {
+    // Preencher referência selecionada
+    const ref = $('#referencia').val();
+    const refId = $('#referencia_id').val();
+    if (!ref || !refId) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.referencia'));
+        return;
+    }
+    $('#saidaReferencia').val(ref);
+    $('#saidaQuantidade').val('');
+    $('#saidaObs').val('');
+    // Preencher select de ensaios (opcional)
+    $('#saidaEnsaio').empty().append('<option value=""></option>');
+
+    $('#saidaLocalizacao').empty().append('<option value=\"\"></option>');
+   
+
+    if (refId) {
+        // Buscar ensaios associados ao projeto da referência
+        const projetoId = $('#projeto_id').val();
+        if (projetoId) {
+            fetch(`/api/ensaios?projeto_id=${projetoId}`)
+                .then(r => r.json())
+                .then(ensaios => {
+                    ensaios.forEach(e => {
+                        $('#saidaEnsaio').append(`<option value="${e.ensaio}">${e.ensaio}</option>`);
+                    });
+                });
+        }
+
+   
+        fetch(`/api/localizacoes_stock?referencia_id=${refId}`)
+            .then(r => r.json())
+            .then(localizacoes => {
+                console.log(i18n.t('field.localizacoes_stock') + ':', localizacoes); 
+                localizacoes.forEach(loc => {
+                    $('#saidaLocalizacao').append(`<option value="${loc.id}">${loc.nome} (${loc.stock})</option>`);
+                });
+            });
+        
+    }
+    $('#saidaStockModal').modal('show');
+});
+
+// Submeter saída de stock
+$('#confirmSaidaStock').on('click', function() {
+    const referenciaId = $('#referencia_id').val();
+    const ensaio = $('#saidaEnsaio').val();
+    const quantidade = parseInt($('#saidaQuantidade').val(), 10);
+    const obs = $('#saidaObs').val();
+    const localizacaoId = $('#saidaLocalizacao').val();
+    if (!localizacaoId) {
+        alert('Selecione a localização de saída.');
+        return;
+    }
+    if (!referenciaId ) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.referencia'));
+        return;
+    }
+
+    if (!quantidade || quantidade < 1) {
+        alert(i18n.t('msg.preencha') + ' ' + i18n.t('field.quantidade'));
+        return;
+    }
+    // Buscar ensaio_id se ensaio selecionado
+    let ensaio_id = null;
+    if (ensaio) {
+        // Buscar o id do ensaio pelo número
+        fetch(`/api/ensaios?projeto_id=${$('#projeto_id').val()}`)
+            .then(r => r.json())
+            .then(ensaios => {
+                const found = ensaios.find(e => e.ensaio == ensaio);
+                ensaio_id = found ? found.id : null;
+                const localizacaoId = $('#saidaLocalizacao').val();
+                enviarSaidaStock(referenciaId, ensaio_id, quantidade, obs, localizacaoId);
+            });
+    } else {
+        const localizacaoId = $('#saidaLocalizacao').val();
+        enviarSaidaStock(referenciaId, null, quantidade, obs, localizacaoId);
+    }
+});
+
+function enviarSaidaStock(referenciaId, ensaioId, quantidade, obs, localizacaoId) {
+    fetch('/api/saida_stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+            referencia_id: referenciaId,
+            ensaio_id: ensaioId,
+            quantidade: quantidade,
+            movimento: '-',
+            obs: obs,
+            localizacao_id: localizacaoId
+        })
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            alert(i18n.t('msg.dados_guardados_sucesso'));
+            $('#saidaStockModal').modal('hide');
+            // Atualizar tabela de movimentos e stock
+            if ($.fn.DataTable.isDataTable('#testesTable')) {
+                $('#testesTable').DataTable().ajax.reload(null, false);
+            }
+            // Atualizar campo stock
+            fetch(`/api/referencia_by_id?id=${referenciaId}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.stock !== undefined) {
+                        $('#stock').val(data.stock);
+                    }
+                });
+        } else {
+            alert(result.error || i18n.t('msg.erro_ao_guardar'));
+        }
+    })
+    .catch(() => alert(i18n.t('msg.erro_ao_guardar')));
+}
+
+
+
+////////////////////////////////////
+//ABRIR TABELA VAZIA
+$(document).ready(function() {
+	$('#testesTable').DataTable({
+		searching: false,
+		ordering: false,
+		paging: false,
+		info: false,
+		language: { url: i18n.getDataTablesLanguageUrl() },
+		columns: [
+			{ data: 'id' },
+			{ data: 'ensaio_id' },
+			{ 
+				data: 'movimento',
+				render: function(data) {
+					return data === '+' ? i18n.t('field.entrada') : (data === '-' ? i18n.t('field.saida') : (data || ''));
+				}
+			},
+			{ data: 'quantidade' },
+            { data: 'localizacao' },
+			{ data: 'obs' },
+			{ 
+				data: null,
+				render: function(data, type, row) {
+					return '<center><i class="fas fa-trash-alt text-danger delete-teste" style="cursor:pointer;" title="Eliminar" data-i18n="action.delete" data-i18n-attr="title" data-id="'+row.id+'"></i></center>';
+				},
+				orderable: false
+			}
+		]
+	});
+
+    // Auto-fill form if referencia_id is passed in URL
+    const params = new URLSearchParams(window.location.search);
+    const refIdParam = params.get('referencia_id');
+    if (refIdParam) {
+        fetch(`/api/referencia_by_id?id=${refIdParam}`)
+            .then(r => r.json())
+            .then(data => {
+                if (data && data.id) {
+                    fillReferenciaForm(data);
+                }
+            });
+    }
+
+
+
+});
+
+/////////////////////////////////////////////////////////////
+// Evento para eliminar movimento
+$(document).on('click', '.delete-teste', function() {
+    const movimentoId = $(this).data('id');
+    if (!movimentoId) return;
+    if (confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.movimento') + '?')) {
+        fetch(`/api/movimentostock/delete/${movimentoId}`, {
+            method: 'DELETE',
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                // Atualizar a tabela
+                $('#testesTable').DataTable().ajax.reload(null, false);
+            } else {
+                alert(result.error || i18n.t('msg.error_delete'));
+            }
+        })
+        .catch(() => alert(i18n.t('msg.error_delete')));
+    }
+});
+
+
+//////////////////////////////////////////////////////////////
+//tabela do modal
+
+$('#referenciasModal').on('show.bs.modal', function () {
+    $('#tabelaReferencias').DataTable({
+        destroy: true,
+        ajax: { url: '/api/referencias', dataSrc: '' },
+        columns: [
+            {
+                data: 'referencia',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `<a href="#" class="selecionar-referencia" data-id="${row.id}">${data}</a>`;
+                    }
+                    return data;
+                }
+            },
+            { data: 'descricao' },
+            { data: 'projeto_codigo' },
+            { data: 'projeto_descricao' },
+            { data: 'tipopeca' },
+            { data: 'stock' },
+            { data: 'laboratorio_nome' }
+        ],
+        dom: '<"top"f>rt<"bottom"ip><"clear">',
+        pagingType: "simple_numbers",
+        language: { url: i18n.getDataTablesLanguageUrl() }
+    });
+});
+
+$(document).on('click', '.selecionar-referencia', function(e) {
+    e.preventDefault();
+    const id = $(this).data('id');
+    fetch(`/api/referencia_by_id?id=${id}`)
+        .then(r => r.json())
+        .then(data => {
+            if (data && data.id) {
+                fillReferenciaForm(data);
+                $('#referenciasModal').modal('hide');
+            } else {
+                alert(i18n.t('field.referencia') + ' ' + i18n.t('msg.nao_encontrado'));
+            }
+        })
+        .catch(() => alert(i18n.t('common.error_loading') + ' ' + i18n.t('field.referencia')));
+});
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+//prevenir submit sem carregar no botão
+document.getElementById('formReferencias').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && e.target.tagName.toLowerCase() !== 'textarea') {
+        e.preventDefault();
+    }
+});
+
+//////////////////////////////////////////////////////////
+//LIMPAR FORMULARIO
+
+function clearFormFields() {
+    const form = document.getElementById('formReferencias');
+    if (!form) return;
+
+    // Limpar inputs de texto
+    form.querySelectorAll('input[type="text"]').forEach(input => input.value = '');
+    // Limpar selects
+    form.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+    // Limpar checkboxes
+    form.querySelectorAll('input[type="checkbox"]').forEach(checkbox => checkbox.checked = false);
+    // Limpar hidden id
+    const idInput = document.getElementById('referencia_id');
+    if (idInput) idInput.value = '';
+}
+
+///////////////////////////////////////////////////////////
+//BOTÃO DUPLICAR
+function duplicarClearFields() {
+    const referenciaInput = document.getElementById('referencia');
+    if (referenciaInput) referenciaInput.value = '';
+    const idInput = document.getElementById('referencia_id');
+    if (idInput) idInput.value = '';
+    const stockInput = document.getElementById('stock');
+    if (stockInput) stockInput.value = '';
+    if ($.fn.DataTable.isDataTable('#testesTable')) {
+        $('#testesTable').DataTable().clear().draw();
+    }
+}
+
+
+//////////////////////////////////////////////////////////////
+//BOTÃO GUARDAR
+document.getElementById('formReferencias').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const id = document.getElementById('referencia_id').value;
+    const url = id ? `/referencias/update/${id}` : '/referencias';
+    const method = 'POST';
+
+    // Montar os dados do formulário
+    const formData = new FormData(this);
+    // Converter para objeto simples
+    const data = {};
+    formData.forEach((value, key) => {
+		if (key === 'obsoleto') {
+			data[key] = document.getElementById(key).checked ? 1 : 0;
+		} else if (key === 'plme') {
+			data[key] = document.getElementById('plme').value;
+		} else if (key === 'referencia') {
+			// Garante que pega o valor atual do input, mesmo com autocomplete
+			data[key] = document.getElementById('referencia').value;
+		} else {
+			data[key] = value;
+		}
+	});
+
+    fetch(url, {
+        method: method,
+        headers: {
+            'Accept': 'application/json'
+        },
+        body: new URLSearchParams(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert(result.message || i18n.t('msg.dados_guardados_sucesso'));
+        
+        } else {
+            alert(result.error || i18n.t('msg.erro_ao_guardar'));
+        }
+    })
+    .catch(() => alert(i18n.t('msg.erro_ao_guardar')));
+});
+
+
+// Função para preencher o formulário com os dados de uma referência
+function fillReferenciaForm(data) {
+    document.getElementById('referencia_id').value = data.id || '';
+    document.getElementById('referencia').value = data.referencia || '';
+    document.getElementById('descricao').value = data.descricao || '';
+    document.getElementById('projeto_id').value = data.projeto_id || '';
+    document.getElementById('componente_id').value = data.componente_id || '';
+    document.getElementById('laboratorio_id').value = data.laboratorio_id || '';
+    document.getElementById('solicitante_id').value = data.solicitante_id || '';
+    document.getElementById('stockminimo').value = data.stockminimo || '';
+    document.getElementById('observacoes').value = data.obs || '';
+    document.getElementById('estado_id').value = data.estado || 'NA';
+    document.getElementById('plme').value = data.plme ? '1' : '0';
+    document.getElementById('obsoleto').checked = !!data.obsoleto;
+    document.getElementById('referencia').value = data.referencia || '';
+    document.getElementById('stock').value = data.stock || '';
+
+	// Atualizar a tabela de movimentos
+    $('#testesTable').DataTable({
+        destroy: true,
+        ajax: { url: '/api/movimentostock?referencia_id=' + (data.id || ''), dataSrc: '' },
+        columns: [
+            { data: 'id' },
+            { data: 'ensaio' },
+            { 
+                data: 'movimento',
+                render: function(data) {
+                    return data === '+' ? i18n.t('field.entrada') : (data === '-' ? i18n.t('field.saida') : (data || ''));
+                }
+            },
+            { data: 'quantidade' },
+            { 
+                data: 'localizacao',
+                render: function(data) { return data || ''; }
+            },
+            { 
+                data: 'obs',
+                render: function(data, type, row) {
+                    if (type === 'display') {
+                        return `<input type="text" class="form-control form-control-sm editable-input" data-field="obs" data-id="${row.id}" value="${data || ''}" style="width:420px;"/>`;
+                    }
+                    return data;
+                }
+            },
+			{
+				data: null,
+				render: function(data, type, row) {
+					return '<center><i class="fas fa-trash-alt text-danger delete-teste" style="cursor:pointer;" title="Eliminar" data-i18n="action.delete" data-i18n-attr="title" data-id="'+row.id+'"></i></center>';
+				},
+				orderable: false
+			}
+        ],
+        dom: '<\"top\"f>rt<\"bottom\"ip><\"clear\">',
+        pagingType: 'simple_numbers',
+        language: { url: '/assets/js/plugin/datatables/Portuguese.json' }
+    });
+
+
+
+}
+
+$('#testesTable').on('draw.dt', function() {
+    const referenciaId = $('#referencia_id').val();
+    if (!referenciaId) return;
+    // Buscar projeto da referência selecionada
+    const projetoId = $('#projeto_id').val();
+    if (!projetoId) return;
+    // Buscar todos os ensaios do projeto
+    fetch(`/api/ensaios?projeto_id=${projetoId}`)
+        .then(r => r.json())
+        .then(ensaios => {
+            $('.editable-select-ensaio').each(function() {
+                const rowId = $(this).data('id');
+                const currentValue = $(this).closest('tr').find('td').eq(1).text();
+                $(this).empty();
+                ensaios.forEach(e => {
+                    const selected = (e.ensaio == currentValue) ? 'selected' : '';
+                    $(this).append(`<option value="${e.ensaio}" ${selected}>${e.ensaio}</option>`);
+                });
+            });
+        });
+});
+
+// Evento para atualizar selects e inputs
+$(document).on('change', '.editable-select-ensaio, .editable-select-movimento, .editable-input', function() {
+    const id = $(this).data('id');
+    let field, value;
+    if ($(this).hasClass('editable-select-ensaio')) {
+        field = 'ensaio';
+        value = $(this).val();
+    } else if ($(this).hasClass('editable-select-movimento')) {
+        field = 'movimento';
+        value = $(this).val();
+    } else {
+        field = $(this).data('field');
+        value = $(this).val();
+    }
+    if (!id || !field) return;
+    fetch(`/api/movimentostock/update/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ [field]: value })
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (!result.success) {
+            alert(result.error || i18n.t('msg.erro_ao_guardar'));
+        }
+    })
+    .catch(() => alert(i18n.t('msg.erro_ao_guardar')));
+});
+
+
+
+//buscar e preencher ao pressionar Enter no campo referência
+document.getElementById('referencia').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        const ref = this.value.trim();
+        if (ref) {
+            fetch(`/api/referencia_by_nome?referencia=${encodeURIComponent(ref)}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data && data.id) {
+                        fillReferenciaForm(data);
+                    } else {
+                    alert(i18n.t('field.referencia') + ' ' + i18n.t('msg.nao_encontrado'));
+                }
+            })
+            .catch(() => alert(i18n.t('common.error_loading') + ' ' + i18n.t('field.referencia')));
+            }
+    }
+});
+
+
+
+
+</script>
+
+{% endblock %}

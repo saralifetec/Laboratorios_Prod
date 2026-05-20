@@ -1,0 +1,292 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="page.historico_ensaios">Histórico de Ensaios</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="page.historico_ensaios">Histórico de Ensaios</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+#tabelaHistoricoEnsaios {
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+#tabelaHistoricoEnsaios thead th,
+#tabelaHistoricoEnsaios tbody td {
+    font-size: 0.8em !important;
+    white-space: nowrap;
+    font-weight: bold !important;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    text-align: left !important;
+    vertical-align: middle !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#tabelaHistoricoEnsaios tbody td {
+    font-weight: normal !important;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+</style>
+
+
+
+<div class="tabelas-page">
+	<div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+                    <div class="row">
+                       <div class="container mt-12">
+                            
+                        <div class="row mb-5">
+                            <div class="col-md-2 d-flex align-items-center gap-2">
+                                <label for="tipo" class="form-label mb-0" style="white-space: nowrap;">
+                                    <span data-i18n="field.tipo"><b>Tipo</b></span>
+                                </label>
+                                <select class="form-control form-control-sm" id="tipo" name="tipo" style="width:150px;">
+                                    <option value="todos"><span data-i18n="common.all">Todos</option>
+                                    <option value="concluidos"><span data-i18n="field.concluidos">Concluídos</option>
+                                    <option value="pendentes"><span data-i18n="field.pendentes">Pendentes</option>
+                                    <option value="anulados"><span data-i18n="field.anulados">Anulados</option>
+                                </select>
+                            </div>
+                            <div class="col-md-9 d-flex align-items-center gap-2">
+                                <label for="laboratorio" class="form-label mb-0" style="white-space: nowrap;">
+                                    <span data-i18n="field.laboratorio"><b>Laboratório</b></span>
+                                </label>
+                                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;">
+                                   
+                                </select>
+                            </div>
+                            <div class="col-md-1" style="text-align:right;">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+                                    <i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                                    <li>
+                                        <a class="dropdown-item" href="#" onclick="exportarConsultaParaExcel(); return false;">
+                                            <i class="fas fa-file-excel"></i> <span data-i18n="action.export">Exportar</span>
+                                        </a>
+                                    </li>
+                                    
+                                    </ul>
+                                </div>
+                                <!-- O input file continua escondido -->
+                                <input type="file" class="form-control-file" id="excelFile" name="excelFile" accept=".xlsx, .xls" style="display: none;" onchange="uploadExcel()">
+                            </div>
+                        </div>
+                                
+                            
+                        
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <br>
+                                            <table id="tabelaHistoricoEnsaios" style="width:100%">
+                                                <thead>
+                                                    <tr>
+                                                        <th><span data-i18n="field.ensaio">Ensaio</span></th>
+                                                        <th><span data-i18n="field.laboratorio">Laboratório</span></th>
+                                                        <th><span data-i18n="field.norma">Norma</span></th>
+                                                        <th><span data-i18n="field.field.n_pecas">Nº de Peças</span></th>
+                                                        <th><span data-i18n="field.destino_pecas">Destino das Peças</span></th>
+                                                        <th><span data-i18n="field.data">Data</span></th>
+                                                        <th><span data-i18n="field.data_limite_solicitada">Data Limite Solicitada</span></th>
+                                                        <th><span data-i18n="field.pep">PEP</span></th>
+                                                        <th><span data-i18n="field.network">Network</span></th>
+                                                        <th><span data-i18n="field.part_number_zf">Part Nº ZF</span></th>
+                                                        <th><span data-i18n="part_number_cliente">Part Nº Cliente</span></th>
+                                                        <th><span data-i18n="data_entrega_pecas">Data Entrega Peças</span></th>
+                                                        <th><span data-i18n="data_limite_acordada">Data Limite Acordada</span></th>
+                                                        <th><span data-i18n="field.concluido_em">Concluído em</span></th>
+                                                        <th><span data-i18n="field.cliente">Cliente</span></th>
+                                                        <th><span data-i18n="field.projeto">Projeto</span></th>
+                                                        <th><span data-i18n="field.denominacao">Denominação</span></th>
+                                                        <th><span data-i18n="field.tipo_peca">Tipo de Peça</span></th>
+                                                        <th><span data-i18n="field.fase">Fase</span></th>
+                                                        <th><span data-i18n="field.solicitante">Solicitante</span></th>
+                                                        <th><span data-i18n="field.tecnico">Técnico</span></th>
+                                                        <th><span data-i18n="field.observacoes">Observações</span></th>
+                                                        <th><span data-i18n="field.anulado">Anulado</span></th>
+                                                        <th><span data-i18n="field.motivo_anulacao">Motivo Anulação</span></th>
+                                                    </tr>
+                                                    
+                                                </thead>
+                                               
+                                                <tbody>
+                                                    <!-- Os dados serão preenchidos por JS via AJAX -->
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                   
+                                    
+                             
+                              
+
+
+                        </div>
+
+
+
+
+
+                    </div>
+
+
+
+        			
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+
+///////////////////////////////////////////
+//carregar tabela
+function carregarHistoricoEnsaios() {
+    const tipo = $('#tipo').val() || 'todos';
+    const laboratorioId = $('#laboratorio').val() || 'todos';
+
+
+    if ($.fn.DataTable.isDataTable('#tabelaHistoricoEnsaios')) {
+        $('#tabelaHistoricoEnsaios').DataTable().clear().destroy();
+    }
+
+    $.ajax({
+        url: `/api/ensaios_concluidos?tipo=${encodeURIComponent(tipo)}&laboratorio_id=${encodeURIComponent(laboratorioId)}`,
+        method: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            let rows = '';
+            data.forEach(e => {
+                rows += `<tr>
+                    <td><a href="/ensaios?ensaio=${encodeURIComponent(e.ensaio)}" class="link-ensaio" data-ensaio="${e.ensaio}">${e.ensaio}</a></td>
+                    <td>${e.laboratorio || ''}</td>
+                    <td>${e.norma || ''}</td>
+                    <td>${e.npecasrecebidas || ''}</td>
+                    <td>${e.destinopecas || ''}</td>
+                    <td>${e.datapedido || ''}</td>
+                    <td>${e.datasolicitada || ''}</td>
+                    <td>${e.pep || ''}</td>
+                    <td>${e.network || ''}</td>
+                    <td>${e.partnzf || ''}</td>
+                    <td>${e.partncliente || ''}</td>
+                    <td>${e.dataentregapecas || ''}</td>
+                    <td>${e.dataacordada || ''}</td>
+                    <td>${e.concluido || ''}</td>
+                    <td>${e.cliente || ''}</td>
+                    <td>${e.projeto || ''}</td>
+                    <td>${e.projeto_descricao || ''}</td>
+                    <td>${e.tipopeca || ''}</td>
+                    <td>${e.fase || ''}</td>
+                    <td>${e.solicitante || ''}</td>
+                    <td>${e.user || ''}</td>
+                    <td>${e.obs || ''}</td>
+                    <td>${e.anulado ? 'Sim' : 'Não'}</td>
+                    <td>${e.motivoanulacao || ''}</td>
+                </tr>`;
+            });
+
+            $('#tabelaHistoricoEnsaios tbody').html(rows);
+
+            const colWidths = [
+                '80px','100px','80px','60px','100px','80px','80px','80px','80px','80px','80px','80px','80px','80px','100px','100px','120px','80px','60px','100px','100px','120px','80px','120px'
+            ];
+
+            $('#tabelaHistoricoEnsaios').DataTable({
+                order: [[13, 'desc']],
+                pageLength: 25,
+                scrollX: true,
+                autoWidth: false,
+                columns: colWidths.map(w => ({ width: w })),
+                language: { url: i18n.getDataTablesLanguageUrl() }
+            });
+        }
+    });
+}
+
+$(document).ready(async function() {
+    await carregarLaboratorios();
+    carregarHistoricoEnsaios();
+
+    $('#tipo').on('change', carregarHistoricoEnsaios);
+    $('#laboratorio').on('change', carregarHistoricoEnsaios);
+
+    $(document).on('click', '.link-ensaio', function(e) {
+        e.preventDefault();
+        const ensaio = $(this).data('ensaio');
+        window.location.href = `/ensaios?ensaio=${encodeURIComponent(ensaio)}`;
+    });
+});
+
+
+//////////////////////////////////////////
+//exportar para excel
+
+function exportarConsultaParaExcel() {
+    // Pega os dados da tabela (incluindo cabeçalhos)
+    var table = document.getElementById('tabelaHistoricoEnsaios');
+    var wb = XLSX.utils.table_to_book(table, {sheet: "Histórico de Ensaios"});
+    XLSX.writeFile(wb, i18n.t('page.historico_ensaios') + ".xlsx");
+}
+
+async function carregarLaboratorios() {
+    const selectLab = document.getElementById('laboratorio');
+    selectLab.innerHTML = '<option value="todos"><span data-i18n="common.all">Todos</span></option>';
+
+    try {
+        const [labsRes, meRes] = await Promise.all([
+            fetch('/laboratorios/ativos'),
+            fetch('/api/me')
+        ]);
+
+        const labs = await labsRes.json();
+        const me = await meRes.json();
+        const userLab = String(me.laboratorio_id || '');
+
+        labs.forEach(lab => {
+            const opt = document.createElement('option');
+            opt.value = String(lab.id);
+            opt.textContent = lab.laboratorio;
+            selectLab.appendChild(opt);
+        });
+
+        // mantém "Todos" como primeira opção, mas seleciona o lab do user
+        const exists = [...selectLab.options].some(o => o.value === userLab);
+        selectLab.value = exists ? userLab : 'todos';
+    } catch (err) {
+        console.error(i18n.t('common.error_loading') + ' ' + i18n.t('field.laboratorios') + ':', err);
+        selectLab.value = 'todos';
+    }
+}
+
+
+
+</script>
+
+{% endblock %}

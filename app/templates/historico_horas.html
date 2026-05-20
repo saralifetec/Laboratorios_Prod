@@ -1,0 +1,456 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="field.hitorico_horas">Histórico Horas</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="field.hitorico_horas">Histórico Horas</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+/* Tabela compacta */
+#tabelaDatasExportacao {
+    font-size: 0.85em;
+}
+#tabelaDatasExportacao thead th {
+    font-size: 1.0em;
+    font-weight: 500;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+#tabelaDatasExportacao tbody td {
+    font-size: 1.0em;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.dataTables_wrapper .dataTables_paginate .pagination {
+    font-size: 0.8em !important;
+}
+.dataTables_wrapper .dataTables_paginate .page-item .page-link {
+    font-size: 0.8em !important;
+    padding: 2px 8px !important;
+}
+</style>
+
+<div class="tabelas-page">
+	<div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+					<div class="card-title">
+						<div class="row">
+                            <div class="d-flex align-items-center gap-3" style="width:100%">
+                                <label for="tipo" class="form-label mb-0 me-2"  data-i18n="field.tipo">Tipo</label>
+                                <select class="form-control form-control-sm me-3" id="consulta" name="consulta" required style="width:auto;max-width:120px;">
+                                    <option value="Técnico"><span data-i18n="field.pessoa">Pessoa</span></option>
+                                        {% if user.funcao_id != 1 %}
+                                            <option value="Máquina"><span data-i18n="field.maquina">Máquina</span></option>
+                                        {% endif %}
+                                </select>
+                                <div id="tecnico_nome_group">
+                                    <label for="tecnico_id" class="form-label mb-0 me-2" data-i18n="field.nome">Nome</label>
+                                    <select class="form-control form-control-sm" id="tecnico_id" name="tecnico_id" required style="width:auto;max-width:180px;">
+                                        {% if user.funcao_id == 1 %}
+                                            <option value="{{ user.id }}">{{ user.full_name }}</option>
+                                        {% else %}
+                                        {% for tecnico in tecnicos %}
+                                            <option value="{{ tecnico.id }}" {% if tecnico.id == user.id %}selected{% endif %}>
+                                                {{ tecnico.full_name }}
+                                            </option>
+                                        {% endfor %}
+                                        {% endif %}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+					
+                    <br><br>
+
+                    <div class="row">
+                        <div id="datasExportacao">
+                            <div class="table-responsive">
+                              <table id="tabelaDatasExportacao">
+                                <thead>
+                                  <tr>
+                                    <th><span data-i18n="data_exportacao">Data da Exportação</span></th>
+                                    <th></th>
+                                    <th style="text-align:center;"><span data-i18n="action.export">Exportar</span></th>
+                                    <th style="text-align:center;"><span data-i18n="action.anular">Anular</span></th>
+                                  </tr>
+                                </thead>
+                                <tbody></tbody>
+                              </table>
+                            </div>
+                        </div>
+                    </div>
+
+
+
+        			
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    var selectTipo = document.getElementById('consulta');
+    var tecnicoGroup = document.getElementById('tecnico_nome_group');
+    var tecnicoSelect = document.getElementById('tecnico_id');
+
+    function toggleNome() {
+        if (selectTipo.value === 'Técnico') {
+            tecnicoGroup.style.display = 'flex';
+            if (tecnicoSelect) {
+                preencherDatasExportacaoDatatable(tecnicoSelect.value);
+            }
+        } else {
+            tecnicoGroup.style.display = 'none';
+            preencherDatasExportacaoDatatable();
+        }
+    }
+    selectTipo.addEventListener('change', toggleNome);
+    if (tecnicoSelect) {
+        tecnicoSelect.addEventListener('change', function() {
+            if (selectTipo.value === 'Técnico') {
+                preencherDatasExportacaoDatatable(tecnicoSelect.value);
+            }
+        });
+    }
+    setTimeout(toggleNome, 0);
+});
+
+
+//TABELA HORAS PESSOA
+function preencherDatasExportacaoDatatable() {
+
+    //  destruir antes de mexer no DOM
+    if ($.fn.DataTable.isDataTable('#tabelaDatasExportacao')) {
+        $('#tabelaDatasExportacao').DataTable().destroy();
+    }
+
+    const table = document.getElementById('tabelaDatasExportacao');
+    if (!table) return;
+
+    const tbody = table.querySelector('tbody');
+    const theadRow = table.querySelector('thead tr');
+    if (!tbody || !theadRow) return;
+
+    tbody.innerHTML = '';
+    theadRow.innerHTML = '';
+
+    const tipo = document.getElementById('consulta').value;
+    let fetchUrl;
+
+    if (tipo === 'Técnico') {
+        const tecnicoSelect = document.getElementById('tecnico_id');
+        const tecnico_id = tecnicoSelect?.value;
+        if (!tecnico_id) return;
+
+        fetchUrl = `/api/datas_exportacao_tecnico?tecnico_id=${tecnico_id}`;
+    } else {
+        fetchUrl = `/api/datas_exportacao_maquina`;
+    }
+
+    fetch(fetchUrl)
+        .then(r => r.json())
+        .then(datas => {
+            if (!Array.isArray(datas)) datas = [];
+
+            // cabeçalho
+            theadRow.innerHTML = `<th><span data-i18n="field.data_exportacao">Data da Exportação</span></th>`;
+            theadRow.innerHTML += (tipo === 'Máquina')
+                ? `<th><span data-i18n="field.laboratorio">Laboratório</span></th>`
+                : `<th></th>`;
+            theadRow.innerHTML += `
+                <th style="text-align:center;"><span data-i18n="action.exportar">Exportar</span></th>
+                <th style="text-align:center;"><span data-i18n="action.anular">Anular</span></th>
+            `;
+
+            // corpo
+            if (!datas.length) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="4" class="text-center"><span data-i18n="field.sem_dados">Sem dados</span></td>
+                    </tr>`;
+            } else {
+                datas.forEach(row => {
+                    const data = (tipo === 'Máquina') ? row.data : row;
+                    const lab = (tipo === 'Máquina') ? row.laboratorio : '';
+
+                    tbody.insertAdjacentHTML('beforeend', `
+                        <tr>
+                            <td>${data}</td>
+                            ${tipo === 'Máquina' ? `<td>${lab}</td>` : `<td></td>`}
+                            <td class="text-center">
+                                <button class="btn btn-link p-0"
+                                  onclick="exportarExcelData('${data}')">
+                                  <i class="fas fa-file-excel text-success"></i>
+                                </button>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-link p-0"
+                                  onclick="anularExportacao('${data}')">
+                                  <i class="fas fa-times text-danger"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `);
+                });
+            }
+
+            // recriar DataTable
+            $('#tabelaDatasExportacao').DataTable({
+                paging: true,
+                searching: false,
+                info: false,
+                ordering: false,
+                pageLength: 10,
+                pagingType: "simple_numbers",
+                language: { url: i18n.getDataTablesLanguageUrl() }
+            });
+        })
+        .catch(err => console.error(err));
+}
+
+
+
+//ANULAR EXPORTAÇÃO
+function anularExportacao(data) {
+    var tipo = document.getElementById('consulta').value;
+    if (!confirm(i18n.t('msg.anular_exp') + ' ' + data + '?')) return;
+    if (tipo === 'Técnico') {
+        var tecnico_id = document.getElementById('tecnico_id').value;
+        fetch('/api/anular_exportacao_data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ tecnico_id, data })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                preencherDatasExportacaoDatatable(tecnico_id);
+            } else {
+                alert(res.error || i18n.t('msg.erro_anular') + ' ' + i18n.t('field.exportacao'));
+            }
+        });
+    } else {
+        fetch('/api/anular_exportacao_maquina_data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ data })
+        })
+        .then(r => r.json())
+        .then(res => {
+            if (res.success) {
+                preencherDatasExportacaoDatatable();
+            } else {
+                alert(res.error || i18n.t('msg.erro_anular') + ' ' + i18n.t('field.exportacao'));
+            }
+        });
+    }
+}
+
+
+//EXPORTAR EXCEL
+function exportarExcelData(data) {
+
+    var tipo = document.getElementById('consulta').value;
+        if (tipo === 'Máquina') {
+        fetch(`/api/exportar_horas_maquina_por_data?data=${encodeURIComponent(data)}`)
+            .then(r => r.json())
+            .then(todosTestes => {
+                if (!todosTestes.length) {
+                    alert(i18n.t('msg.sem_horas'));
+                    return;
+                }
+                gerarCsvMaquina(todosTestes, data);
+            });
+        return;
+    }else{
+        const tecnicoNome = document.getElementById('tecnico_id').selectedOptions[0].text;
+        const tecnicoId = document.getElementById('tecnico_id').value;
+
+        fetch('/api/exportar_horas_por_data', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({tecnico_id: tecnicoId, data: data})
+        })
+        .then(resp => resp.json())
+        .then(horas => {
+            if (!horas.length) {
+                alert(i18n.t('msg.sem_horas'));
+                return;
+            }
+            let projetosPorMes = {}, codigosGPorMes = {};
+            horas.forEach(h => {
+    const mes = h.mes;
+
+    if (!projetosPorMes[mes])  projetosPorMes[mes]  = {};
+    if (!codigosGPorMes[mes])  codigosGPorMes[mes]  = {};
+
+    // ==============================
+    // 1) ENSAIO → folha de projetos
+    // ==============================
+    if (h.tipo === 'ensaio') {
+        const network = h.network || h.ensaio;
+
+        if (!projetosPorMes[mes][network]) {
+            projetosPorMes[mes][network] = {
+                network: network,
+                horasDias: Array(31).fill(''),
+                laboratorio_elmact: h.laboratorio_elmact || '',
+                laboratorio_act:   h.laboratorio_act   || ''
+            };
+        }
+
+        const atual = parseFloat(projetosPorMes[mes][network].horasDias[h.dia - 1]) || 0;
+        projetosPorMes[mes][network].horasDias[h.dia - 1] = atual + h.horas;
+        return;
+    }
+
+    // ========================================================
+    // 2) CÓDIGOS G (normais) → folha de códigos G
+    // ========================================================
+    if (h.tipo === 'codigog' && h.codigog) {
+        if (!codigosGPorMes[mes][h.codigog])
+            codigosGPorMes[mes][h.codigog] = Array(31).fill('');
+
+        const atual = parseFloat(codigosGPorMes[mes][h.codigog][h.dia - 1]) || 0;
+        codigosGPorMes[mes][h.codigog][h.dia - 1] = atual + h.horas;
+        return;
+    }
+
+    // ========================================================
+    // 3) MODO PEP → tipo "codigog-pep"
+    //    h.network contém o valor PEP enviado pelo backend
+    // ========================================================
+    if (h.tipo === 'codigog-pep' && h.network) {
+        const pep = h.network;
+
+        if (!codigosGPorMes[mes][pep])
+            codigosGPorMes[mes][pep] = Array(31).fill('');
+
+        const atual = parseFloat(codigosGPorMes[mes][pep][h.dia - 1]) || 0;
+        codigosGPorMes[mes][pep][h.dia - 1] = atual + h.horas;
+        return;
+    }
+});
+            let wb = XLSX.utils.book_new();
+            Object.keys(projetosPorMes).forEach(mes => {
+                let ws_data = [];
+                Object.values(projetosPorMes[mes]).forEach(proj => {
+                    let row = [
+                        'O8MTCZ',
+                        proj.network,
+                        proj.laboratorio_elmact || '',
+                        proj.laboratorio_act || '',
+                        '', '', ''
+                    ];
+                    let horasDiasArr = Array.isArray(proj.horasDias) ? proj.horasDias : Array(31).fill('');
+                    row = row.concat(horasDiasArr.map(h => h ? h.toFixed(2).replace('.', ',') : ''));
+                    ws_data.push(row);
+                });
+                if (ws_data.length > 0) {
+                    let ws = XLSX.utils.aoa_to_sheet(ws_data);
+                    XLSX.utils.book_append_sheet(wb, ws, `ZPLME-${mes}`);
+                }
+            });
+            Object.keys(codigosGPorMes).forEach(mes => {
+                let ws_data = [];
+                Object.entries(codigosGPorMes[mes]).forEach(([codigog, horasDias]) => {
+                    let row = ['O8MTCZ', codigog, '', '', '', '', ''];
+                    row = row.concat(horasDias.map(h => h ? h.toFixed(2).replace('.', ',') : ''));
+                    ws_data.push(row);
+                });
+                if (ws_data.length > 0) {
+                    let ws = XLSX.utils.aoa_to_sheet(ws_data);
+                    XLSX.utils.book_append_sheet(wb, ws, `ZOSS1-${mes}`);
+                }
+            });
+            const filename = `${tecnicoNome}_${data}.xlsx`;
+            const folhasCriadas = Object.keys(projetosPorMes).length + Object.keys(codigosGPorMes).length;
+            if (folhasCriadas === 0) {
+                alert(i18n.t('msg.sem_horas'));
+                return;
+            }
+            XLSX.writeFile(wb, filename);
+        });
+    }
+}
+
+function gerarCsvMaquina(testes, dataLabel) {
+    let grupos = {};
+    testes.forEach(row => {
+        const network   = row.network || row.ensaio || '';
+        const elmact    = row.elmact || '';
+        const act       = row.act || '';
+        const codbarras = `="00${network}0${elmact}${act}"`;
+        const key       = `${row.codsaphoras}|${row.codsappecas}|${codbarras}`;
+        if (!grupos[key]) {
+            grupos[key] = {
+                codbarras,
+                codsaphoras: row.codsaphoras || '',
+                codsappecas: row.codsappecas || '',
+                horas: 0,
+                qtd:   0
+            };
+        }
+        grupos[key].horas += parseFloat(row.horas) || 0;
+        grupos[key].qtd   += parseFloat(row.qtd)   || 0;
+    });
+
+    let csvRows = [[i18n.t('field.cod_barras'), i18n.t('field.cod_sap_hora'), i18n.t('field.horas'), i18n.t('field.cod_sap_pecas'), i18n.t('field.n_pecas')]];
+    Object.values(grupos).forEach(g => {
+        csvRows.push([
+            g.codbarras,
+            g.codsaphoras,
+            g.horas.toFixed(2).replace('.', ','),
+            g.codsappecas,
+            g.qtd
+        ]);
+    });
+
+    const csvContent = csvRows.map(r => r.join(';')).join('\n');
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `Horas_maquina_export_${dataLabel}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,743 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.queries">Consultas</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="nav.queries">Consultas</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+#tabelaEnsaiosTerminados, #tabelaEnsaiosAtrasados, #tabelaBemPrimeira {
+    width: 100% !important;
+    table-layout: fixed !important;
+}
+#tabelaEnsaiosTerminados thead th,
+#tabelaEnsaiosTerminados tbody td,
+#tabelaEnsaiosAtrasados thead th,
+#tabelaEnsaiosAtrasados tbody td,
+#tabelaBemPrimeira thead th,
+#tabelaBemPrimeira tbody td {
+    font-size: 0.85em !important;
+    white-space: nowrap;
+    font-weight: bold !important;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    text-align: left !important;
+    vertical-align: middle !important;
+    overflow: visible;
+    text-overflow: initial;
+}
+#tabelaEnsaiosTerminados td:nth-child(1), /* Ensaio */
+#tabelaEnsaiosTerminados td:nth-child(8), /* Data de Início */
+#tabelaEnsaiosTerminados td:nth-child(9)  /* Data de Fim */ {
+    white-space: nowrap;
+}
+#tabelaEnsaiosTerminados tbody td,
+#tabelaEnsaiosAtrasados tbody td,
+#tabelaBemPrimeira tbody td {
+    font-weight: normal !important;
+    padding-top: 3px;
+    padding-bottom: 3px;
+}
+.dataTables_wrapper .dataTables_paginate .pagination {
+    font-size: 0.8em !important;
+}
+.dataTables_wrapper .dataTables_paginate .page-item .page-link {
+    font-size: 0.8em !important;
+    padding: 2px 8px !important;
+}
+
+#tabelaEnsaiosTerminados {
+    width: 100% !important;
+    table-layout: auto !important;
+}
+#tabelaEnsaiosTerminados th, #tabelaEnsaiosTerminados td {
+    font-size: 0.85em !important;
+    padding: 4px;
+    text-align: left !important;
+    vertical-align: middle !important;
+    overflow: hidden;
+}
+#tabelaEnsaiosTerminados td:nth-child(1), /* Ensaio */
+#tabelaEnsaiosTerminados td:nth-child(8), /* Data de Início */
+#tabelaEnsaiosTerminados td:nth-child(9)  /* Data de Fim */ {
+    white-space: nowrap;
+}
+#tabelaEnsaiosTerminados td:nth-child(3), /* Cliente */
+#tabelaEnsaiosTerminados td:nth-child(4), /* Projeto */
+#tabelaEnsaiosTerminados td:nth-child(5)  /* Tipo Peça */ {
+    white-space: normal;
+    word-break: break-word;
+    min-width: 120px;
+    max-width: 220px;
+}
+
+</style>
+
+<div class="tabelas-page">
+	<div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+                    <div class="row">
+                       <div class="container mt-12">
+                            
+                                <div class="row mb-3">
+                                    <form id="consultasForm" autocomplete="off"></form>
+                                    <div class="col-md-2">
+                                        <label for="tipo" class="form-label"><span data-i18n="field.tipo">Tipo</span></label>
+                                        <div class="input-group input-group-sm">
+                                            <select class="form-control" id="consulta" name="consulta" required>
+                                                <option value="ensaiosatrasados"><span data-i18n="field.mediveis">Medíveis</span> - <span data-i18n="field.ensaios_atrasados">Ensaios Atrasados</span></option>
+                                                <option value="bemprimeira"><span data-i18n="field.mediveis">Medíveis</span> - <span data-i18n="field.bem_primeira"">Bem à primeira</span></option>
+                                                <option value="ensaiosterminados"><span data-i18n="field.ensaios_terminados">Ensaios Terminados</span></option>
+                                                <option value="horasensaios"><span data-i18n="field.horas_ensaios">Horas Ensaios</span></option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2" id="anoDiv">
+                                        <label for="ano" class="form-label"><span data-i18n="field.ano">Ano</span></label>
+                                        <div class="input-group input-group-sm">
+                                            <select class="form-control" id="ano" name="ano" required>
+                                                {% set ano_inicio = 2025 %}
+                                                {% set ano_fim = ano_atual %}
+                                                {% set ano_selecionado = ano_atual if mes_atual != 1 else ano_atual - 1 %}
+                                                {% for ano in range(ano_inicio, ano_fim + 1) %}
+                                                    <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2" id ="mesDiv">
+                                        <label for="mes" class="form-label"><span data-i18n="field.mes">Mês</span></label>
+                                        <div class="input-group input-group-sm" id ="mesDiv">
+                                            <select class="form-control" id="mes" name="mes" required>
+                                            {% set mes_selecionado = mes_atual - 1 if mes_atual > 1 else 12 %}
+
+                                            {% for i in range(1, 13) %}
+                                                <option value="{{ i }}" {% if i == mes_selecionado %}selected{% endif %}>
+                                                {{ i }}
+                                                </option>
+                                            {% endfor %}
+                                            </select>
+                       
+                                        </div>
+                                    </div>
+                                    {% set prev_month = mes_atual - 1 if mes_atual > 1 else 12 %}
+                                    {% set prev_year = ano_atual if mes_atual > 1 else ano_atual - 1 %}
+                                    {% set first_day = prev_year ~ '-' ~ (prev_month|string).zfill(2) ~ '-01' %}
+                                    {% set last_day = prev_year ~ '-' ~ (prev_month|string).zfill(2) ~ '-' %}
+                                    {% if prev_month in [1,3,5,7,8,10,12] %}
+                                        {% set last_day = last_day ~ '31' %}
+                                    {% elif prev_month in [4,6,9,11] %}
+                                        {% set last_day = last_day ~ '30' %}
+                                    {% elif prev_month == 2 %}
+                                        {% if prev_year % 4 == 0 and (prev_year % 100 != 0 or prev_year % 400 == 0) %}
+                                            {% set last_day = last_day ~ '29' %}
+                                        {% else %}
+                                            {% set last_day = last_day ~ '28' %}
+                                        {% endif %}
+                                    {% endif %}
+                                    <div class="col-md-2" id="dataDeDiv" style="display:none;">
+                                        <label for="dataDe" class="form-label"><span data-i18n="field.de">De</span></label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="date" class="form-control" id="dataDe" name="dataDe" value="{{ first_day }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2" id="dataAteDiv" style="display:none;">
+                                        <label for="dataAte" class="form-label"><span data-i18n="field.ate">Até</span></label>
+                                        <div class="input-group input-group-sm">
+                                            <input type="date" class="form-control" id="dataAte" name="dataAte" value="{{ last_day }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label for="laboratorio" class="form-label"><span data-i18n="field.laboratorio">Laboratório</span></label>
+                                        <div class="input-group input-group-sm">
+                                            <select class="form-control" id="laboratorio" name="laboratorio">
+                                                <option value=""><span data-i18n="common.all">Todos</span></option>
+                                            </select>
+                                        </div>
+                                    </div>
+
+                                    
+                                </form>
+                                <div class="col-md-3">  </div>
+                                <div class="col-md-1" style="text-align:right;">
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+                                        <i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+                                        </button>
+                                        <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="exportarConsultaParaExcel(); return false;">
+                                                <i class="fas fa-file-excel"></i> <span data-i18n="action.export">Exportar</span>
+                                            </a>
+                                        </li>
+                                        
+                                        </ul>
+                                    </div>
+                                    <!-- O input file continua escondido -->
+                                    <input type="file" class="form-control-file" id="excelFile" name="excelFile" accept=".xlsx, .xls" style="display: none;" onchange="uploadExcel()">
+                                </div>
+
+
+                                </div>
+                            
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <br>
+                                    <div id="resultadoConsulta"></div>
+                                </div>
+                            </div>
+
+
+                        </div>
+
+
+
+
+
+                    </div>
+
+
+
+        			
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+
+
+
+
+<script>
+
+let dadosUltimaConsulta = [];
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  
+
+    document.getElementById('consulta').addEventListener('change', function() {
+        const tipo = this.value;
+        const anoDiv = document.getElementById('anoDiv');
+        const mesDiv = document.getElementById('mesDiv');
+        const dataDeDiv = document.getElementById('dataDeDiv');
+        const dataAteDiv = document.getElementById('dataAteDiv');
+        if (tipo === 'ensaiosterminados' || tipo === 'horasensaios') {
+            if (anoDiv) anoDiv.style.display = 'none';
+            if (mesDiv) mesDiv.style.display = 'none';
+            if (dataDeDiv) dataDeDiv.style.display = '';
+            if (dataAteDiv) dataAteDiv.style.display = '';
+        } else {
+            if (anoDiv) anoDiv.style.display = '';
+            if (mesDiv) mesDiv.style.display = '';
+            if (dataDeDiv) dataDeDiv.style.display = 'none';
+            if (dataAteDiv) dataAteDiv.style.display = 'none';
+        }
+    });
+
+    // Para inicializar corretamente na primeira carga:
+    document.getElementById('consulta').dispatchEvent(new Event('change'));
+
+
+    //atualizar tabela ao mudar a data
+    const dataDeInput = document.getElementById('dataDe');
+    const dataAteInput = document.getElementById('dataAte');
+    if (dataDeInput) {
+        dataDeInput.addEventListener('change', function() {
+            const tipo = document.getElementById('consulta').value;
+            if (tipo === 'ensaiosterminados' || tipo === 'horasensaios') {
+                atualizarConsulta();
+            }
+        });
+    }
+    if (dataAteInput) {
+        dataAteInput.addEventListener('change', function() {
+            const tipo = document.getElementById('consulta').value;
+            if (tipo === 'ensaiosterminados' || tipo === 'horasensaios') {
+                atualizarConsulta();
+            }
+        });
+    }
+
+
+
+
+});
+///////////////////////////////////////////////////////////////
+//CONSULTA ENSAIOS ATRASADOS
+
+function atualizarConsulta() {
+    const tipo = document.getElementById('consulta').value;
+    const ano = document.getElementById('ano').value;
+    const mes = document.getElementById('mes').value;
+    const laboratorio = document.getElementById('laboratorio').value;
+    if (tipo === 'ensaiosatrasados') {
+        fetch(`/consultas/ensaiosatrasados?ano=${ano}&mes=${mes}&laboratorio=${laboratorio}`)
+            .then(res => res.json())
+            .then(data => {
+                apresentarTabelaEnsaiosAtrasados(data);
+            });
+    } else if (tipo === 'bemprimeira') {
+        fetch(`/consultas/bemaprimeira?ano=${ano}&mes=${mes}&laboratorio=${laboratorio}`)
+            .then(res => res.json())
+            .then(data => {
+                apresentarTabelaBemPrimeira(data);
+            });
+    } else if (tipo === 'ensaiosterminados') {
+        const dataDe = document.getElementById('dataDe').value;
+        const dataAte = document.getElementById('dataAte').value;
+        fetch(`/consultas/ensaiosterminados?dataDe=${dataDe}&dataAte=${dataAte}&laboratorio=${laboratorio}`)
+            .then(res => res.json())
+            .then(data => {
+                apresentarTabelaEnsaiosTerminados(data);
+            });
+    } else if (tipo === 'horasensaios') {
+        const dataDe = document.getElementById('dataDe').value;
+        const dataAte = document.getElementById('dataAte').value;
+        fetch(`/consultas/horasensaios?dataDe=${dataDe}&dataAte=${dataAte}&laboratorio=${laboratorio}`)
+            .then(res => res.json())
+            .then(data => {
+                apresentarTabelaHorasEnsaios(data);
+            });
+    } else {
+        document.getElementById('resultadoConsulta').innerHTML = '';
+    }
+}
+
+function apresentarTabelaHorasEnsaios(data) {
+    dadosUltimaConsulta = Array.isArray(data) ? data : [];
+
+    let html = '<div class="table-responsive"><table id="tabelaHorasEnsaios" class="table table-bordered table-striped table-hover align-middle">' +
+        '<thead><tr>' +
+        '<th><span data-i18n="field.ensaio">Ensaio</span></th>' +
+        '<th><span data-i18n="field.teste">Teste</span></th>' +
+        '<th><span data-i18n="field.nome">Nome</span></th>' +
+        '<th><span data-i18n="field.data">Data</span></th>' +
+        '<th><span data-i18n="field.horas">Horas</span></th>' +
+        '</tr></thead><tbody>';
+
+    let linhas = 0;
+    let totalHoras = 0;
+
+    if (data && data.length) {
+        data.forEach(row => {
+            html += `<tr>
+                <td><a href="/ensaios?ensaio=${encodeURIComponent(row.ensaio)}" class="link-ensaio" data-ensaio="${row.ensaio}">${row.ensaio || ''}</a></td>
+                <td>${row.teste || ''}</td>
+                <td>${row.tecnico || ''}</td>
+                <td>${row.data || ''}</td>
+                <td>${Number(row.horas || 0).toFixed(2)}</td>
+            </tr>`;
+            totalHoras += Number(row.horas || 0);
+            linhas++;
+        });
+    } else {
+        html += '<tr><td colspan="5"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>';
+    }
+
+    html += '</tbody>';
+
+    html += '</table></div>';
+
+    document.getElementById('resultadoConsulta').innerHTML = html;
+
+    if (linhas > 0 && window.$ && $.fn.DataTable) {
+        setTimeout(function() {
+            if ($.fn.DataTable.isDataTable('#tabelaHorasEnsaios')) {
+                $('#tabelaHorasEnsaios').DataTable().destroy();
+            }
+            $('#tabelaHorasEnsaios').DataTable({
+                language: { url: i18n.getDataTablesLanguageUrl() },
+                order: [],
+                pageLength: 25,
+                dom: 'Bfrtip',
+                buttons: ['copy', 'excel', 'csv', 'pdf', 'print']
+            });
+        }, 100);
+    }
+}
+
+function apresentarTabelaEnsaiosTerminados(data) {
+    dadosUltimaConsulta = Array.isArray(data) ? data : [];
+    let html = '<div class="table-responsive"><table id="tabelaEnsaiosTerminados" class="table table-bordered table-striped table-hover align-middle text-center">' +
+        '<thead><tr>' +
+        '<th><span data-i18n="field.ensaio">Ensaio</span></th>' +
+        '<th><span data-i18n="field.network">Network</span></th>' +
+        '<th><span data-i18n="field.cliente">Cliente</span></th>' +
+        '<th><span data-i18n="field.projeto">Projeto</span></th>' +
+        '<th><span data-i18n="field.tipo_peca">Tipo Peça</span></th>' +
+        '<th><span data-i18n="field.teste">Teste</span></th>' +
+        '<th><span data-i18n="field.n_pecas">Nº de Peças</span></th>' +
+        '<th><span data-i18n="field.data_inicio">Data Início</span></th>' +
+        '<th><span data-i18n="field.data_fim">Data Fim</span></th>' +
+        '<th><span data-i18n="field.fase">Fase</span></th>' +
+        '<th><span data-i18n="field.horas_estimadas">Horas Estimadas</span></th>' +
+        '<th><span data-i18n="field.horas_totais">Horas Totais</span></th>' +
+        '</tr></thead><tbody>';
+    let totalPecas = 0;
+    let linhas = 0;
+    if (data && data.length) {
+        const dataDe = document.getElementById('dataDe').value;
+        const dataAte = document.getElementById('dataAte').value;
+        data.forEach(row => {
+            if (row.data_fim >= dataDe && row.data_fim <= dataAte) {
+                html += `<tr>
+                    <td><a href="/ensaios?ensaio=${encodeURIComponent(row.ensaio)}" class="link-ensaio" data-ensaio="${row.ensaio}">${row.ensaio}</a></td>
+                    <td>${row.network || ''}</td>
+                    <td>${row.cliente || ''}</td>
+                    <td>${row.projeto || ''}</td>
+                    <td>${row.tipo_peca || ''}</td>
+                    <td>${row.teste || ''}</td>
+                    <td>${row.num_pecas_teste || ''}</td>
+                    <td>${row.data_inicio || ''}</td>
+                    <td>${row.data_fim || ''}</td>
+                    <td>${row.fase || ''}</td>
+                    <td>${row.horas_estimadas || ''}</td>
+                    <td>${row.horas_totais || ''}</td>
+                </tr>`;
+                totalPecas += Number(row.num_pecas_teste) || 0;
+                linhas++; // <-- Adicione esta linha!
+            }
+        });
+    }
+    if (html.endsWith('<tbody>')) {
+        html += '<tr><td colspan="12"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>';
+    }
+    html += '</tbody>';
+    if (linhas > 0) {
+        html += `<tfoot><tr style="font-weight:bold;background:#f7f7f7;">
+            <td colspan="6" style="text-align:right;"><span data-i18n="field.total_pecas">Total de Peças:</span></td>
+            <td>${totalPecas}</td>
+            <td colspan="5"></td>
+        </tr></tfoot>`;
+    }
+    html += '</table></div>';
+    document.getElementById('resultadoConsulta').innerHTML = html;
+    if (linhas > 0 && window.$ && $.fn.DataTable) {
+        setTimeout(function() {
+            if ($.fn.DataTable.isDataTable('#tabelaEnsaiosTerminados')) {
+                $('#tabelaEnsaiosTerminados').DataTable().destroy();
+            }
+            $('#tabelaEnsaiosTerminados').DataTable({
+                language: { url: i18n.getDataTablesLanguageUrl() },
+                order: [],
+                pageLength: 25,
+                autoWidth: true,
+                dom: 'Bfrtip',
+                buttons: ['copy', 'excel', 'csv', 'pdf', 'print']
+            });
+        }, 100);
+    }
+}
+
+function apresentarTabelaEnsaiosAtrasados(data) {
+    dadosUltimaConsulta = Array.isArray(data) ? data : [];
+    let html = '<div class="table-responsive"><table id="tabelaEnsaiosAtrasados" class="table table-bordered table-striped table-hover align-middle text-center">' +
+        '<thead><tr>' +
+        '<th><span data-i18n="field.laboratorio">Laboratório</span></th>' +
+        '<th><span data-i18n="field.ensaios_terminados">Ensaios Concluídos</span></th>' +
+        '<th><span data-i18n="field.ensaios_atrasados">Ensaios Atrasados</span></th>' +
+        '<th><span data-i18n="table.delay_reasons">Motivo do Atraso</span></th>' +
+        '</tr></thead><tbody>';
+    let linhas = 0;
+    if (data && data.length) {
+        data.forEach(row => {
+            if (row.motivos_atraso && row.motivos_atraso.length) {
+                row.motivos_atraso.forEach((motivo, idx) => {
+                    html += '<tr>';
+                    if (idx === 0) {
+                        html += `<td rowspan="${row.motivos_atraso.length}">${row.laboratorio}</td>`;
+                        html += `<td rowspan="${row.motivos_atraso.length}">${row.total_ensaios}</td>`;
+                    }
+                    html += `<td>${motivo.qtd || 0}</td>`;
+                    html += `<td>${motivo.motivo}</td>`;
+                    html += '</tr>';
+                    linhas++;
+                });
+            } else {
+                html += `<tr><td>${row.laboratorio}</td><td>${row.total_ensaios}</td><td>${row.total_atrasados || 0}</td><td></td></tr>`;
+                linhas++;
+            }
+        });
+    } else {
+        html += '<tr><td colspan="4"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>';
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('resultadoConsulta').innerHTML = html;
+    if (linhas > 0 && window.$ && $.fn.DataTable) {
+        setTimeout(function() {
+            if ($.fn.DataTable.isDataTable('#tabelaEnsaiosAtrasados')) {
+                $('#tabelaEnsaiosAtrasados').DataTable().destroy();
+            }
+            $('#tabelaEnsaiosAtrasados').DataTable({
+                language: { url: i18n.getDataTablesLanguageUrl() },
+                order: [],
+                pageLength: 25,
+                dom: 'Bfrtip',
+                buttons: ['copy', 'excel', 'csv', 'pdf', 'print']
+            });
+        }, 100);
+    }
+}
+
+
+
+document.addEventListener('DOMContentLoaded', function() {
+    fetch('/laboratorios/ativos')
+        .then(res => res.json())
+        .then(labs => {
+            const select = document.getElementById('laboratorio');
+            labs.forEach(lab => {
+                const opt = document.createElement('option');
+                opt.value = lab.id;
+                opt.textContent = lab.laboratorio;
+                select.appendChild(opt);
+            });
+            // Liga eventos e faz a primeira consulta
+            ['consulta','ano','mes','laboratorio'].forEach(id => {
+                document.getElementById(id).addEventListener('change', atualizarConsulta);
+            });
+            atualizarConsulta();
+        });
+});
+
+function apresentarTabelaBemPrimeira(data) {
+    dadosUltimaConsulta = Array.isArray(data) ? data : [];
+    let html = '<div class="table-responsive"><table id="tabelaBemPrimeira" class="table table-bordered table-striped table-hover align-middle text-center">' +
+        '<thead><tr>' +
+        '<th><span data-i18n="field.laboratorio">Laboratório</span></th>' +
+        '<th><span data-i18n="field.total_pecas">Total de Peças</span></th>' +
+        '<th><span data-i18n="field.pecas_bem_primeira">Peças Bem à Primeira</span></th>' +
+        '<th><span data-i18n="field.pecas_nao_bem_primeira">Peças Não Bem à Primeira</span></th>' +
+        '<th><span data-i18n="field.motivo_falha">Motivo de Falha</span></th>' +
+        '</tr></thead><tbody>';
+    let linhas = 0;
+    if (data && data.length) {
+        data.forEach(row => {
+            if (row.motivos && row.motivos.length) {
+                // Filtra motivos com "Não Bem à Primeira" > 0
+                const motivosValidos = row.motivos; // mostrar tudo, mesmo sem falhas
+                if (motivosValidos.length) {
+                    motivosValidos.forEach((motivo, idx) => {
+                        html += '<tr>';
+                        if (idx === 0) {
+                            html += `<td rowspan="${motivosValidos.length}">${row.laboratorio}</td>`;
+                            html += `<td rowspan="${motivosValidos.length}">${row.total_pecas}</td>`;
+                        }
+                        html += `<td>${motivo.total_bemprimeira}</td>`
+                        html += `<td>${motivo.total_pecas - motivo.total_bemprimeira}</td>`;
+                        html += `<td>${motivo.motivo}</td>`;
+                        html += '</tr>';
+                        linhas++;
+                    });
+                }
+                // Se não houver motivos válidos, não mostra linha nenhuma
+            } else {
+                html += `<tr><td>${row.laboratorio}</td><td colspan="4"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>`;
+                linhas++;
+            }
+        });
+    } else {
+        html += '<tr><td colspan="5"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>';
+    }
+    html += '</tbody></table></div>';
+    document.getElementById('resultadoConsulta').innerHTML = html;
+    if (linhas > 0 && window.$ && $.fn.DataTable) {
+        setTimeout(function() {
+            if ($.fn.DataTable.isDataTable('#tabelaBemPrimeira')) {
+                $('#tabelaBemPrimeira').DataTable().destroy();
+            }
+            $('#tabelaBemPrimeira').DataTable({
+                language: { url: i18n.getDataTablesLanguageUrl() },
+                order: [],
+                pageLength: 25,
+                dom: 'Bfrtip',
+                buttons: ['copy', 'excel', 'csv', 'pdf', 'print']
+            });
+        }, 100);
+    }
+}
+
+
+//////////////////////////////////////////
+//EXPORTAR EXCEL
+function exportarConsultaParaExcel() {
+    const tipo = document.getElementById('consulta').value;
+    const ano = document.getElementById('ano').value;
+    const mes = document.getElementById('mes').value.padStart(2, '0');
+    if (tipo === 'ensaiosatrasados') {
+        const rows = [];
+        if (dadosUltimaConsulta && dadosUltimaConsulta.length) {
+            dadosUltimaConsulta.forEach(row => {
+                if (row.motivos_atraso && row.motivos_atraso.length) {
+                    row.motivos_atraso.forEach((motivo, idx) => {
+                    rows.push({
+                        [i18n.t('field.laboratorio')]: idx === 0 ? row.laboratorio : '',
+                        [i18n.t('field.ensaios_terminados')]: idx === 0 ? row.total_ensaios : '',
+                        [i18n.t('field.ensaios_atrasados')]: idx === 0 ? row.total_atrasados : '',
+                        [i18n.t('table.delay_reasons')]: motivo.motivo,
+                        [i18n.t('field.qtd')]: motivo.qtd
+                    });
+                    });
+                } else {
+                    rows.push({
+                    [i18n.t('field.laboratorio')]: row.laboratorio,
+                    [i18n.t('field.ensaios_terminados')]: row.total_ensaios,
+                    [i18n.t('field.ensaios_atrasados')]: row.total_atrasados,
+                    [i18n.t('table.delay_reasons')]: '',
+                    [i18n.t('field.qtd')]: ''
+                    });
+                }
+                });
+        );
+        }
+        if (rows.length === 0) {
+            alert(i18n.t('field.sem_dados'));
+            return;
+        }
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Consulta');
+        XLSX.writeFile(wb, i18n.t('field.ensaios_atrasados') + `_${mes}-${ano}.xlsx`);
+    } else if (tipo === 'bemprimeira') {
+        const rows = [];
+        if (dadosUltimaConsulta && dadosUltimaConsulta.length) {
+            dadosUltimaConsulta.forEach(row => {
+                if (row.motivos && row.motivos.length) {
+                    const motivosValidos = row.motivos.filter(motivo => (motivo.total_pecas - motivo.total_bemprimeira) > 0);
+                    motivosValidos.forEach((motivo, idx) => {
+                        rows.push({
+                            [i18n.t('field.laboratorio')]: idx === 0 ? row.laboratorio : '',
+                            [i18n.t('field.total_pecas')]: idx === 0 ? row.total_pecas : '',
+                            [i18n.t('field.bem_primeira')]: motivo.total_bemprimeira,
+                            [i18n.t('field.nao_bem_primeira')]: motivo.total_pecas - motivo.total_bemprimeira,
+                            [i18n.t('field.motivo_falha')]: motivo.motivo
+                        });
+                    });
+                }
+            });
+        }
+        if (rows.length === 0) {
+            alert(i18n.t('msg.sem_dados'));
+            return;
+        }
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Consulta');
+        XLSX.writeFile(wb, i18n.t('field.bem_primeira') + `_${mes}-${ano}.xlsx`);
+    }else if (tipo === 'ensaiosterminados') {
+        const rows = [];
+        let totalPecas = 0;
+        if (dadosUltimaConsulta && dadosUltimaConsulta.length) {
+            dadosUltimaConsulta.forEach(row => {
+                rows.push({
+                    [i18n.t('field.ensaio')]: row.ensaio || '',
+                    [i18n.t('field.network')]: row.network || '',
+                    [i18n.t('field.cliente')]: row.cliente || '',
+                    [i18n.t('field.projeto')]: row.projeto || '',
+                    [i18n.t('field.tipo_peca')]: row.tipo_peca || '',
+                    [i18n.t('field.teste')]: row.teste || '',
+                    [i18n.t('field.n_pecas')]: row.num_pecas_teste || '',
+                    [i18n.t('field.data_inicio')]: row.data_inicio || '',
+                    [i18n.t('field.data_fim')]: row.data_fim || '',
+                    [i18n.t('field.fase')]: row.fase || '',
+                    [i18n.t('field.horas_estimadas')]: row.horas_estimadas || '',
+                    [i18n.t('field.horas_totais')]: row.horas_totais || ''
+                });
+                totalPecas += Number(row.num_pecas_teste) || 0;
+            });
+        }
+        if (rows.length === 0) {
+            alert(i18n.t('msg.sem_dados'));
+            return;
+        }
+        // Adiciona linha de total de peças ao final
+        rows.push({
+            [i18n.t('field.ensaio')]: '',
+            [i18n.t('field.network')]: '',
+            [i18n.t('field.cliente')]: '',
+            [i18n.t('field.projeto')]: '',
+            [i18n.t('field.tipo_peca')]: '',
+            [i18n.t('field.teste')]: '',
+            [i18n.t('field.n_pecas')]: totalPecas,
+            [i18n.t('field.data_inicio')]: '',
+            [i18n.t('field.data_fim')]: '',
+            [i18n.t('field.fase')]: '',
+            [i18n.t('field.horas_estimadas')]: '',
+            [i18n.t('field.horas_totais')]: ''
+        });
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, i18n.t('field.consulta'));
+        XLSX.writeFile(wb, i18n.t('field.ensaios_terminados') + `_${mes}-${ano}.xlsx`);
+
+    } else if (tipo === 'horasensaios') {
+        const rows = [];
+        let totalHoras = 0;
+    
+        if (dadosUltimaConsulta && dadosUltimaConsulta.length) {
+            dadosUltimaConsulta.forEach(row => {
+                rows.push({
+                    [i18n.t('field.ensaio')]: row.ensaio || '',
+                    [i18n.t('field.teste')]: row.teste || '',
+                    [i18n.t('field.nome')]: row.tecnico || '',
+                    [i18n.t('field.data')]: row.data || '',
+                    [i18n.t('field.horas')]: Number(row.horas || 0).toFixed(2)
+                });
+            });
+        }
+    
+        if (rows.length === 0) {
+            alert(i18n.t('msg.sem_dados'));
+            return;
+        }
+    
+        rows.push({
+            [i18n.t('field.ensaio')]: '',
+            [i18n.t('field.teste')]: '',
+            [i18n.t('field.nome')]: 'Total',
+            [i18n.t('field.horas')]: totalHoras.toFixed(2)
+        });
+    
+        const ws = XLSX.utils.json_to_sheet(rows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, 'Consulta');
+        XLSX.writeFile(wb, i18n.t('field.horas_ensaios') + `_${ano}-${mes}.xlsx`);
+    
+    } else {
+        alert(i18n.t('msg.sem_dados'));
+    }
+}
+
+
+</script>
+
+{% endblock %}

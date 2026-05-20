@@ -1,0 +1,219 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.validation_rules">Regras de Validação</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title" data-i18n="nav.validation_rules">Regras de Validação</h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+#tblValidacaoRegras thead th {
+    font-size: 0.9em;
+    font-weight: 500;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+#tblValidacaoRegras tbody td {
+    font-size: 0.9em;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    word-break: break-all;
+}
+</style>
+
+<div class="tabelas-page">
+
+    <form id="formValidacaoRegra" class="mb-4">
+        <input type="hidden" id="regra_id">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    
+                    <div class="card-body">
+
+                        <div class="row mb-2">
+                            
+                            <div class="col-md-3">
+                                <label class="form-label form-label-sm"><span data-i18n="field.nome">Nome </span><small class="text-muted">(<span data-i18n="field.identificador"></span>identificador</span>)</small></label>
+                                <input type="text" class="form-control form-control-sm" id="regra_nome" maxlength="100" required>
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm"><span data-i18n="field.chave_erro">Chave i18n Erro </span><small class="text-muted">(<span data-i18n="field.traducao"></span>tradução</span>)</small></label>
+                                <input type="text" class="form-control form-control-sm" id="regra_chave_i18n" maxlength="100">
+                            </div>
+                            <div class="col-md-2">
+                                <label class="form-label form-label-sm"><span data-i18n="field.status">Estado</span></label>
+                                <select class="form-select form-select-sm" id="regra_obsoleto">
+                                    <option value="0"><span data-i18n="field.ativo">Ativo</span></option>
+                                    <option value="1"><span data-i18n="field.obsolete">Obsoleto</span></option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-10">
+                                <label class="form-label form-label-sm"><span data-i18n="field.regex">Regex</span></label>
+                                <input type="text" class="form-control form-control-sm font-monospace" id="regra_regex" required>
+                            </div>
+                        </div>
+						
+
+                        <div class="row">
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-warning btn-sm" onclick="limparFormRegra()">
+                                    <span data-i18n="action.clear">
+                                    Limpar
+                                    </span>
+                                </button>
+                            </div>
+                            <div class="col-md-10"></div>
+                            <div class="col-md-1 text-end">
+                                <button type="submit" class="btn btn-success btn-sm">
+                                    <span data-i18n="action.save">
+                                    Guardar
+                                    </span>
+                                </button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <hr>
+
+    <table class="table table-striped table-hover table-sm" id="tblValidacaoRegras">
+        <thead>
+            <tr>
+                <th><span data-i18n="field.id">ID</span></th>
+                <th><span data-i18n="field.nome">Nome</span></th>
+                <th><span data-i18n="field.regex">Regex</span></th>
+                <th><span data-i18n="field.chave_i18n">Chave i18n</span></th>
+                <th><center><span data-i18n="field.status">Estado</span></center></th>
+                <th><center><span data-i18n="field.acoes">Ações</span></center></th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+<script>
+
+function limparFormRegra() {
+    document.getElementById('regra_id').value = '';
+    document.getElementById('regra_nome').value = '';
+    document.getElementById('regra_regex').value = '';
+    document.getElementById('regra_chave_i18n').value = '';
+    document.getElementById('regra_obsoleto').value = '0';
+}
+
+function carregarRegras() {
+    fetch('/api/confvalidacaomanual')
+        .then(r => r.json())
+        .then(data => {
+            const tbody = document.querySelector('#tblValidacaoRegras tbody');
+            tbody.innerHTML = '';
+            if (!data.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center text-muted"><span data-i18n="field.sem_dados">Sem regras definidas</span></td></tr>';
+                return;
+            }
+            data.forEach(r => {
+                tbody.innerHTML += `
+                <tr class="${r.obsoleto ? 'table-secondary text-muted' : ''}">
+                    <td>${r.id}</td>
+                    <td>${r.nome}</td>
+                    <td><small class="font-monospace">${r.regex}</small></td>
+                    <td><small>${r.chave_i18n || ''}</small></td>
+                    <td><center>
+						${r.obsoleto ? i18n.t('field.obsolete') : i18n.t('field.ativo')}
+					</center></td>
+                    <td><center>
+						<i class="fas fa-edit text-primary me-2" style="cursor:pointer;"
+						   onclick="editarRegra(${r.id})" title="Editar" data-i18n="action.edit" data-i18n-attr="title"></i>
+						<i class="fas fa-trash text-danger" style="cursor:pointer;"
+						   onclick="eliminarRegra(${r.id})" title="Eliminar" data-i18n="action.delete" data-i18n-attr="title"></i>
+					</center></td>
+                </tr>`;
+            });
+        })
+        .catch(() => mostrarNotificacao(i18n.t('common.error_loading'), 'error'));
+}
+
+function editarRegra(id) {
+    fetch(`/api/confvalidacaomanual/${id}`)
+        .then(r => r.json())
+        .then(r => {
+            document.getElementById('regra_id').value = r.id;
+            document.getElementById('regra_nome').value = r.nome;
+            document.getElementById('regra_regex').value = r.regex;
+            document.getElementById('regra_chave_i18n').value = r.chave_i18n || '';
+            document.getElementById('regra_obsoleto').value = r.obsoleto ? '1' : '0';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+}
+
+function eliminarRegra(id) {
+    if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.regra') + '?')) return;
+    fetch(`/api/confvalidacaomanual/${id}`, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                mostrarNotificacao(i18n.t('msg.eliminado'), 'success');
+                carregarRegras();
+            } else {
+                mostrarNotificacao(data.error || i18n.t('msg.error_delete'), 'error');
+            }
+        });
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    carregarRegras();
+
+    document.getElementById('formValidacaoRegra').addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        const id = document.getElementById('regra_id').value;
+        const body = {
+            nome:        document.getElementById('regra_nome').value.trim(),
+            regex:       document.getElementById('regra_regex').value.trim(),
+            chave_i18n:  document.getElementById('regra_chave_i18n').value.trim() || null,
+            obsoleto:    parseInt(document.getElementById('regra_obsoleto').value)
+        };
+        if (id) body.id = parseInt(id);
+
+        fetch('/api/confvalidacaomanual', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                mostrarNotificacao(i18n.t('msg.dados_guardados_sucesso'), 'success');
+                limparFormRegra();
+                carregarRegras();
+            } else {
+                mostrarNotificacao(data.error || i18n.t('msg.erro_ao_guardar'), 'error');
+            }
+        })
+        .catch(() => mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error'));
+    });
+});
+
+</script>
+
+{% endblock %}

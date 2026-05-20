@@ -1,0 +1,421 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.hours_machine">Horas Máquina</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="nav.hours_machine">Horas Máquina</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+/* Tabela compacta */
+#tabelaHorasMaquina {
+    font-size: 0.8em;
+}
+#tabelaHorasMaquina thead th {
+    font-size: 1.0em;
+    font-weight: 500;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+#tabelaHorasMaquina tbody td {
+    font-size: 1.0em;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.dataTables_wrapper .dataTables_paginate .pagination {
+    font-size: 0.8em !important;
+}
+.dataTables_wrapper .dataTables_paginate .page-item .page-link {
+    font-size: 0.8em !important;
+    padding: 2px 8px !important;
+}
+</style>
+
+
+
+
+<div class="tabelas-page">
+	<div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="ano" class="form-label mb-0"><b><span data-i18n="field.ano">Ano</span></b></label>
+                           
+                                <select class="form-control form-control-sm" id="ano" name="ano" required>
+                                    {% set ano_inicio = 2025 %}
+                                    {% set ano_fim = ano_atual %}
+                                    {% set ano_selecionado = ano_atual if mes_atual != 1 else ano_atual - 1 %}
+                                    {% for ano in range(ano_inicio, ano_fim + 1) %}
+                                        <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                           
+                           <div class="d-flex align-items-center gap-2">
+                                <label for="mes" class="form-label mb-0" data-i18n="field.mes"><b>Mês</b></label>
+                                <select class="form-control form-control-sm" id="mes" name="mes" required>
+                                    {% set meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'] %}
+                                    {% set mes_selecionado = mes_atual %}
+                                    {% for i in range(1, 13) %}
+                                        
+                                        <option value="{{ i }}"
+                                            {% if i == mes_atual %}selected{% endif %}
+                                            data-i18n="month.{{ i }}">
+                                        </option>
+
+                                    {% endfor %}
+                                </select>                         
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio"><b>Laboratório</b></label>
+                                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;">
+                                    
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-3">  </div>
+                        <div class="col-md-1" style="text-align:right;">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+                                <i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="exportarConsultaParaExcel(); return false;">
+                                        <i class="fas fa-file-excel"></i> <span data-i18n="action.export">Exportar</span>
+                                    </a>
+                                </li>
+                                
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <br><br>
+                            <table id="tabelaHorasMaquina" class="table table-striped table-sm" style="width:100%">
+                                <thead>
+                                    <tr>
+                                    <th><span data-i18n="field.ensaio">Ensaio</span></th>
+                                    <th><span data-i18n="field.lab">Lab.</span></th>
+                                    <th><span data-i18n="field.elem_act">Elem. Act.</span></th>
+                                    <th><span data-i18n="field.act">Act.</span></th>
+                                    <th><span data-i18n="field.data">Data</span></th>
+                                    <th><span data-i18n="field.network">Network</span></th>
+                                    <th><span data-i18n="field.maquina">Máquina</span></th>
+                                    <th><span data-i18n="field.cod_sap_horas">Cod SAP Horas</span></th>
+                                    <th><span data-i18n="field.cod_sap_pecas">Cod SAP Peças</span></th>
+                                    <th><span data-i18n="field.fator">Fator</span></th>
+                                    <th><span data-i18n="field.n_pecas">Nº de Peças</span></th>
+                                    <th><span data-i18n="field.horas">Horas</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                     <div class="row">
+                        <div id="avisosDiv" class="col-md-4 mt-4"></div>
+
+        			
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+
+
+
+<script>
+let dataTableInstance = null;
+
+/////////////////////////////////
+//EXPORTAR PARA EXCEL
+function exportarConsultaParaExcel() {
+        
+        let data = [];
+        if (window.dataTableInstance) {
+            let dtRows = window.dataTableInstance.rows({ search: 'applied' });
+            let dtData = dtRows.data();
+            if (typeof dtData.toArray === 'function') {
+                data = dtData.toArray();
+            } else if (Array.isArray(dtData)) {
+                data = dtData;
+            } else if (dtData.length !== undefined) {
+                data = Array.from(dtData);
+            }
+            // fallback: se ainda assim não houver dados, tenta pegar manualmente
+            if ((!data || !Array.isArray(data) || data.length === 0) && dtRows.count() > 0) {
+                for (let i = 0; i < dtRows.count(); i++) {
+                    data.push(dtRows.data()[i]);
+                }
+            }
+        }
+        console.log('ExportarConsultaParaExcel - data:', data);
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            alert('Sem dados para exportar.');
+            return;
+        }
+        
+    
+    // Cabeçalhos customizados
+    const headers = [
+        i18n.t('field.cod_barras'),
+        i18n.t('field.cod_sap_horas'), // coluna 8
+        i18n.t('field.horas'),  // coluna 12 (horas)
+        i18n.t('field.cod_sap_pecas'), // coluna 9
+        i18n.t('field.qtd')  // coluna 10 (qtd)
+        
+    ];
+    const agrupados = {};
+    const idsExportados = [];
+    data.forEach(row => {
+        // Colunas da tabela:
+        // 0: ensaio, 1: laboratorio, 2: elmact, 3: act, 4: datafim, 5: network, 6: maquina_nome, 7: codsaphoras, 8: codsappecas, 9: fator, 10: qtd, 11: horas
+        let codsaphoras = row.codsaphoras || '';
+        let codsappecas = row.codsappecas || '';
+        let horas = parseFloat(row.horas) || 0;
+        let qtd = parseFloat(row.qtd) || 0;
+        let elem = row.elmact || '';
+        let a = row.act || '';
+        let codbarras = `="00${row.network || ''}0${elem}${a}"`;
+        let key = `${codsaphoras}|${codsappecas}|${codbarras}`;
+        if (!agrupados[key]) {
+            agrupados[key] = {
+                codbarras,
+                codsaphoras,
+                horas,
+                codsappecas,
+                qtd
+                
+            };
+        } else {
+            agrupados[key].horas += horas;
+            agrupados[key].qtd += qtd;
+        }
+        if (row.id) idsExportados.push(row.id);
+    });
+    const rows = [headers];
+    Object.values(agrupados).forEach(item => {
+        rows.push([
+        item.codbarras,
+          item.codsaphoras,
+          item.horas.toFixed(2).replace('.', ','), 
+          item.codsappecas,
+          item.qtd,
+          
+        ]);
+    });
+    let csvContent = rows.map(e => e.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(';')).join('\r\n');
+    let blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    let link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    let now = new Date();
+    let yyyy = now.getFullYear();
+    let mm = String(now.getMonth() + 1).padStart(2, '0');
+    let dd = String(now.getDate()).padStart(2, '0');
+    let hh = String(now.getHours()).padStart(2, '0');
+    let min = String(now.getMinutes()).padStart(2, '0');
+    let ss = String(now.getSeconds()).padStart(2, '0');
+    let dataStr = `${yyyy}${mm}${dd}`;
+    let labSelect = document.getElementById('laboratorio');
+    let labNome = '';
+    if (labSelect) {
+    let selected = labSelect.options[labSelect.selectedIndex];
+    labNome = selected && selected.value
+        ? selected.textContent.trim().replace(/\s+/g, '_')
+        : t('common.all');
+    } else {
+        labNome = t('common.all');
+    }
+    link.download = i18n.t('nav.hours_machine') + `_export_${labNome}_${dataStr}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    // Atualizar backend com os ids exportados e data
+    if (idsExportados.length > 0) {
+        fetch('/horas_maquina/marcar_exportados', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                ids: idsExportados,
+                data: `${yyyy}-${mm}-${dd} ${hh}:${min}:${ss}`,
+                atualizar_horasmaqexp: true // flag para backend
+            })
+        })
+        .then(res => res.json())
+        .then(resp => {
+            if (resp.success) {
+                // Atualiza a tabela para remover os registos exportados
+                window.dataTableInstance.ajax.reload();
+            }
+        });
+    }
+}
+
+
+
+
+
+
+///////////////////////////////////////////////////
+//tabela
+
+
+document.addEventListener('DOMContentLoaded', function() {
+
+
+    async function carregarLaboratoriosEInicializarTabela() {
+  const select = document.getElementById('laboratorio');
+  select.innerHTML = `<option disabled></option>`;
+
+  try {
+    const [labsRes, meRes] = await Promise.all([
+      fetch('/laboratorios/ativos'),
+      fetch('/api/me')
+    ]);
+
+    const labs = await labsRes.json();
+    const me   = await meRes.json();
+
+    const userLab = String(me.laboratorio_id);
+
+    // Limpa opções
+    select.innerHTML = '';
+
+    // Preenche apenas labs ativos
+    labs.forEach(lab => {
+      const opt = document.createElement('option');
+      opt.value = String(lab.id);
+      opt.textContent = lab.laboratorio;
+      select.appendChild(opt);
+    });
+
+    // Verifica se o laboratório do user está na lista
+    const existsInList = [...select.options].some(o => o.value === userLab);
+
+    if (existsInList) {
+      select.value = userLab;
+    } else {
+      // Se por acaso o lab do user não estiver ativo
+      const opt = document.createElement('option');
+      opt.value = userLab;
+      opt.textContent = `(Lab ${userLab}) — ${i18n.t('common.error_loading', 'Erro ao carregar)')}`;
+      select.insertBefore(opt, select.firstChild);
+      select.value = userLab;
+    }
+
+    // Agora que o select está pronto → inicializa DataTable
+    inicializarTabela();
+
+  } catch (err) {
+    console.error('Erro ao carregar laboratórios:', err);
+    select.innerHTML = `<option>${i18n.t('common.error_loading', 'Erro ao carregar')}</option>`;
+    select.disabled = true;
+  }
+}
+
+
+
+
+  carregarLaboratoriosEInicializarTabela();
+
+  function inicializarTabela() {
+    var table = $('#tabelaHorasMaquina').DataTable({
+      autoWidth: true,
+      ajax: {
+        url: '/api/horas_maquina',
+        data: function(d) {
+          d.ano = document.getElementById('ano').value;
+          d.mes = document.getElementById('mes').value;
+          d.laboratorio = document.getElementById('laboratorio').value;
+        },
+        dataSrc: ''
+      },
+      columns: [
+        {
+          data: 'ensaio',
+          render: function(data, type, row) {
+            return `<a href="/ensaios?ensaio=${encodeURIComponent(data)}" class="link-ensaio" data-ensaio="${data}">${data}</a>`;
+          }
+        },
+        { data: 'laboratorio' },
+        { data: 'elmact' },
+        { data: 'act' },
+        { data: 'datafim' },
+        { data: 'network' },
+        { data: 'maquina_nome' },
+        { data: 'codsaphoras' },
+        { data: 'codsappecas' },
+        { data: 'fator' },
+        { data: 'qtd' },
+        { data: 'horas' },
+        { data: 'id', visible: false, searchable: false }  
+      ],
+      paging: true,
+      searching: true,
+      pageLength: 10,
+        language: { url: i18n.getDataTablesLanguageUrl() }
+    });
+
+    window.dataTableInstance = table;
+
+    // Ajusta colunas após cada draw
+    table.on('draw', function() {
+      table.columns.adjust();
+    });
+
+    // Refresh ao mudar laboratório, mês ou ano
+    ['laboratorio', 'ano', 'mes'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', function() {
+          table.ajax.reload(function(){
+            table.columns.adjust();
+          });
+        });
+      }
+    });
+}
+});
+
+
+
+
+</script>
+
+{% endblock %}

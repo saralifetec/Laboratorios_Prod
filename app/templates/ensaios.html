@@ -1,0 +1,4051 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.tests">Ensaios</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title" data-i18n="nav.tests">Ensaios</h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+#resumoStockContainer th,
+#resumoStockContainer td {
+    font-size: 0.8em !important;
+}
+
+table.dataTable {
+    border-collapse: collapse;
+    width: 100% !important;
+    background: #fff;
+    color: #212529;
+    font-size: 12px !important;
+    margin-bottom: 1rem;
+}
+table.dataTable th, table.dataTable td {
+    border: 0px solid #dee2e6;
+    padding: 8px 10px;
+    vertical-align: middle;
+}
+
+table.dataTable tbody td[contenteditable="true"]:focus {
+    outline: 1px solid #ced4da;
+    border-radius: 3px;
+    background: #f8f9fa;
+}
+
+table.dataTable thead th {
+    background: #f8f9fa;
+	font-size: 10px !important;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+}
+table.dataTable tbody tr:nth-child(even) {
+    background: #f6f6f6;
+}
+table.dataTable tbody tr:hover {
+    background: #e9ecef;
+}
+table.dataTable tbody tr {
+    transition: background 0.2s;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    border: 1px solid #ced4da !important;
+    border-radius: 3px !important;
+    box-shadow: none !important;
+}
+
+table.dataTable tbody td select,
+table.dataTable tbody td input,
+table.dataTable tbody td .form-control,
+table.dataTable tbody td .form-control-sm {
+    font-size: 10px !important;
+    line-height: 1.5 !important;
+    height: auto !important;
+}
+
+
+.grip-handle {
+    cursor: move !important;
+    text-align: center;
+    color: #888;
+    font-size: 18px;
+}
+.grip-handle:active {
+    cursor: move !important;
+}
+
+#concluido-container.ensaio-concluido {
+    background: linear-gradient(90deg, #eafaf1 60%, #fff 100%);
+    border-radius: 6px;
+    box-shadow: 0 0 0 2px #b7eacb33;
+    transition: box-shadow 0.3s, background 0.3s;
+}
+
+/* Select2 Height Fix */
+.select2-container--default .select2-selection--single {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    min-height: 38px !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 1.5 !important;
+    padding: 0.375rem 0.75rem !important;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: calc(1.5em + 0.75rem + 2px) !important;
+    top: 0 !important;
+}
+
+/* Select2: opções numa única linha + scroll horizontal no dropdown */
+.select2-container--default .select2-results > .select2-results__options {
+    white-space: nowrap;
+    overflow-x: auto !important;
+}
+
+.select2-container--default .select2-results__option {
+    white-space: nowrap;
+}
+
+/* Garante que a largura acompanha o conteúdo */
+.select2-container--default .select2-results {
+    min-width: max-content;
+}
+
+/* Select2 com fundo totalmente opaco */
+.select2-container--default .select2-selection--single,
+.select2-container--open .select2-dropdown,
+.select2-container--default .select2-results,
+.select2-container--default .select2-results > .select2-results__options,
+.select2-container--default .select2-results__option {
+    background-color: #fff !important;
+    opacity: 1 !important;
+}
+
+/* Manter legibilidade no hover/seleção */
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+
+/* Select2 menor apenas na tabela de testes */
+#testesTable .select2-container--default .select2-selection--single {
+    height: 28px !important;
+    min-height: 28px !important;
+    border-radius: 3px !important;
+}
+
+#testesTable .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 26px !important;
+    padding: 0 8px !important;
+    font-size: 10px !important;
+}
+
+#testesTable .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 26px !important;
+}
+
+</style>
+
+
+
+<div class="tabelas-page">
+
+					
+<form method="POST" action="" enctype="multipart/form-data" id="formEnsaio">
+
+<input type="hidden" id="ensaio_id" name="ensaio_id" value="">
+<div class="tabelas-page">
+<div class="row">    
+	<div class="col-md-12">
+		<div class="card">
+			<div class="card-header">
+				<div class="row align-items-center">
+
+					<div class="col-md-1">
+						<h5 data-i18n="field.ensaio">Ensaio</h5>
+					</div>
+					<div class="col-md-2">
+						<input type="text" class="form-control" id="ensaio" name="ensaio" list="ensaios_list" value="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}>
+					</div>
+					<div class="col-md-2">
+						<button type="button" class="btn btn-info btn-sm" style="border-radius: 0;"  data-bs-toggle="modal" data-bs-target="#ensaiosModal">
+							<i class="fas fa-list"></i>
+						</button>
+                        <button type="button" id ="gbs" class="btn btn-success btn-sm" style="border-radius: 0;">
+							GBS
+						</button>
+						
+					</div>
+					<div class="col-md-1">
+					<img id="anuladoIcon" src="assets/img/anulado.png" style="display:none; width:80px; vertical-align:middle; margin-left:5px; cursor:pointer;" title="" data-i18n="field.anulado">
+					</div>
+                    <div class="col-md-2"></div>
+                    <div class="col-md-2" id="concluido-container">
+                            <span style="font-weight:600;" data-i18n="field.concluido_em">Concluído em</span>
+                            <div class="col-md-12 p-0 position-relative">
+                                <input type="date" class="form-control input-full" id="concluido" name="concluido" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                                <span id="concluido-check" style="display:none; position:absolute; right:10px; top:50%; transform:translateY(-50%); color:#28a745; font-size:1.3em;">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                            </div>
+                    </div>
+
+
+
+					<div class="col-md-1" style="text-align:right;">
+                        <button type="button" id="abrirPastaBtn" title="Abrir pasta do ensaio" style="background: #fff; border: none; padding: 0;">
+                            <i class="fas fa-folder-open" style="color: #FFD700; font-size: 2rem;"></i>
+                        </button>
+                    </div>
+					
+					<div class="col-md-1" style="text-align:right;">
+						<div class="dropdown">
+							<button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+							<i class="fas fa-bars" ></i> <span data-i18n="field.acoes">Ações</span>
+							</button>
+							<ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                            {% if user and user.funcao_id != 1 %}
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="criarPastas()">
+                                    <i class="fas fa-folder-open"></i> <span data-i18n="action.create_folders">Criar Pastas</span>
+                                    </a>
+                                </li>
+                            {% endif %}
+                            <li>
+								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){generateFolhaAcompanhamento();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
+                                <i class="fas fa-file-pdf"></i> <span data-i18n="action.tracking_sheet">Folha Acompanhamento</span>
+                                </a>
+							</li>
+                            <li>
+								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){relatorioFotos();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
+                                <i class="fas fa-file-word"></i> <span data-i18n="field.relatorio_fotos">Relatório Fotos</span>
+                                </a>
+							</li>
+                            <li>
+								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){relatorioFotosTeste();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
+                                <i class="fas fa-file-word"></i> <span data-i18n="field.relatorio_fotos_teste">Relatório Fotos por Teste</span>
+                                </a>
+							</li>
+                            <li>
+								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){generateEtiqueta();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
+                                <i class="fas fa-tag"></i> <span data-i18n="action.test_label">Etiqueta Ensaio</span>
+                                </a>
+							</li>
+                            <li>
+								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){generateEtiquetaTrims();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
+                                <i class="fas fa-tag"></i> <span data-i18n="action.trims_label">Etiqueta Trims</span>
+                                </a>
+							</li>
+						
+                            {% if user and user.funcao_id != 1 %}
+							<li>
+								<a class="dropdown-item" href="#" id="abrirSaidaStockModal">
+                                    <i class="fas fa-box-open"></i> <span data-i18n="field.saida_stock">Saída Stock</span>
+                                </a>
+							</li>
+							
+                            {% endif %}
+                            {% if user and user.funcao_id != 1 %}
+							<li>
+								<a class="dropdown-item" href="#" id="gerarorcamento">
+                                    <i class="fas fa-file-invoice"></i> <span data-i18n="action.budget">Orçamento</span>
+                                </a>
+							</li>
+							
+                            {% endif %}
+							</ul>
+						</div>
+						<!-- O input file continua escondido -->
+						<input type="file" class="form-control-file" id="excelFile" name="excelFile" accept=".xlsx, .xls" style="display: none;" onchange="uploadExcel()">
+					</div>
+					
+    
+        </div>
+        
+    </div>	
+
+	
+	 <div class="card-body">
+
+		<div class="row">
+            <div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="laboratorio" class="col-md-3 col-form-label" ><span data-i18n="field.laboratorio">Laboratório</span> *
+                    <span id="atualizarLaboratoriosBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Laboratórios" data-i18n="action.update_laboratories" data-i18n-attr="title">
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                        </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="laboratorio_id" name="laboratorio_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected disabled></option>
+                            {% for laboratorio in laboratorios %}
+                                <option value="{{ laboratorio.id }}">{{ laboratorio.laboratorio }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="part_number" class="col-md-3 col-form-label" ><span data-i18n="field.norma">Norma</span> *
+                        <span id="atualizarNormasBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Normas"  data-i18n="action.update_normas" data-i18n-attr="title">
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+
+                    </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="norma_id" name="norma_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected disabled></option>
+                            {% for norma in normas %}
+                                <option value="{{ norma.id }}">{{ norma.norma }}</option>
+                            {% endfor %}
+                        </select>
+					</div>
+                </div>
+            </div>
+			
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="npecasrecebidas" class="col-md-3 col-form-label"><span data-i18n="field.n_pecas">Nº de Peças</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="npecasrecebidas" name="npecasrecebidas" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-6 col-lg-2">
+				<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+					<label for="primeira_peca" class="col-md-12 col-form-label"><span data-i18n="field.primeira_peca">Primeira Peça</span></label>
+					<div class="col-md-12 p-0 d-flex">
+						<input type="text" class="form-control" id="prefixo" name="prefixo" placeholder="" style="width:30%; margin-right:5px;" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+						<input type="text" class="form-control" id="primeira_peca" name="primeira_peca" placeholder="" style="width:70%;" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+					</div>
+				</div>
+			</div>
+            <div class="col-md-6 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="data_solicitude" class="col-md-3 col-form-label"><span data-i18n="field.data">Data</span> *</label>
+                    <div class="col-md-12 p-0">
+                        <input type="date" class="form-control input-full" id="datapedido" name="datapedido" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-6 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="data_solicitada" class="col-md-3 col-form-label"><span data-i18n="field.data_limite_solicitada">Data Limite Solicitada</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="date" class="form-control input-full" id="data_solicitada" name="data_solicitada" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+        <div class="row">
+            <div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="pep" class="col-md-3 col-form-label"><span data-i18n="field.pep">PEP</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="pep" name="pep" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="part_number" class="col-md-3 col-form-label"><span data-i18n="field.network">Network</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="network" name="network" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="part_number" class="col-md-3 col-form-label"><span data-i18n="field.part_number_zf">Part Nº ZF</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="part_number" name="part_number" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+			
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="partnumbercli" class="col-md-3 col-form-label"><span data-i18n="field.part_number_cliente">Part Nº Cliente</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="partnumbercli" name="partnumbercli" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+            
+			<div class="col-md-6 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="data_entrega_pecas" class="col-md-3 col-form-label"><span data-i18n="field.data_entrega_pecas">Data Entrega Peças</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="date" class="form-control input-full" id="data_entrega_pecas" name="data_entrega_pecas" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-6 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="data_acordada" class="col-md-3 col-form-label"><span data-i18n="field.data_limite_acordada">Data Limite Acordada</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="date" class="form-control input-full" id="data_acordada" name="data_acordada" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+		<div class="row">
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="fase_id" class="col-md-3 col-form-label">
+                        <span data-i18n="field.cliente">Cliente</span>
+                        
+                        <span id="atualizarClientesBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Clientes"  data-i18n="action.update_clientes" data-i18n-attr="title"
+>
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+
+                    </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="cliente_id" name="cliente_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected disabled></option>
+                            {% for cliente in clientes %}
+                                <option value="{{ cliente.id }}">{{ cliente.cliente }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="codprojecto" class="col-md-3 col-form-label">
+                        <span data-i18n="field.projeto">Projeto</span>
+                        <span id="atualizarProjetosBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Projetos"  data-i18n="action.update_projetos" data-i18n-attr="title">
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                    </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="projecto_select" name="projecto_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected disabled></option>
+                            <!-- Opções serão preenchidas por JS -->
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="denominacao" class="col-md-3 col-form-label"><span data-i18n="field.denominacao">Denominação</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="denominacao" name="denominacao" placeholder="" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                
+                    <label for="fase_id" class="col-md-3 col-form-label"><span data-i18n="field.tipo_peca">Tipo de Peça</span>
+                    <span id="atualizarTipoPecasBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Tipos de Peça"  data-i18n="action.update_tipopeca" data-i18n-attr="title"
+>
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                    </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="tipopeca_id" name="tipopeca_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected></option>
+                            {% for tipopeca in tipopecas %}
+                                <option value="{{ tipopeca.id }}" data-divisao="{{ tipopeca.divisao }}">{{ tipopeca.tipopeca }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="destino_pecas" class="col-md-3 col-form-label"><span data-i18n="field.destino_pecas">Destino das Peças</span></label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="destino_pecas" name="destino_pecas" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected></option>
+                            
+                            <option value="Archive" data-i18n="option.archive">Arquivar</option>
+                            <option value="Scrap" data-i18n="option.scrap">Sucatear</option>
+                            <option value="Devolution" data-i18n="option.devolution">Devolver</option>
+                            
+                        </select>
+                        
+					</div>
+                </div>
+            </div>
+            <div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <div id="destinoGroup" style="display:none;">
+                        <label for="destino_pecas" class="col-md-3 col-form-label"><span data-i18n="field.destinatario">Destinatário</span></label>
+                        <div class="col-md-12 p-0">
+                            <input type="text" id="destinodevol" class="form-control input-full" {% if user.funcao_id == 1 %}readonly enabled{% endif %}>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+			
+
+            
+        </div>
+		<div class="row">
+             <div class="col-md-6 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="corecustomer" class="col-md-3 col-form-label">
+                    <span data-i18n="field.pasta">Pasta</span>
+                    </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="corecustomer" name="corecustomer" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="Customer" data-i18n="field.cliente" selected>Cliente</option>
+                            <option value="Core" data-i18n="field.core">Core</option>
+                        </select>
+                    </div>
+                </div>
+            </div>   
+             <div class="col-md-6 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="fase_id" class="col-md-3 col-form-label">
+                    <span data-i18n="field.fase">Fase</span>
+                    <span id="atualizarFasesBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Fases" data-i18n="action.update_fases" data-i18n-attr="title"
+>
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                    </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="fase_id" name="fase_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected disabled></option>
+                            {% for fase in fases %}
+                                <option value="{{ fase.id }}">{{ fase.fase }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-3 col-lg-2">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="solicitante_id" class="col-md-3 col-form-label">
+                    <span data-i18n="field.solicitante">Solicitante</span>
+                    <span id="atualizarSolicitantesBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Solicitantes"  data-i18n="action.update_solicitantes" data-i18n-attr="title"
+>
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                    </label>
+                    <div class="col-md-12 p-0">
+                        <select class="form-control" id="solicitante_id" name="solicitante_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+							<option value="" selected disabled></option>
+						</select>
+                    </div>
+                </div>
+            </div>
+			<div class="col-md-3 col-lg-2">
+				<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+					<label for="tecnico_id" class="col-md-3 col-form-label"><span data-i18n="field.tecnico">Técnico</span>
+                    <span id="atualizarTecnicosBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Técnicos"  data-i18n="action.update_tecnicos" data-i18n-attr="title"
+>
+                            <i class="fas fa-sync-alt"></i>
+                        </span>
+                    </label>
+					<div class="col-md-12 p-0">
+						<select class="form-control" id="tecnico_id" name="tecnico_id"  {% if user.funcao_id == 1 %}disabled{% endif %}>
+							<option value="" selected disabled></option>
+							{% for tecnico in tecnicos %}
+								<option value="{{ tecnico.id }}">{{ tecnico.full_name }}</option>
+							{% endfor %}
+						</select>
+					</div>
+				</div>
+			</div>
+
+			
+			<div class="col-md-6 col-lg-4">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <div id="destinoGroup2" style="display:none;">
+                    <label for="moradadevol" class="col-md-3 col-form-label"><span data-i18n="field.morada_devolucao">Morada Devolução</span></label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="moradadevol" name="moradadevol" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+                </div>
+            </div>
+			
+
+			
+			
+		</div>
+        <div class="row">
+            <div class="col-md-12 col-lg-8">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+                    <label for="observacoes" class="col-md-3 col-form-label" data-i18n="field.observacoes">Observações</label>
+                    <div class="col-md-12 p-0">
+                        <input type="text" class="form-control input-full" id="observacoes" name="observacoes" {% if user.funcao_id == 1 %}readonly enabled{% endif %}/>
+                    </div>
+                </div>
+            </div>
+        
+        <div class="col-md-6 col-lg-4">
+                <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
+					<label for="ensaioatrasado" class="col-md-12 col-form-label"><span data-i18n="field.ensaio_atrasado">Ensaio Atrasado</span></label>
+					<div class="col-md-10">
+                      <div class="d-flex">
+                        <select class="form-control me-1" id="atrasado" name="atrasado" style="max-width:120px;" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                            <option value="" selected></option>
+                            <option value="0" data-i18n="status.no">Não</option>
+                            <option value="1" data-i18n="status.yes">Sim</option>
+                        </select>
+                        <select class="form-control" id="motivoatraso_id" name="motivoatraso_id" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                        <option value="" selected></option>
+                          {% for motivo in motivosatraso %}
+                            <option value="{{ motivo.id }}">{{ motivo.motivo }}</option>
+                          {% endfor %}
+                        </select>
+                      </div>
+                    </div>
+				</div>
+            </div>
+		</div>
+		<br>
+		<div class="row">
+			<div class="col-md-1">
+                <button type="button" class="btn btn-warning btn-sm"  data-i18n="action.clear" onclick="clearFormFields()">
+                    Limpar
+                </button>
+			</div>
+            <div class="col-md-2">
+                <button type="button" class="btn btn-danger btn-sm" data-i18n="action.anular" onclick="anularinforme()" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                    Anular
+                </button>
+			</div>
+			<div class="col-md-7"></div>
+            <div class="col-md-1 align-right">
+                <button type="button" class="btn btn-info btn-sm" data-i18n="action.duplicate" onclick="duplicateInforme()" name="duplicate_informe" {% if user.funcao_id == 1 %}disabled{% endif %}>
+					Duplicar
+				</button>
+            </div>
+			<div class="col-md-1 align-right">
+                <button type="submit" class="btn btn-success btn-sm" data-i18n="action.save" name="save_informe" {% if user.funcao_id == 1 %}disabled{% endif %}>
+					Guardar
+				</button>
+            </div>
+            <div class="mt-2">
+            <small class="text-muted" style="font-size: 11px;">
+                * <span data-i18n="field.required_fields">Campos de preenchimento obrigatório</span>
+            </small>
+            </div>
+		</div>
+       
+
+
+        
+ </div> 
+
+
+
+
+		</div>
+	</div>
+
+
+	
+</div>       
+
+
+
+
+</form>
+
+<!--  TABELA DE TESTES -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 data-i18n="field.testes"">Testes</h5>
+                <button id="addTeste" type="button" class="btn btn-success btn-sm text-white dt-btn-rounded" title="Adicionar Teste" data-i18n="action.addtest" data-i18n-attr="title" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                    <i class="fas fa-plus"></i> 
+                </button>
+                
+                <button id="carregarNormaBtn" type="button" class="btn btn-primary btn-sm" title="Carregar template da norma" {% if user.funcao_id == 1 %}disabled{% endif %}>
+                    <i class="fas fa-file-import"></i> <span data-i18n="action.load_norma">Carregar Norma</span>
+                </button>
+            </div>
+            <div class="card-body">
+                <div style="overflow-x:auto;"></div>
+                <table id="testesTable">
+                    <thead>
+                        <tr>
+                            <th style="width:30px;"><center><i class="fas fa-grip-vertical"></i></center></th>
+                            <th><center></center></th>
+                            <th style="min-width: 140px;"><center><span data-i18n="field.tipo_teste">Tipo Teste</span></center></th>
+                            <th><center><span data-i18n="field.qtd">Qtd</span></center></th>
+                            <th><center><span data-i18n="field.prefixo">Prefixo</span></center></th>
+                            <th><center><span data-i18n="field.primeira_peca">Primeira Peça</span></center></th>
+                            <th><center><span data-i18n="field.data_inicio">Data Início</span></center></th>
+                            <th><center><span data-i18n="field.duracao_h">Duração (h)</span></center></th>
+                            <th><center><span data-i18n="field.data_fim">Data Fim</span></center></th>
+                            <th><center><span data-i18n="field.maquina">Máquina</span></center></th>
+                            <th><center><span data-i18n="field.tecnico">Técnico</span></center></th>
+                            <th><center><span data-i18n="field.fator">Fator</span></center></th>
+                            <th><center><span data-i18n="field.bem_primeira">Bem à Primeira (Qtd)</span></center></th>
+                            <th><center><span data-i18n="field.observacoes">Observações</span></center></th>
+                            <th style="width:50px;"><center><span data-i18n="action.delete">Eliminar</span></center></th>
+                        </tr>
+                    </thead>
+                    <tbody id="testesTableBody">
+                        <!-- Linhas serão adicionadas dinamicamente -->
+                    </tbody>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+<!-- Modal de Seleção de Ensaios -->
+<div class="modal fade" id="ensaiosModal" tabindex="-1" aria-labelledby="ensaiosModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="ensaiosModalLabel"><span data-i18n="nav.tests">Ensaios</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <table id="ensaiosTable" class="table table-striped" style="width:100%">
+          <thead>
+            <tr>
+              <th><span data-i18n="field.ensaio">Ensaio</span></th>
+              <th><span data-i18n="field.laboratorio">Laboratório</span></th>
+              <th><span data-i18n="field.projeto">Projeto</span></th>
+              <th><span data-i18n="field.denominacao">Denominação</span></th>
+              <th><span data-i18n="field.tipo_peca">Tipo de Peça</span></th>
+              <th><span data-i18n="field.solicitante">Solicitante</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Linhas serão preenchidas por JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div class="modal fade" id="motivoFalhaModal" tabindex="-1" aria-labelledby="motivoFalhaModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="motivoFalhaModalLabel"><span data-i18n="section.motivo_falha">Motivo da Falha</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <label for="motivoFalhaSelect"><span data-i18n="field.selecionar">Selecionar</span> <span data-i18n="field.motivo_falha">motivo da falha:</span></label>
+        <select class="form-control" id="motivoFalhaSelect"></select>
+      </div>
+      
+      <div class="modal-footer justify-content-end">
+        <button type="button" class="btn btn-success btn-sm" id="confirmarMotivoFalhaBtn"><span data-i18n="action.save">Guardar</span></button>
+    </div>
+    </div>
+  </div>
+</div>
+
+
+
+<!-- Modal de Inserção de Saída de Stock -->
+<div class="modal fade" id="saidaStockModal" tabindex="-1" role="dialog" aria-labelledby="saidaStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="saidaStockModalLabel"><span data-i18n="field.inserir">Inserir</span> <span data-i18n="field.saida_stock">Saída de Stock</span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+            </div>
+            <div class="modal-body">
+                <form id="saidaStockForm">
+                    <div class="row align-items-center g-2 mb-2">
+                        <label for="saidaStockEnsaio" class="col-sm-2 col-form-label col-form-label-sm"><span data-i18n="field.ensaio">Ensaio</span></label>
+                        <div class="col-sm-10">
+                        <input type="text" class="form-control" id="saidaStockEnsaio" name="saidaStockEnsaio" readonly>
+                        </div>
+                    </div>
+                    <div class="row align-items-center g-2 mb-2">
+                        <label for="saidaStockReferencia" class="col-sm-2 col-form-label col-form-label-sm"><span data-i18n="field.referencia">Referência</span></label>
+                        <div class="col-sm-10">
+                        <select class="form-control" id="saidaStockReferencia" name="saidaStockReferencia" required>
+                            <option value="" selected disabled></option>
+                        </select>
+                        </div>
+                    </div>
+                    <div class="row align-items-center g-2 mb-2">
+                        <div class="col-sm-2"></div>
+                        <div class="col-sm-10">
+                        <input class="form-check-input" type="checkbox" id="mostrarTodasRefs">
+                        <label class="form-check-label" for="mostrarTodasRefs" style="font-size:0.95em;">
+                            <span data-i18n="action.show_all">Mostrar Todas</span></label>
+                        </div>
+                    </div>
+                    <div class="row align-items-center g-2 mb-2">
+                        <label for="saidaStockQuantidade" class="col-sm-2 col-form-label col-form-label-sm"><span data-i18n="field.quantidade">Quantidade</span></label>
+                        <div class="col-sm-6">
+                        <input type="number" class="form-control" id="saidaStockQuantidade" name="saidaStockQuantidade" min="0" step="any" required>
+                        </div>
+                    </div>
+                    <div class="row align-items-center g-2 mb-2">
+                      <label for="saidaLocalizacao" class="col-sm-2 col-form-label col-form-label-sm"><span data-i18n="field.localizacao">Localização</span></label>
+                      <div class="col-sm-10">
+                      <select class="form-control" id="saidaLocalizacao" name="localizacao" required>
+                        <option value=""></option>
+                        <!-- opções serão preenchidas via JS -->
+                      </select>
+                      </div>
+                    </div>
+                    <div class="row align-items-center g-2 mb-2">
+                        <label for="obs" class="col-sm-2 col-form-label col-form-label-sm"><span data-i18n="field.observacoes">Observações</span></label>
+                        <div class="col-sm-10">
+                        <input type="text" class="form-control" id="obs" name="obs">
+                        </div>
+                    </div>
+                    <div class="modal-footer justify-content-end">
+                        <button type="submit" class="btn btn-success btn-sm"><span data-i18n="action.save">Guardar</span></button>
+                    </div>
+
+                    <hr>
+                    <div id="resumoStockContainer">
+                      <strong style="font-size:0.9em;"><span data-i18n="field.stock_gasto">Stock gasto neste ensaio</span></strong>
+                        <table class="table table-sm table-bordered table-striped table-hover mt-1">
+                          <thead>
+                            <tr>
+                              <th><span data-i18n="field.referencia">Referência</span></th>
+                              <th><span data-i18n="field.descricao">Descrição</span></th>
+                              <th class="text-end"><span data-i18n="field.qtd">Qtd</span></th>
+                            </tr>
+                          </thead>
+                          <tbody id="resumoStockBody">
+                            <tr><td colspan="3" class="text-muted"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>
+                          </tbody>
+                        </table>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="emailConclusaoModal" tabindex="-1" aria-labelledby="emailConclusaoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="emailConclusaoModalLabel"><span data-i18n="modal.emails_conclusao">Emails de Conclusao</span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="emailConclusaoList" class="list-group"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.plugin.addimage.min.js"></script>
+<script src="{{ url_for('static', filename='js/plugin/select2/select2.full.min.js') }}"></script>
+
+<script>
+
+/////////////////////////////////////////////////////////////
+//GBS
+document.addEventListener("DOMContentLoaded", function () {
+    
+    const btn = document.getElementById("gbs");
+    const ensaioInput = document.getElementById("ensaio");
+
+    btn.addEventListener("click", function () {
+        const ensaio = ensaioInput.value;
+
+        if (!ensaio || !ensaio.includes("_")) {
+            alert(i18n.t('msg.formato_ensaio_invalido'));
+            return;
+        }
+
+        // separar function e série
+        const lastUnderscore = ensaio.lastIndexOf("_");
+        const functionNumber = ensaio.substring(0, lastUnderscore);
+        const seriesNumber = ensaio.substring(lastUnderscore + 1);
+
+        console.log("Function:", functionNumber);
+
+        fetch("/gbs/project", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                function_number: functionNumber
+            })
+        })
+        .then(async response => {
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                console.error("ERRO BACKEND:", data);
+                throw data;
+            }
+
+            return data;
+        })
+     .then(async response => {
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error("ERRO BACKEND:", data);
+            throw data;
+        }
+
+        return data;
+    })
+    .catch(error => {
+
+    console.error("ERRO COMPLETO:", error);
+
+    if (error?.error) {
+        alert(error.error);
+    } 
+    else if (error?.detail) {
+        alert(error.detail);
+    } 
+    else {
+        alert("Erro desconhecido");
+    }
+});
+
+
+
+    });
+});
+
+
+
+
+
+
+
+function relatorioFotos() {
+
+    mostrarNotificacao(i18n.t('msg.gerar_relatorio_fotos'), "info");
+
+    const ensaio = document.getElementById('ensaio').value;
+
+    fetch('/relatorio_fotos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ensaio })
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw err; });
+        }
+        return response.blob();
+    })
+    .then(blob => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Relatorio_Fotos_${ensaio}.docx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        mostrarNotificacao(
+            i18n.t('msg.relatorio_gerado_sucesso'),
+            'success'
+        );
+    })
+    .catch(err => {
+        console.error(err);
+
+        // Caso o backend já envie error_key (novo padrão)
+        if (err?.error_key) {
+            mostrarNotificacao(
+                i18n.t(err.error_key, '', err.params || {}),
+                'error'
+            );
+        }
+        // Caso antigo: backend ainda envia texto direto
+        else if (err?.error) {
+            mostrarNotificacao(err.error, 'error');
+        }
+        // Fallback genérico
+        else {
+            mostrarNotificacao(
+                i18n.t('msg.erro_gerar_relatorio'),
+                'error'
+            );
+        }
+    });
+}
+
+function relatorioFotosTeste() {
+
+    mostrarNotificacao(i18n.t('msg.gerar_relatorio_fotos'), "info");
+
+    const ensaio = document.getElementById('ensaio').value;
+
+    fetch('/relatorio_fotos_por_teste', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ensaio })
+    })
+    .then(async response => {
+    if (!response.ok) {
+        const err = await response.json();
+        console.error("ERRO BACKEND:", err);
+        throw err;
+    }
+    return response.json();
+})
+    .then(data => {
+        mostrarNotificacao(
+            i18n.t(data.message_key),
+            'success'
+        );
+    })
+    .catch(err => {
+    console.error("ERRO COMPLETO:", err);
+
+    if (err?.error_key) {
+        mostrarNotificacao(
+            i18n.t(err.error_key, '', err.params || {}),
+            'error'
+        );
+    } else {
+        mostrarNotificacao(
+            JSON.stringify(err),
+            'error'
+        );
+    }
+});
+``
+}
+
+
+function setSelectByText(selectElement, text) {
+    if (!text) return;
+
+    let found = false;
+
+    for (let option of selectElement.options) {
+        if (option.text.trim() === text.trim()) {
+            option.selected = true;
+            found = true;
+            break;
+        }
+    }
+
+    if (found) {
+        // atualizar Select2
+        selectElement.dispatchEvent(new Event("change"));
+        return;
+    }
+
+    // Não encontrado perguntar
+    const confirmAdd = confirm(
+    i18n.t('msg.item_nao_existe_lista', '', { text })
+    );
+
+    if (!confirmAdd) {
+        return;
+    }
+
+    // Criar nova opção
+    const newOption = new Option(text, text, true, true);
+    selectElement.add(newOption);
+
+    //Atualizar UI Select2 
+    selectElement.dispatchEvent(new Event("change"));
+}
+
+
+
+document.getElementById('gerarorcamento')?.addEventListener('click', async function (e) {
+    e.preventDefault();
+
+    const ensaioNumero = (document.getElementById('ensaio')?.value || '').trim();
+    if (!ensaioNumero) {
+        mostrarNotificacao(
+            i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'),
+            'error'
+            );
+        return;
+    }
+
+    try {
+        const url = `/api/ensaios/${encodeURIComponent(ensaioNumero)}/exportar_orcamento`;
+        const response = await fetch(url, { method: 'GET' });
+
+        if (!response.ok) {
+            let msg = 'Erro ao gerar Excel.';
+            try {
+                const err = await response.json();
+                if (err && err.error) msg = err.error;
+            } catch (_) {}
+            mostrarNotificacao(msg, 'error');
+            return;
+        }
+
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `${ensaioNumero}_Orçamento.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(downloadUrl);
+
+    mostrarNotificacao(
+        i18n.t('msg.ficheiro_gerado_sucesso'),
+        'success'
+        );
+        } catch (err) {
+            console.error(err);
+            mostrarNotificacao(
+            i18n.t('msg.erro_gerar_ficheiro'),
+            'error'
+            );
+        }
+});
+
+
+
+////////////////////////////////////////////////////
+//selects com pesquisa
+function sortSelectOptionsAlphabetically(selectEl, keepFirstOption) {
+    if (!selectEl) return;
+
+    const selectedValue = selectEl.value;
+    const options = Array.from(selectEl.options);
+
+    let fixed = [];
+    let sortable = options;
+
+    if (keepFirstOption && options.length > 0) {
+    fixed = [options[0]];
+    sortable = options.slice(1);
+    }
+
+    sortable.sort((a, b) =>
+    (a.textContent || "").trim().localeCompare((b.textContent || "").trim(), "pt", { sensitivity: "base" })
+    );
+
+    selectEl.innerHTML = "";
+    [...fixed, ...sortable].forEach(opt => selectEl.appendChild(opt));
+
+    if (selectedValue) {
+    selectEl.value = selectedValue;
+    }
+}
+
+function initSelect2Combo(selector, opts) {
+    if (!window.jQuery || !$.fn.select2) return;
+
+    const $el = $(selector);
+    if (!$el.length) return;
+    if ($el.data("select2")) return;
+
+    const config = Object.assign({width: "100%"},opts || {}); 
+
+    $el.select2(config);
+
+    $el.on("select2:select select2:unselect select2:clear", function () {
+        // Evita duplo disparo no modal de stock (Select2 + dispatch manual)
+        if (this.id === "saidaStockReferencia" || this.id === "saidaLocalizacao") return;
+        this.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+
+    $el.on("select2:open", function () {
+    setTimeout(() => {
+    document.querySelector(".select2-container--open .select2-search__field")?.focus();
+    }, 50);
+    });
+}
+
+function refreshLaboratorioSelectUI() {
+    const select = document.getElementById("laboratorio_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#laboratorio_id");
+    } else {
+    $("#laboratorio_id").trigger("change.select2");
+    }
+}
+
+function refreshNormaSelectUI() {
+    const select = document.getElementById("norma_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+        initSelect2Combo("#norma_id");
+    } else {
+        $("#norma_id").trigger("change.select2");
+    }
+}
+
+function refreshClienteSelectUI() {
+    const select = document.getElementById("cliente_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+        initSelect2Combo("#cliente_id");
+    } else {
+        $("#cliente_id").trigger("change.select2");
+    }
+}
+
+function refreshProjectoSelectUI() {
+    const select = document.getElementById("projecto_select");
+    if (!select) return;
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+        initSelect2Combo("#projecto_select");
+    } else {
+        $("#projecto_select").trigger("change.select2");
+    }
+}
+
+function refreshTipoPecaSelectUI() {
+    const select = document.getElementById("tipopeca_id");
+    if (!select) return;
+        sortSelectOptionsAlphabetically(select, true);
+    
+    if (!$(select).data("select2")) {
+        initSelect2Combo("#tipopeca_id");
+    } else {
+        $("#tipopeca_id").trigger("change.select2");
+    }
+}
+
+function refreshFaseSelectUI() {
+    const select = document.getElementById("fase_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+        initSelect2Combo("#fase_id");
+    } else {
+        $("#fase_id").trigger("change.select2");
+    }
+}
+
+function refreshSolicitanteSelectUI() {
+    const select = document.getElementById("solicitante_id");
+    if (!select) return;
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+        initSelect2Combo("#solicitante_id");
+    } else {
+        $("#solicitante_id").trigger("change.select2");
+    }
+}
+
+function refreshTecnicoSelectUI() {
+    const select = document.getElementById("tecnico_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+        initSelect2Combo("#tecnico_id");
+    } else {
+        $("#tecnico_id").trigger("change.select2");
+    }
+}
+
+function refreshMotivoAtrasoSelectUI() {
+    const select = document.getElementById("motivoatraso_id");
+    if (!select) return;
+
+    sortSelectOptionsAlphabetically(select, true);
+
+    if (!$(select).data("select2")) {
+    initSelect2Combo("#motivoatraso_id");
+    } else {
+    $("#motivoatraso_id").trigger("change.select2");
+    }
+}
+
+function initSelect2Tabela($els) {
+    if (!window.jQuery || !$.fn.select2 || !$els || !$els.length) return;
+
+    $els.each(function () {
+        const $el = $(this);
+        if ($el.data("select2")) return;
+
+        $el.select2({
+            width: "100%",
+            dropdownAutoWidth: true,
+            dropdownParent: $("#testesTable").closest(".card-body")
+        });
+
+        $el.on("select2:open", function () {
+            setTimeout(() => {
+                document.querySelector(".select2-container--open .select2-search__field")?.focus();
+            }, 50);
+        });
+    });
+}
+
+////////////////////////////////////////
+//botões atualizar combos
+document.getElementById('atualizarClientesBtn').onclick = atualizarComboClientes;
+document.getElementById('atualizarProjetosBtn').onclick = carregarTodosProjetos;
+document.getElementById('atualizarLaboratoriosBtn').onclick = atualizarComboLaboratorios;
+document.getElementById('atualizarNormasBtn').onclick = atualizarComboNormas;
+document.getElementById('atualizarFasesBtn').onclick = atualizarComboFases;
+document.getElementById('atualizarSolicitantesBtn').onclick = carregarSolicitantes;
+document.getElementById('atualizarTecnicosBtn').onclick = atualizarComboTecnicos;
+document.getElementById('atualizarTipoPecasBtn').onclick = atualizarComboTipoPecas;
+
+//carregar clientes
+function atualizarComboClientes() {
+    fetch('/clientes/ativos')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('cliente_id');
+            const valorAtual = select.value;
+            select.innerHTML = '<option value="" selected disabled></option>';
+            data.forEach(cliente => {
+                select.innerHTML += `<option value="${cliente.id}">${cliente.cliente}</option>`;
+            });
+            if (valorAtual) {
+                select.value = valorAtual;
+            }
+            refreshClienteSelectUI();
+        })
+        .catch(() =>
+            mostrarNotificacao(
+                i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.clientes'),
+                'error'
+            )
+            );
+}
+
+//carregar laboratorios
+function atualizarComboLaboratorios() {
+    fetch('/laboratorios/ativos') // ajuste a rota conforme sua API
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('laboratorio_id');
+            const valorAtual = select.value;
+            select.innerHTML = '<option value="" selected disabled></option>';
+            data.forEach(laboratorio => {
+                select.innerHTML += `<option value="${laboratorio.id}">${laboratorio.laboratorio}</option>`;
+            });
+            if (valorAtual) {
+                select.value = valorAtual;
+            }
+            refreshLaboratorioSelectUI();
+        })
+        .catch(() =>
+            mostrarNotificacao(
+                i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.laboratorios') ,
+                'error'
+            )
+            );
+}
+
+//carregar normas
+function atualizarComboNormas() {
+    fetch('/normas/ativas')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('norma_id');
+            const valorAtual = select.value;
+            select.innerHTML = '<option value="" selected disabled></option>';
+            data.forEach(norma => {
+                select.innerHTML += `<option value="${norma.id}">${norma.norma}</option>`;
+            });
+            if (valorAtual) {
+                select.value = valorAtual;
+            }
+            refreshNormaSelectUI();
+        })
+        .catch(() =>
+            mostrarNotificacao(
+                i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.normas'),
+                'error'
+            )
+            );
+}
+
+function atualizarComboTipoPecas() {
+    fetch("/tipo_pecas/ativas")
+    .then(res => res.json())
+    .then(data => {
+    const select = document.getElementById("tipopeca_id");
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="" selected></option>';
+
+        data.forEach(tipopeca => {
+            select.innerHTML += `<option value="${tipopeca.id}">${tipopeca.tipopeca}</option>`;
+        });
+
+        if (valorAtual) {
+            select.value = valorAtual;
+        }
+
+        refreshTipoPecaSelectUI();
+    })
+    .catch(() =>
+            mostrarNotificacao(
+                i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.tipos_pecas'),
+                'error'
+            )
+            );
+}
+
+//carregar fases
+function atualizarComboFases() {
+    fetch("/fases/ativas")
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById("fase_id");
+            const valorAtual = select.value;
+            select.innerHTML = '<option value="" selected disabled></option>';
+
+            data.forEach(fase => {
+                select.innerHTML += `<option value="${fase.id}">${fase.fase}</option>`;
+            });
+
+            if (valorAtual) {
+                select.value = valorAtual;
+            }
+
+            refreshFaseSelectUI();
+        })
+        .catch(() =>
+            mostrarNotificacao(
+                i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.fases'),
+                'error'
+            )
+            );
+}
+
+function atualizarComboTecnicos() {
+    fetch('/tecnicos/ativos')
+        .then(res => res.json())
+        .then(data => {
+            const select = document.getElementById('tecnico_id');
+            const valorAtual = select.value;
+
+            select.innerHTML = '<option value="" selected disabled></option>';
+            data.forEach(tecnico => {
+                select.innerHTML += `<option value="${tecnico.id}">${tecnico.full_name}</option>`;
+            });
+
+            if (valorAtual) {
+                select.value = valorAtual;
+            }
+
+            refreshTecnicoSelectUI();
+        })
+        .catch(() =>
+            mostrarNotificacao(
+                i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.tecnicos'),
+                'error'
+            )
+            );
+}
+
+////////////////////////////////////
+//botão duplicar
+
+function duplicateInforme() {
+    // Limpa apenas os campos ensaio_id, ensaio e a tabela de testes
+    document.getElementById('ensaio_id').value = '';
+    document.getElementById('ensaio').value = '';
+    // Limpa a tabela de testes
+    const testesTableBody = document.getElementById('testesTableBody');
+    if (testesTableBody) {
+        testesTableBody.innerHTML = '';
+    }
+}
+
+////////////////////////////////////
+//dar baixa stock
+
+
+$(document).on('click', '#abrirSaidaStockModal', function(e) {
+    e.preventDefault();
+
+    if (!$('#saidaStockReferencia').data('select2')) {
+        initSelect2Combo('#saidaStockReferencia', {
+            width: '100%',
+            dropdownParent: $('#saidaStockModal'),
+            placeholder: ''
+        });
+    }
+
+    if (!$('#saidaLocalizacao').data('select2')) {
+        initSelect2Combo('#saidaLocalizacao', {
+            width: '100%',
+            dropdownParent: $('#saidaStockModal'),
+            placeholder: ''
+        });
+    }
+
+    const ensaioSelecionado = $('#ensaio_id').val();
+    const ensaionumero = $('#ensaio').val();
+    if (!ensaioSelecionado) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'));
+        return;
+    }
+
+    //$('#saidaLocalizacao').empty().append('<option value=\"\"></option>');
+
+  
+
+    $('#saidaStockEnsaio').val(ensaionumero);
+    fetch(`/api/ensaio_by_id?id=${ensaioSelecionado}`)
+        .then(r => r.json())
+        .then(ensaioData => {
+            const projetoId = $('#projecto_select').val();
+            function carregarReferencias(eAbrirModal) {
+                let url = '/api/referencias_stock?obsoleta=0';
+                if (!$('#mostrarTodasRefs').is(':checked') && projetoId) {
+                    url += `&projeto_id=${projetoId}`;
+                }
+                fetch(url)
+                    .then(r => r.json())
+                    .then(refs => {
+                        const $select = $('#saidaStockReferencia');
+                        $select.empty();
+                        $select.append('<option value="" selected disabled></option>');
+                        refs.forEach(ref => {
+                            $select.append(`<option value="${ref.id}">${ref.referencia} - ${ref.descricao || ''}</option>`);
+                        });
+                        if (eAbrirModal) {
+                            $('#saidaStockModal').modal('show');
+                        }
+                        $select.val(null).trigger('change.select2');
+                    });
+            }
+            $('#mostrarTodasRefs').off('change').on('change', function() { carregarReferencias(false); });
+            carregarReferencias(true);
+            carregarResumoStock();
+
+        });
+
+});
+
+function carregarResumoStock() {
+    const ensaioId = $('#ensaio_id').val();
+    if (!ensaioId) return;
+    fetch(`/api/saida_stock/resumo?ensaio_id=${ensaioId}`)
+        .then(r => r.json())
+        .then(data => {
+            const tbody = $('#resumoStockBody');
+            tbody.empty();
+            if (!data.length) {
+                tbody.append('<tr><td colspan="3" class="text-muted"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>');
+                return;
+            }
+            data.forEach(row => {
+                tbody.append(`<tr>
+                    <td><a href="/referencias?referencia_id=${row.id}" target="_blank" class="selecionar-referencia" data-id="${row.id}">${row.referencia}</a></td>
+                    <td>${row.descricao}</td>
+                    <td class="text-end">${row.total}</td>
+                </tr>`);
+            });
+        });
+}
+
+
+
+$('#saidaStockForm').on('submit', function(e) {
+    e.preventDefault();
+    const ensaio_id = $('#ensaio_id').val();
+    const referencia_id = $('#saidaStockReferencia').val();
+    const quantidade = $('#saidaStockQuantidade').val();
+    const localizacao_id = $('#saidaLocalizacao').val();
+    const movimento = "-";
+    const obs = $('#obs').val();
+    fetch('/api/saida_stock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ensaio_id, referencia_id, quantidade, localizacao_id, obs, movimento })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            //$('#saidaStockModal').modal('hide');
+            $('#saidaStockForm')[0].reset();
+            mostrarNotificacao('Saída de stock inserida!', 'success');
+            carregarResumoStock();
+        } else {
+            mostrarNotificacao(
+  i18n.t('msg.erro_inserir_saida_stock'),
+  'error'
+);
+        }
+    })
+    .catch(() => mostrarNotificacao(
+  i18n.t('msg.erro_inserir_saida_stock'),
+  'error'
+));
+});
+
+
+//////////////////////////////////////////////////
+//Etiqueta
+
+async function generateEtiquetaTrims() {
+    const ensaioNumero = $('#ensaio').val() + ` (${i18n.t('field.trims')})`;
+    const { jsPDF } = window.jspdf;
+    // A5 horizontal: [210, 148] mm
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+
+    // Cabeçalho com fundo cinza escuro
+    doc.setFillColor(176, 176, 176); // cinza mais escuro
+    doc.rect(10, 8, 190, 18, 'F');
+
+
+    let logoBase64 = '';
+    try {
+        const response = await fetch('/assets/img/logo.png');
+        const blob = await response.blob();
+        const reader = new FileReader();
+        const base64Promise = new Promise(resolve => { reader.onloadend = () => resolve(reader.result); });
+        reader.readAsDataURL(blob);
+        logoBase64 = await base64Promise;
+    } catch (e) { logoBase64 = null; }
+    if (logoBase64) {
+        doc.addImage(logoBase64, 'PNG', 13, 13, 0, 8); // altura 8, largura auto
+    }
+
+    // Buscar dados do formulário
+    const destinatario = $('#destinodevol').val() || '';
+    const projeto = $('#projecto_select option:selected').text() || '';
+    const tipopeca = $('#tipopeca_id option:selected').text() || '';
+    const fase = $('#fase_id option:selected').text() || '';
+    const quantidade = $('#npecasrecebidas').val() || '';
+
+    // Corpo da etiqueta
+    doc.setFontSize(22);
+    let y = 42;
+    const xLabel = 20;
+    const xValue = 73;
+
+    const dataConclusao = document.getElementById('concluido').value;
+    const fasetext = document.getElementById('fase_id').selectedOptions[0]?.text?.toLowerCase() || '';
+    const dataSucatear = await calcularDataSucatearTrims(dataConclusao);
+    
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.destinatario') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(destinatario, xValue, y);
+    y += 20;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.projeto') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(projeto, xValue-20, y);
+    y += 20;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.tipo_peca') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(tipopeca, xValue, y);
+    y += 20;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.fase') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(fase, xValue-30, y);
+    y += 20;
+
+   
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.quantidade') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(quantidade, xValue, y);
+    
+
+     if (dataSucatear) {
+        doc.setFont(undefined, 'bold');
+        doc.text(i18n.t('option.scrap') + ':', xLabel+90, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(dataSucatear, xValue+80, y);
+    }
+
+
+    // Título ENSAIO
+    doc.setFontSize(24);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont(undefined, 'bold');
+
+    doc.text(i18n.t('field.ensaio').toUpperCase() + ':', 60, 21);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(24);
+    doc.text(String(ensaioNumero), 96, 21);
+
+    doc.save('Etiqueta_Ensaio_' + ensaioNumero + '.pdf');
+}
+
+////////////////////////////////////////////////////////
+//data sucatear peças
+async function calcularDataSucatearTrims(dataConclusao) {
+    if (!dataConclusao) return '';
+
+    const faseId = document.getElementById('fase_id')?.value;
+    if (!faseId) return '';
+
+    let fases = [];
+    try {
+    const res = await fetch('/fases');
+    const json = await res.json();
+    fases = Array.isArray(json.data) ? json.data : [];
+    } catch (e) {
+    console.error('Erro ao obter fases (trims):', e);
+    return '';
+    }
+
+    const faseSelecionada = fases.find(f => String(f.id) === String(faseId));
+    if (!faseSelecionada) return '';
+
+    const dias = Number(faseSelecionada.sucateartrims);
+    if (!Number.isFinite(dias)) return '';
+
+    const dt = new Date(dataConclusao);
+    dt.setDate(dt.getDate() + dias);
+
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(dt.getDate())}-${pad(dt.getMonth() + 1)}-${dt.getFullYear()}`;
+}
+
+async function generateEtiqueta() {
+    const ensaioNumero = $('#ensaio').val();
+    const { jsPDF } = window.jspdf;
+    // A5 horizontal: [210, 148] mm
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a5' });
+
+    // Cabeçalho com fundo cinza escuro
+    doc.setFillColor(176, 176, 176); // cinza mais escuro
+    doc.rect(10, 8, 190, 18, 'F');
+
+
+    let logoBase64 = '';
+    try {
+        const response = await fetch('/assets/img/logo.png');
+        const blob = await response.blob();
+        const reader = new FileReader();
+        const base64Promise = new Promise(resolve => { reader.onloadend = () => resolve(reader.result); });
+        reader.readAsDataURL(blob);
+        logoBase64 = await base64Promise;
+    } catch (e) { logoBase64 = null; }
+    if (logoBase64) {
+        doc.addImage(logoBase64, 'PNG', 13, 13, 0, 8); // altura 8, largura auto
+    }
+
+    // Buscar dados do formulário
+    const destinatario = $('#destinodevol').val() || '';
+    const projeto = $('#projecto_select option:selected').text() || '';
+    const tipopeca = $('#tipopeca_id option:selected').text() || '';
+    const fase = $('#fase_id option:selected').text() || '';
+    const quantidade = $('#npecasrecebidas').val() || '';
+
+    // Corpo da etiqueta
+    doc.setFontSize(22);
+    let y = 42;
+    const xLabel = 20;
+    const xValue = 73;
+
+    const dataConclusao = document.getElementById('concluido').value;
+    const fasetext = document.getElementById('fase_id').selectedOptions[0]?.text?.toLowerCase() || '';
+    const dataSucatear = await calcularDataSucatear(dataConclusao);
+    
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.destinatario') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(destinatario, xValue, y);
+    y += 20;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.projeto') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(projeto, xValue-20, y);
+    y += 20;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.tipopeca') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(tipopeca, xValue, y);
+    y += 20;
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.fase') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(fase, xValue-30, y);
+    y += 20;
+
+   
+    
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.quantidade') + ':', xLabel, y);
+    doc.setFont(undefined, 'normal');
+    doc.text(quantidade, xValue, y);
+    
+
+     if (dataSucatear) {
+        doc.setFont(undefined, 'bold');
+        doc.text(i18n.t('option.scrap') + ':', xLabel+90, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(dataSucatear, xValue+80, y);
+    }
+
+
+    // Título ENSAIO
+    doc.setFontSize(24);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.ensaio').toUpperCase() + ':', 60, 21);
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(24);
+    doc.text(String(ensaioNumero), 96, 21);
+
+    doc.save('Etiqueta_Ensaio_' + ensaioNumero + '.pdf');
+}
+
+////////////////////////////////////////////////////////
+//data sucatear peças
+async function calcularDataSucatear(dataConclusao) {
+    if (!dataConclusao) return '';
+
+    const faseId = document.getElementById('fase_id')?.value;
+    if (!faseId) return '';
+
+    let fases = [];
+    try {
+        const res = await fetch('/fases');
+        const json = await res.json();
+        fases = Array.isArray(json.data) ? json.data : [];
+    } catch (e) {
+        console.error('Erro ao carregar fases:', e);
+        return '';
+    }
+
+    const faseSelecionada = fases.find(f => String(f.id) === String(faseId));
+    if (!faseSelecionada) return '';
+
+    const dias = Number(faseSelecionada.sucatearmod);
+    if (!Number.isFinite(dias)) return '';
+
+    const dt = new Date(dataConclusao);
+    dt.setDate(dt.getDate() + dias);
+
+    const pad = n => String(n).padStart(2, '0');
+    return `${pad(dt.getDate())}-${pad(dt.getMonth() + 1)}-${dt.getFullYear()}`;
+}
+
+/////////////////////////////////////////////////////////////////////
+//DATA CONCLUIDO
+
+document.getElementById('concluido').addEventListener('change', function(e) {
+    const valor = (this.value || '').trim();
+
+    // formato completo obrigatório
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(valor) || !this.valueAsDate) {
+        return;
+    }
+
+    const ano = Number(valor.slice(0, 4));
+
+    // só continua se ano > 2025
+    if (!Number.isFinite(ano) || ano <= 2025) {
+        return;
+    }
+
+    const atrasado = document.getElementById('atrasado').value;
+    const motivoAtraso = document.getElementById('motivoatraso_id').value;
+    if (!atrasado) {
+        
+        mostrarNotificacao(
+        i18n.t('msg.preencha') + ' ' + i18n.t('field.ensaio_atrasado'),
+        'error'
+        );
+
+        this.value = '';
+        this.focus();
+        return;
+    }
+    if (atrasado === '1' && !motivoAtraso) {
+        
+        mostrarNotificacao(
+        i18n.t('msg.indicar_motivo_ensaio_atrasado'),
+        'error'
+        );
+
+        this.value = '';
+        this.focus();
+        return;
+    }
+
+    // Verificar se todos os testes têm data de fim, bem à primeira (qtd) e motivo de falha se necessário
+    const linhasTestes = document.querySelectorAll('#testesTableBody tr');
+    let algumSemDataFim = false;
+    let algumSemBemPrimeira = false;
+    let algumSemMotivoFalha = false;
+    linhasTestes.forEach(tr => {
+        const inputDataFim = tr.querySelector('.datafim-input');
+        const inputBemPrimeira = tr.querySelector('.bem-primeira-input');
+        const qtdCell = tr.querySelector('.qtd-input');
+        // Motivo de falha pode estar em data attribute ou hidden input, depende da tua implementação
+        const motivoFalha = tr.dataset.motivofalha || tr.getAttribute('data-motivofalha') || tr.getAttribute('motivofalha') || null;
+
+        if (!inputDataFim || !inputDataFim.value) {
+            algumSemDataFim = true;
+        }
+        if (!inputBemPrimeira || inputBemPrimeira.textContent.trim() === '') {
+            algumSemBemPrimeira = true;
+        }
+        // Verificação motivo de falha
+        if (inputBemPrimeira && qtdCell) {
+            const bemPrimeira = parseInt(inputBemPrimeira.textContent.trim());
+            const qtd = parseInt(qtdCell.textContent.trim());
+            if (!isNaN(bemPrimeira) && !isNaN(qtd) && bemPrimeira < qtd) {
+                if (!motivoFalha) {
+                    algumSemMotivoFalha = true;
+                }
+            }
+        }
+    });
+    if (algumSemDataFim) {
+       
+        mostrarNotificacao(
+        i18n.t('msg.testes_precisam_data_fim'),
+        'error'
+        );
+
+        this.value = '';
+        this.focus();
+        return;
+    }
+    if (algumSemBemPrimeira) {
+        
+        mostrarNotificacao(
+        i18n.t('msg.testes_precisam_bem_primeira'),
+        'error'
+        );
+
+        this.value = '';
+        this.focus();
+        return;
+    }
+    if (algumSemMotivoFalha) {
+        
+        mostrarNotificacao(
+        i18n.t('msg.bem_primeira_inferior_indicar_motivo'),
+        'error'
+        );
+
+        this.value = '';
+        this.focus();
+        return;
+    }
+
+   
+        enviarEmailConclusao();
+    
+
+});
+
+let emailConclusaoModalRef = null;
+
+function buildMailtoLink(emailCfg) {
+  const to = (emailCfg.to_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+  const cc = (emailCfg.cc_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+  const subject = encodeURIComponent(emailCfg.assunto || '');
+  const body = encodeURIComponent(emailCfg.texto || '');
+
+  let mailtoLink = `mailto:${encodeURIComponent(to)}?subject=${subject}&body=${body}`;
+  if (cc) {
+    mailtoLink += `&cc=${encodeURIComponent(cc)}`;
+  }
+  return mailtoLink;
+}
+
+function renderEmailConclusaoList(emails) {
+  const list = document.getElementById('emailConclusaoList');
+  list.innerHTML = '';
+
+  emails.forEach((emailCfg, idx) => {
+    const item = document.createElement('div');
+    item.className = 'list-group-item';
+
+    const to = (emailCfg.to_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+    const cc = (emailCfg.cc_email || '').split(';').map(e => e.trim()).filter(Boolean).join(';');
+
+    item.innerHTML = `
+  <div class="d-flex justify-content-between align-items-center gap-2">
+    <div>
+      <div>
+        <strong>
+          ${idx + 1}. ${emailCfg.config_nome || i18n.t('field.configuracao')}
+        </strong>
+      </div>
+
+      <div>
+        <small>
+          <strong>${i18n.t('field.assunto')}:</strong>
+          ${emailCfg.assunto || ''}
+        </small>
+      </div>
+
+      <div>
+        <small>
+          <strong>${i18n.t('field.para')}:</strong>
+          ${to || '-'}
+        </small>
+      </div>
+
+      <div>
+        <small>
+          <strong>${i18n.t('field.cc')}:</strong>
+          ${cc || '-'}
+        </small>
+      </div>
+    </div>
+
+    <button type="button" class="btn btn-sm btn-primary">
+      ${i18n.t('action.open')}
+    </button>
+  </div>
+`;
+
+    const btn = item.querySelector('button');
+    btn.addEventListener('click', () => {
+      const mailtoLink = buildMailtoLink(emailCfg);
+      window.location.href = mailtoLink;
+    });
+
+    list.appendChild(item);
+  });
+}
+
+function abrirModalEmailsConclusao(emails) {
+  renderEmailConclusaoList(emails);
+  if (!emailConclusaoModalRef) {
+    emailConclusaoModalRef = new bootstrap.Modal(document.getElementById('emailConclusaoModal'));
+  }
+  emailConclusaoModalRef.show();
+}
+
+async function enviarEmailConclusao() {
+  const ensaioId = document.getElementById('ensaio_id').value;
+
+  if (!ensaioId) {
+    mostrarNotificacao(
+        i18n.t('msg.guardar_ensaio_antes'),
+        'error'
+        );
+            return;
+        }
+
+  try {
+    const response = await fetch('/api/render-email-conclusao', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ensaio_id: ensaioId })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      if (data.error) mostrarNotificacao(data.error, 'error');
+      return;
+    }
+
+    const emails = Array.isArray(data.emails) ? data.emails : [];
+    if (!emails.length) {
+    
+      return;
+    }
+
+    abrirModalEmailsConclusao(emails);
+    //mostrarNotificacao(`${emails.length} email(s) prontos para abrir.`, 'success');
+
+  } catch (error) {
+    console.error('Erro ao preparar email:', error);
+    
+mostrarNotificacao(
+  i18n.t('msg.erro_gerar_email_conclusao'),
+  'error'
+);
+
+  }
+}
+
+
+
+
+///////////////////////////////////////////////
+//MOTIVO NÃO BEM PRIMEIRA
+let motivosFalhaCache = [];
+async function carregarMotivosFalha() {
+    if (motivosFalhaCache.length) return motivosFalhaCache;
+    const resp = await fetch('/motivosfalhaensaios');
+    const data = await resp.json();
+    motivosFalhaCache = data.data || [];
+    return motivosFalhaCache;
+}
+
+let motivoFalhaRow = null;
+
+$(document).on('blur', '.bem-primeira-input', async function() {
+    const $cell = $(this);
+    const $row = $cell.closest('tr');
+    // Lê o valor da célula (como texto)
+    const bemPrimeira = parseInt($cell.text());
+    // Lê a célula Qtd (pode ser input ou contenteditable)
+    const qtdCell = $row.find('.qtd-input, .qtd-cell');
+    const qtd = parseInt(qtdCell.is('input') ? qtdCell.val() : qtdCell.text());
+    if (!isNaN(qtd) && !isNaN(bemPrimeira) && bemPrimeira < qtd) {
+        await carregarMotivosFalha();
+        const $select = $('#motivoFalhaSelect');
+        $select.empty();
+        motivosFalhaCache.forEach(m => {
+            $select.append(`<option value=\"${m.id}\">${m.motivo}</option>`);
+        });
+        motivoFalhaRow = $row;
+        var modal = new bootstrap.Modal(document.getElementById('motivoFalhaModal'));
+        modal.show();
+    } else {
+        $row.data('motivofalha', null);
+    }
+});
+
+$('#confirmarMotivoFalhaBtn').on('click', function() {
+    const motivoId = $('#motivoFalhaSelect').val();
+    if (motivoFalhaRow && motivoId) {
+        motivoFalhaRow.data('motivofalha', motivoId);
+        // Aqui podes atualizar um campo hidden ou célula, conforme o teu fluxo de save
+    }
+    var modal = bootstrap.Modal.getInstance(document.getElementById('motivoFalhaModal'));
+    modal.hide();
+});
+
+//LIMPAR MEMORIA AO FECHAR O MODAL
+document.getElementById('motivoFalhaModal').addEventListener('hidden.bs.modal', function () {
+    document.body.classList.remove('modal-open');
+    document.querySelectorAll('.modal-backdrop').forEach(el => el.remove());
+});
+
+//guardar
+$('#confirmarMotivoFalhaBtn').on('click', function() {
+    const motivoId = $('#motivoFalhaSelect').val();
+    if (motivoFalhaRow && motivoId) {
+        motivoFalhaRow.data('motivofalha', motivoId);
+
+        // Obter o id do teste (assumindo que está em data-id ou similar na linha)
+        const testeId = motivoFalhaRow.data('id');
+        if (testeId) {
+            fetch(`/testes/update/${testeId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ motivofalhaensaio_id: motivoId })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    
+                    mostrarNotificacao(
+                    i18n.t('msg.dados_guardados_sucesso'),
+                    'success'
+                    );
+
+                } else {
+                    
+                    mostrarNotificacao(
+                    i18n.t('msg.erro_ao_guardar'),
+                    'error'
+                    );
+
+                }
+            })
+            .catch(() => {
+                
+                mostrarNotificacao(
+                i18n.t('msg.erro_ao_guardar'),
+                'error'
+                );
+
+            });
+        }
+    }
+    var modal = bootstrap.Modal.getInstance(document.getElementById('motivoFalhaModal'));
+    modal.hide();
+});
+
+
+
+
+
+//////////////////////////////////////////////
+//BOTAO ABRIR PASTA
+async function copiarTextoParaClipboard(texto) {
+    if (!texto) return false;
+
+    try {
+        if (navigator.clipboard && window.isSecureContext) {
+            await navigator.clipboard.writeText(texto);
+            return true;
+        }
+    } catch (err) {
+        console.warn('Clipboard API falhou, a usar fallback.', err);
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = texto;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.left = '-9999px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    textarea.setSelectionRange(0, textarea.value.length);
+
+    try {
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        return ok;
+    } catch (err) {
+        document.body.removeChild(textarea);
+        console.error('Erro ao copiar texto:', err);
+        return false;
+    }
+}
+
+document.getElementById('abrirPastaBtn').onclick = function () {
+    let caminhoBaseLaboratorio = null;
+
+    const laboratorio = document.getElementById('laboratorio_id').options[document.getElementById('laboratorio_id').selectedIndex]?.text?.trim().toUpperCase();
+    const dataPedido = document.getElementById('datapedido').value;
+    const cliente = document.getElementById('cliente_id').options[document.getElementById('cliente_id').selectedIndex]?.text?.trim().toUpperCase();
+    const tipoFase = document.getElementById('corecustomer').value;
+    const codProjeto = document.getElementById('projecto_select').options[document.getElementById('projecto_select').selectedIndex]?.getAttribute('data-codigo')?.toUpperCase();
+    const denominacao = document.getElementById('denominacao').value?.trim().toUpperCase();
+    const tipopecaSelect = document.getElementById('tipopeca_id');
+    const tipopeca = tipopecaSelect.options[tipopecaSelect.selectedIndex]?.text?.trim().toUpperCase();
+    const projetoFolder = (codProjeto && denominacao && tipopeca) ? `${codProjeto}_${denominacao}_${tipopeca}` : '';
+    const ensaio = document.getElementById('ensaio').value?.trim().toUpperCase();
+
+    if (!laboratorio || !dataPedido || !cliente || !projetoFolder || !ensaio) {
+        
+mostrarNotificacao(
+  i18n.t('msg.preencher_campos_obrigatorios'),
+  'error'
+);
+
+        return;
+    }
+
+    const ano = new Date(dataPedido).getFullYear();
+
+    fetch(`/laboratorios/pastatestes_nome/${encodeURIComponent(laboratorio)}`)
+        .then(res => res.json())
+        .then(async data => {
+            if (!data.pastatestes) {
+                
+mostrarNotificacao(
+  data.error || i18n.t('msg.laboratorio_nao_encontrado'),
+  'error'
+);
+
+                return;
+            }
+
+            caminhoBaseLaboratorio = data.pastatestes;
+            const pasta = `${caminhoBaseLaboratorio}\\${laboratorio}\\${ano}\\${tipoFase}\\${cliente}\\${projetoFolder}\\${ensaio}`;
+
+            const copiado = await copiarTextoParaClipboard(pasta);
+
+            if (copiado) {
+                
+mostrarNotificacao(
+  i18n.t('msg.percurso_copiado', '', { pasta }),
+  'success'
+);
+
+            } else {
+                
+mostrarNotificacao(
+  i18n.t('msg.erro_copiar_percurso'),
+  'error'
+);
+
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            
+mostrarNotificacao(
+  i18n.t('msg.erro_obter_percurso_pasta'),
+  'error'
+);
+
+        });
+};
+
+$('#testesTable').DataTable({
+    searching: false,   
+    ordering: false,    
+    paging: false,     
+    info: false,        
+    language: {
+        emptyTable: i18n.t('field.sem_dados')
+    }
+});
+
+
+///////////////////////////////////////////////////////
+//FUNÇÃO CRIAR PASTAS
+
+async function loopCriarPastas(payload) {
+    try {
+        const response = await fetch('/criar_pastas', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        // 1) Tratar conflito 409 ANTES de ler o body noutros casos
+        
+        if (response.status === 409) {
+            const data = await response.json();
+            if (data.conflict) {
+                let overwrite_list = {};
+                for (const doc of data.documents) {
+                    const confirmar = confirm(i18n.t('msg.documento_ja_existe_substituir', '', { doc }));
+                    overwrite_list[doc] = confirmar;  // true ou false
+                }
+
+                payload.overwrite_list = overwrite_list;
+
+                return await loopCriarPastas(payload);  // reenviar com as decisões
+            }
+        }
+
+
+        // 2) Restantes estados → agora sim, lê o JSON
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+            mostrarNotificacao(i18n.t('msg.pastas_criadas_sucesso'),'success');
+        } else {
+            // Erros 4xx/5xx que não sejam 409 já foram cobertos acima
+            const msg = data?.error || i18n.t('msg.erro_criar') + ' ' + i18n.t('field.pastas');
+            mostrarNotificacao(msg, 'error');
+        }
+    } catch (err) {
+        console.error('Erro no loopCriarPastas:', err);     
+        mostrarNotificacao(i18n.t('msg.falha_comunicacao_servidor'),'error');
+    }
+}
+
+
+function criarPastas() {
+
+    // 1. Laboratório
+    const laboratorioSelect = document.getElementById('laboratorio_id');
+    const laboratorio = laboratorioSelect.options[laboratorioSelect.selectedIndex]?.text?.trim().toUpperCase();
+    if (!laboratorio) {
+        mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.laboratorio'),'error');
+        return;
+    }
+
+    // 2. Ano do campo Data
+    const dataPedido = document.getElementById('datapedido').value;
+    if (!dataPedido) {
+        mostrarNotificacao(i18n.t('msg.preencha') + ' ' + i18n.t('field.data'),'error');
+        return;
+    }
+
+    const ano = new Date(dataPedido).getFullYear();
+
+    // 3. Cliente
+    const clienteSelect = document.getElementById('cliente_id');
+    const cliente = clienteSelect.options[clienteSelect.selectedIndex]?.text?.trim().toUpperCase();
+    if (!cliente) {   
+        mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.cliente'),'error');
+        return;
+    }
+    const tipoFase = document.getElementById('corecustomer').value.trim().toUpperCase();
+
+    // 5. Código do projeto
+    const projetoSelect = document.getElementById('projecto_select');
+    const codProjeto = projetoSelect.options[projetoSelect.selectedIndex]?.getAttribute('data-codigo')?.toUpperCase();
+    const denominacao = document.getElementById('denominacao').value?.trim().toUpperCase();
+    if (!codProjeto || !denominacao) {
+        mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.projeto'),'error');
+         return; 
+    }
+    const projetoFolder = `${codProjeto}_${denominacao}`;
+
+    const ensaio = document.getElementById('ensaio').value?.trim().toUpperCase();
+    if (!ensaio) { 
+        mostrarNotificacao(i18n.t('msg.preencha') + ' ' + i18n.t('field.ensaio'),'error');
+        return;
+    }
+
+    const tipopecaSelect = document.getElementById('tipopeca_id');
+    const tipopeca = tipopecaSelect.options[tipopecaSelect.selectedIndex]?.text?.trim().toUpperCase();
+    
+
+    const prefixo = document.getElementById('prefixo').value?.trim().toUpperCase();
+    const primeira_peca = document.getElementById('primeira_peca').value?.trim();
+    const npecasrecebidas = document.getElementById('npecasrecebidas').value?.trim();
+    
+
+    const payload = {
+        laboratorio,
+        ano,
+        tipoFase,
+        cliente,
+        projetoFolder,
+        tipopeca,
+        ensaio,
+        prefixo,
+        primeira_peca,
+        npecasrecebidas
+    };
+    loopCriarPastas(payload);
+}
+
+
+///////////////////////////////////////////////////////
+//FUNÇÃO ANULAR INFORME
+function anularinforme() {
+    const numeroInforme = document.getElementById('ensaio').value;
+    if (!numeroInforme) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'));
+        return;
+    }
+    if (confirm('Tem a certeza que quer anular este ensaio?')) {
+        const motivo = prompt('Indique o motivo da anulação:');
+        if (!motivo || motivo.trim() === '') {
+            alert(i18n.t('msg.motivo_anulacao_obrigatorio'));
+            return;
+        }
+        fetch(`/anular_informe/${numeroInforme}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ motivoanulacao: motivo })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                // Opcional: atualizar a página ou limpar o formulário
+                // location.reload();
+                $('#ensaio').trigger($.Event('keypress', { which: 13 }));
+            } else {
+                alert(data.error || i18n.t('msg.erro_anular_ensaio'));
+            }
+        })
+        .catch(error => {
+            alert(i18n.t('msg.erro_anular_ensaio'))
+            console.error(error);
+        });
+    }
+}
+
+
+///////////////////////////////////////////////////////
+// GRAVAR ENSAIO
+$('#formEnsaio').on('submit', function(e) {
+    e.preventDefault();
+
+    // Coleta todos os dados do formulário
+    const formData = {
+        id: $('#ensaio_id').val() || null,
+        ensaio: $('#ensaio').val(),
+        laboratorio_id: $('#laboratorio_id').val(),
+        norma_id: $('#norma_id').val(),
+        npecasrecebidas: $('#npecasrecebidas').val(),
+        destinopecas: $('#destino_pecas').val(),
+        destinodevol: $('#destinodevol').val(),
+        moradadevol: $('#moradadevol').val(),
+        datapedido: $('#datapedido').val(),
+        datasolicitada: $('#data_solicitada').val(),
+        pep: $('#pep').val(),
+        network: $('#network').val(),
+        partnzf: $('#part_number').val(),
+        partncliente: $('#partnumbercli').val(),
+        dataentregapecas: $('#data_entrega_pecas').val(),
+        dataacordada: $('#data_acordada').val(),
+        concluido: $('#concluido').val(),
+        cliente_id: $('#cliente_id').val(),
+        projeto_id: $('#projecto_select').val(),
+        projeto_descricao: $('#denominacao').val(),
+        tipopeca_id: $('#tipopeca_id').val(),
+        fase_id: $('#fase_id').val(),
+        corecustomer: $('#corecustomer').val(),
+        atrasado: $('#atrasado').val(),
+        motivoatraso_id: $('#motivoatraso_id').val(),
+        solicitante_id: $('#solicitante_id').val(),
+        user_id: $('#tecnico_id').val(),
+        prefixo: $('#prefixo').val(),
+        obs: $('#observacoes').val(),
+        primeirapeca: $('#primeira_peca').val()
+    };
+
+    // Decide se é novo ou edição
+    const url = formData.id ? `/ensaios/update/${formData.id}` : '/ensaios/api';
+    const method = formData.id ? 'PUT' : 'POST';
+
+    fetch(url, {
+        method: method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+    })
+    .then(res => {
+        if (!res.ok) {
+            // Tenta ler o texto da resposta (HTML ou mensagem de erro)
+            return res.text().then(text => { throw new Error(text); });
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.error) {
+            mostrarNotificacao(data.error, 'error');
+        } else {
+            
+            mostrarNotificacao(
+            data.message || i18n.t('msg.dados_guardados_sucesso'),
+            'success'
+            );
+
+            if (data.id) {
+                $('#ensaio_id').val(data.id);
+                ensaioIdAtual = data.id;
+            }
+            if (formData.ensaio) {
+                carregarTestes(formData.ensaio);
+            }
+        }
+    })
+    .catch(err => {
+        console.error('Erro ao guardar.', err);
+        
+        mostrarNotificacao(
+        i18n.t('msg.erro_ao_guardar', '', { erro: err.message }),
+        'error'
+        );
+
+    });
+});
+
+////////////////////////////////////////////////////////
+//PREENCHER MODAL ENSAIOS
+$(document).ready(function() {
+
+    document.getElementById("abrirPastaBtn")
+        .setAttribute("title", i18n.t("action.open_folder"));
+
+
+    // Inicializar DataTable apenas uma vez
+        let ensaiosTable = $('#ensaiosTable').DataTable({
+        columns: [
+            { data: 'ensaio' },
+            { data: 'laboratorio' },
+            { data: 'codigo_projeto' },
+            { data: 'denominacao' },
+            { data: 'tipopeca' },
+            { data: 'solicitante' }
+        ],
+        language: { url: i18n.getDataTablesLanguageUrl() },
+        dom: '<"top"f>rt<"bottom"ip><"clear">',
+        pagingType: "simple_numbers"
+        // NÃO precisa de mais nada, o DataTables já aplica as classes Bootstrap
+    });
+
+    // Ao abrir o modal, carregar os ensaios
+    $('#ensaiosModal').on('show.bs.modal', function () {
+        fetch('/ensaios/sem_data_fim')
+            .then(res => res.json())
+            .then(data => {
+                ensaiosTable.clear();
+                data.forEach(e => {
+                    ensaiosTable.row.add({
+                        ensaio: `<a href="#">${e.ensaio}</a>`,
+                        laboratorio: e.laboratorio,
+                        codigo_projeto: e.codigo_projeto,
+                        denominacao: e.denominacao_projeto,
+                        tipopeca: e.tipo_peca,
+                        solicitante: e.solicitante
+                     });
+                });
+                ensaiosTable.draw();
+            });
+    });
+
+    // Selecionar ensaio ao dar duplo clique no número do ensaio
+    $('#ensaiosTable tbody').on('click', 'td:first-child', function() {
+        const ensaio = $(this).text();
+        $('#ensaio').val(ensaio);
+        $('#ensaiosModal').modal('hide');
+        // Simular Enter para acionar o preenchimento automático
+        const e = $.Event('keypress');
+        e.which = 13;
+        $('#ensaio').trigger(e);
+    });
+
+let localizacoesRequestSeq = 0;
+$(document).off('change', '#saidaStockReferencia').on('change', '#saidaStockReferencia', function() {
+    const referenciaId = $(this).val();
+    const $localizacao = $('#saidaLocalizacao');
+
+    localizacoesRequestSeq += 1;
+    const requestSeq = localizacoesRequestSeq;
+
+    $localizacao.empty().append('<option value=""></option>');
+
+    if (!referenciaId) {
+        $localizacao.val(null).trigger('change.select2');
+        return;
+    }
+
+    fetch(`/api/localizacoes_stock?referencia_id=${referenciaId}`)
+        .then(r => r.json())
+        .then(localizacoes => {
+            // Ignora respostas antigas (quando há seleção rápida/duplo evento)
+            if (requestSeq !== localizacoesRequestSeq) return;
+            let firstValidId = null;
+
+            const added = new Set();
+            localizacoes.forEach(loc => {
+                if (loc.nome && loc.stock > 0 && !added.has(loc.id)) {
+                    $localizacao.append(`<option value="${loc.id}">${loc.nome} (${loc.stock})</option>`);
+                    added.add(loc.id);
+
+                    
+                    if (firstValidId === null) {
+                        firstValidId = loc.id;
+                    }
+
+
+                }
+            });
+
+            if (firstValidId !== null) {
+                $localizacao.val(firstValidId).trigger('change.select2');
+            } else {
+                $localizacao.val(null).trigger('change.select2');
+            }
+
+            // $localizacao.val(null).trigger('change.select2');
+        });
+
+        
+
+
+});
+
+
+
+
+});
+
+////////////////////////////////////////////////////////
+//CARREGAR A NORMA
+let ensaioIdAtual = null;
+$('#carregarNormaBtn').on('click', function() {
+    const normaId = $('#norma_id').val();
+    const ensaioIdAtual = $('#ensaio_id').val();
+    if (!normaId) {
+        mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.norma'), 'error');
+        return;
+    }
+    if (!ensaioIdAtual) {
+        mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');
+        return;
+    }
+    // Obter valores do ensaio
+    const qtd = $('#npecasrecebidas').val() || '';
+    const prefixo = $('#prefixo').val() || '';
+    const primeirapeca = $('#primeira_peca').val() || '';
+    const user_id = $('#tecnico_id').val() || null;
+
+    fetch('/testes/gravar_template', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            ensaio_id: ensaioIdAtual, 
+            norma_id: normaId,
+            qtd: qtd,
+            prefixo: prefixo,
+            primeirapeca: primeirapeca,
+            user_id: user_id
+        })
+    })
+    .then(res => res.json())
+    .then(resp => {
+        if (resp.status === 'ok') {
+            mostrarNotificacao(i18n.t('msg.dados_guardados_sucesso'), 'success');
+            carregarTestes($('#ensaio').val());
+        } else {
+            mostrarNotificacao(resp.error || i18n.t('msg.erro_ao_guardar'), 'error');
+        }
+    })
+    .catch(err => {
+        mostrarNotificacao(i18n.t('msg.erro_ao_guardar'), 'error');
+    });
+});
+
+////////////////////////////////////////////////////////
+// ADICIONAR FUNÇÃO DE NOTIFICAÇÃO
+function mostrarNotificacao(mensagem, tipo) {
+    const notif = document.getElementById('notificacao');
+    notif.className = 'alert alert-' + (tipo === 'success' ? 'success' : tipo === 'error' ? 'danger' : 'info');
+    notif.textContent = mensagem;
+    notif.style.display = 'block';
+    setTimeout(() => {
+        notif.style.display = 'none';
+    }, 4000);
+}
+
+///////////////////////////////////////////////////
+//PREENCHER DADOS DAS COMBOS
+
+// Cache de dados
+window.todosProjectos = [];
+let projectosOriginais = [];
+let todosTiposTestes = [];
+let todasMaquinas = [];
+let todosTecnicos = [];
+let ensaioAtual = null;
+
+// Carregar SLECTS ao carregar a página
+$(document).ready(function() {
+    carregarTodosProjetos();
+    carregarSolicitantes();
+    carregarDadosTestes();
+    carregarmotivosatraso();
+    inicializarDragDrop();
+});
+
+function carregarmotivosatraso() {
+    fetch('/motivosatraso')
+    .then(res => res.json())
+    .then(data => {
+    const select = document.getElementById('motivoatraso_id');
+    const valorAtual = select.value;
+    select.innerHTML = '<option value="" selected></option>';
+
+    const motivos = Array.isArray(data) ? data : (data.data || []);
+    motivos.forEach(m => {
+    select.innerHTML += `<option value="${m.id}">${m.motivo}</option>`;
+    });
+
+    if (valorAtual) {
+    select.value = valorAtual;
+    }
+
+    refreshMotivoAtrasoSelectUI();
+    })
+    .catch(err => {
+    console.error(i18n.t('msg.erro_carregar_motivosatraso') + ':', err);
+    mostrarNotificacao(i18n.t('common.error_loading') + ' ' + i18n.t('table.delay_reasons') + ':', 'error'); 
+    });
+}
+
+// Função para carregar todos os projetos
+function carregarTodosProjetos() {
+    fetch('/projetos/ativos')
+        .then(res => res.json())
+        .then(data => {
+            window.todosProjectos = data;
+            projectosOriginais = data;
+            atualizarComboProjectos(window.todosProjectos);
+        })
+        .catch(err => {
+            console.error('Erro ao carregar projetos:', err);
+            mostrarNotificacao(i18n.t('common.error_loading') + ' ' + i18n.t('field.projetos') + ':', 'error'); 
+        });
+}
+
+// Atualizar combo de projetos
+function atualizarComboProjectos(projetos) {
+    const select = $('#projecto_select');
+    const valorAtual = select.val();
+
+    select.empty();
+    select.append('<option value="" selected disabled></option>');
+
+    projetos.forEach(p => {
+        const textoExibicao = p.descricao ? `${p.projeto} - ${p.descricao}` : p.projeto;
+        select.append(`<option value="${p.id}"
+            data-cliente-id="${p.cliente_id}"
+            data-tipopeca-id="${p.tipopeca_id}"
+            data-codigo="${p.projeto}"
+            data-descricao="${p.descricao || ''}">${textoExibicao}</option>`);
+    });
+
+    if (valorAtual) {
+        select.val(valorAtual);
+    }
+
+    refreshProjectoSelectUI();
+}
+
+// Quando seleciona CLIENTE → filtrar projetos desse cliente
+$('#cliente_id').on('change', function() {
+    const clienteId = $(this).val();
+    const tipopecaId = $('#tipopeca_id').val();
+    
+    if (!clienteId && !tipopecaId) {
+        atualizarComboProjectos(projectosOriginais);
+        return;
+    }
+    
+    // Filtrar projetos
+    let projetosFiltrados = projectosOriginais;
+    
+    if (clienteId) {
+        projetosFiltrados = projetosFiltrados.filter(p => p.cliente_id == clienteId);
+    }
+    
+    if (tipopecaId) {
+        projetosFiltrados = projetosFiltrados.filter(p => p.tipopeca_id == tipopecaId);
+    }
+    
+    atualizarComboProjectos(projetosFiltrados);
+    
+    // Limpar seleção de projeto se não pertencer aos filtros
+    const projetoSelecionado = $('#projecto_select').val();
+    if (projetoSelecionado) {
+        const projetoValido = projetosFiltrados.find(p => p.id == projetoSelecionado);
+        if (!projetoValido) {
+            $('#projecto_select').val('');
+        }
+    }
+});
+
+
+// Quando seleciona PROJETO → preencher cliente, tipo de peça e denominação
+$('#projecto_select').on('change', function() {
+    const projetoId = $(this).val();
+    
+    if (!projetoId) return;
+    
+    // Buscar dados do projeto selecionado
+    const option = $(this).find('option:selected');
+    const clienteId = option.data('cliente-id');
+    const tipopecaId = option.data('tipopeca-id');
+    const descricao = option.data('descricao');
+    const codigo = option.data('codigo');
+    
+    // Preencher automaticamente os campos
+    if (clienteId) {
+        $('#cliente_id').val(clienteId).trigger('change.select2');
+        }
+
+        if (tipopecaId) {
+        $('#tipopeca_id').val(tipopecaId).trigger('change.select2');
+        }
+    
+    if (descricao) {
+        $('#denominacao').val(descricao);
+    }
+    
+    // Após seleção, mostrar apenas o código na combo
+    setTimeout(() => {
+        $(this).find('option:selected').text(codigo);
+    }, 50);
+});
+
+// Quando abre a combo novamente, restaurar texto completo
+$('#projecto_select').on('focus', function() {
+    const valorAtual = $(this).val();
+    
+    if (valorAtual) {
+        const option = $(this).find('option:selected');
+        const codigo = option.data('codigo');
+        const descricao = option.data('descricao');
+        const textoCompleto = descricao ? `${codigo} - ${descricao}` : codigo;
+        
+        option.text(textoCompleto);
+    }
+});
+
+// Limpar filtros quando limpar formulário
+function clearFormFields() {
+    // 1) reset nativo
+    $('#formEnsaio')[0].reset();
+    $('#ensaio_id').val('');
+    ensaioIdAtual = null;
+
+    // 2) limpar campos/estados que não vêm do reset
+    $('#denominacao').val('');
+    $('#destinoGroup, #destinoGroup2').hide();
+    $('#destinodevol, #moradadevol').val('');
+    $('#anuladoIcon').hide().attr('title', '');
+
+    // 3) recarregar combos dinâmicas
+    atualizarComboProjectos(projectosOriginais || []);
+    carregarSolicitantes();
+    carregarmotivosatraso();
+    atualizarComboTecnicos();
+
+    // 4) garantir UI Select2 sincronizada após reset
+    const ids = [
+        '#laboratorio_id',
+        '#norma_id',
+        '#cliente_id',
+        '#projecto_select',
+        '#tipopeca_id',
+        '#fase_id',
+        '#solicitante_id',
+        '#tecnico_id',
+        '#motivoatraso_id'
+    ];
+
+    ids.forEach(id => {
+        $(id).val('').trigger('change.select2');
+    });
+
+    // também limpar o campo atrasado
+    $('#atrasado').val('');
+
+    // 5) limpar tabela de testes
+    if ($.fn.DataTable && $('#testesTable').length) {
+        $('#testesTable').DataTable().clear().draw();
+    } else {
+        $('#testesTable tbody').empty();
+    }
+}
+
+// Função para carregar solicitantes com email
+function carregarSolicitantes() {
+fetch("/solicitantes/ativos")
+.then(res => res.json())
+.then(data => {
+const select = $("#solicitante_id");
+const valorAtual = select.val();
+    select.empty();
+    select.append('<option value="" selected disabled></option>');
+
+    data.forEach(function(s) {
+        const textoExibicao = s.email ? (s.nome + " - " + s.email) : s.nome;
+        select.append(
+            '<option value="' + s.id + '" data-nome="' + (s.nome || "") + '" data-email="' + (s.email || "") + '">' +
+            textoExibicao +
+            "</option>"
+        );
+    });
+
+    if (valorAtual) {
+        select.val(valorAtual);
+    }
+
+    refreshSolicitanteSelectUI();
+})
+.catch(err => {
+    console.error("Erro ao carregar solicitantes:", err);
+    mostrarNotificacao(i18n.t('common.error_loading') + ' ' + i18n.t('field.solicitantes'), "error");
+});
+}
+
+// Quando seleciona SOLICITANTE → mostrar apenas o nome após seleção
+$('#solicitante_id').on('change', function() {
+    const solicitanteId = $(this).val();
+    
+    if (!solicitanteId) return;
+    
+    const option = $(this).find('option:selected');
+    const nome = option.data('nome');
+    
+    // Após seleção, mostrar apenas o nome
+    setTimeout(() => {
+        option.text(nome);
+    }, 50);
+});
+
+
+// Quando abre a combo de solicitantes, restaurar nome + email
+$('#solicitante_id').on('focus', function() {
+    const valorAtual = $(this).val();
+    
+    if (valorAtual) {
+        const option = $(this).find('option:selected');
+        const nome = option.data('nome');
+        const email = option.data('email');
+        const textoCompleto = email ? `${nome} - ${email}` : nome;
+        
+        option.text(textoCompleto);
+    }
+});
+
+
+//////////////////////////////////////////////////////////////////////////
+//TABELA Testes
+
+function formatDateInput(dt) {
+    if (!dt) return '';
+    const d = new Date(dt);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Carregar tipos de testes, máquinas e técnicos
+function carregarDadosTestes() {
+    // Tipos de testes
+    fetch('/tipotestes/ativos')
+        .then(res => res.json())
+        .then(data => { todosTiposTestes = data; })
+        .catch(err => console.error(i18n.t('common.error_loading') + ' ' + i18n.t('field.tipos_testes') + ':', err));
+    
+    // Máquinas
+    fetch('/maquinas/ativas')
+        .then(res => res.json())
+        .then(data => { todasMaquinas = data; })
+        .catch(err => console.error(i18n.t('common.error_loading') + ' ' + i18n.t('field.maquinas') + ':', err));
+    
+    // Técnicos
+    fetch('/tecnicos/ativos')
+        .then(res => res.json())
+        .then(data => { todosTecnicos = data; })
+        .catch(err => console.error(i18n.t('common.error_loading') + ' ' + i18n.t('field.tecnicos') + ':', err));
+}
+
+
+
+function formatDateTimeInput(dt) {
+    if (!dt) return '';
+    const d = new Date(dt);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hour = String(d.getHours()).padStart(2, '0');
+    const minute = String(d.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hour}:${minute}`;
+}
+
+
+
+
+// Carregar testes de um ensaio
+function carregarTestes(ensaioNumero) {
+    if (!ensaioNumero) {
+        $('#testesTableBody').empty();
+        return;
+    }
+    
+    ensaioAtual = ensaioNumero;
+    
+    fetch(`/testes/${ensaioNumero}`)
+        .then(res => res.json())
+        .then(data => {
+            renderizarTestes(data);
+        })
+        .catch(err => {
+            console.error('Erro ao carregar testes:', err);
+            mostrarNotificacao(i18n.t('common.error_loading') + ' ' + i18n.t('field.testes'), 'error');
+        });
+}
+
+// Renderizar tabela de testes
+function renderizarTestes(testes) {
+    const tbody = $("#testesTableBody");
+    tbody.empty();
+
+    testes.sort((a, b) => (a.ordem || 999) - (b.ordem || 999));
+
+    testes.forEach((teste, index) => {
+        const $row = criarLinhaTeste(teste, index + 1);
+        tbody.append($row);
+        initSelect2Tabela($row.find(".tipoteste-select, .maquina-select, .tecnico-select"));
+    });
+}
+
+// Criar linha de teste
+function criarLinhaTeste(teste, ordem) {
+    const row = $('<tr draggable="true"></tr>').attr('data-id', teste.id || '').attr('data-novo', teste.novo ? 'true' : 'false');
+    
+    // Coluna drag handle
+    row.append(`<td class="grip-handle"><i class="fas fa-grip-vertical"></i></td>`);
+    
+    // Ordem
+    row.append(`<td contenteditable="false">${ordem}</td>`);
+    
+    // Tipo Teste (select)
+    const selectTipoTeste = $('<select class="form-control form-control-sm tipoteste-select"></select>');
+    selectTipoTeste.append('<option value="">-- Selecionar --</option>');
+    todosTiposTestes.forEach(t => {
+        selectTipoTeste.append(`<option value="${t.id}" ${t.id === teste.teste_id ? 'selected' : ''}>${t.teste}</option>`);
+    });
+    row.append($('<td></td>').append(selectTipoTeste));
+    
+    // Qtd
+    row.append(`<td contenteditable="true" class="qtd-input">${teste.qtd || ''}</td>`);
+    
+    // Prefixo
+    row.append(`<td contenteditable="true">${teste.prefixo || ''}</td>`);
+    
+    // Primeira Peça
+    row.append(`<td contenteditable="true">${teste.primeirapeca || ''}</td>`);
+    
+    // Data Início (input datetime-local)
+    row.append(`<td><input type="datetime-local" class="form-control form-control-sm datainicio-input" value="${teste.datainicio ? formatDateTimeInput(teste.datainicio) : ''}"></td>`);
+    
+    // Duração
+    row.append(`<td contenteditable="true">${teste.duracao || ''}</td>`);
+
+    // Data Fim (input datetime-local)
+    row.append(`<td><input type="datetime-local" class="form-control form-control-sm datafim-input" value="${teste.datafim ? formatDateTimeInput(teste.datafim) : ''}"></td>`);
+    
+    // Máquina (select)
+    const selectMaquina = $('<select class="form-control form-control-sm maquina-select"></select>');
+    selectMaquina.append('<option value="">-- Selecionar --</option>');
+    todasMaquinas.forEach(m => {
+        selectMaquina.append(`<option value="${m.id}" ${m.id === teste.maquina_id ? 'selected' : ''}>${m.nome}</option>`);
+    });
+    row.append($('<td></td>').append(selectMaquina));
+    
+    // Técnico (select)
+    const selectTecnico = $('<select class="form-control form-control-sm tecnico-select"></select>');
+    selectTecnico.append('<option value="">-- Selecionar --</option>');
+    todosTecnicos.forEach(t => {
+        selectTecnico.append(`<option value="${t.id}" ${t.id === teste.user_id ? 'selected' : ''}>${t.full_name}</option>`);
+    });
+    row.append($('<td></td>').append(selectTecnico));
+    
+    // Fator
+    row.append(`<td contenteditable="true">${teste.fator ?? 1}</td>`);
+
+    // Bem à primeira
+    row.append(`<td contenteditable="true" class="bem-primeira-input">${teste.bemprimeira || ''}</td>`);
+
+    // Observações
+    row.append(`<td contenteditable="true">${teste.obs || ''}</td>`);
+    
+    // Eliminar
+    row.append(`<td><center><i class="fas fa-trash-alt text-danger delete-teste" style="cursor:pointer;" title="Eliminar" data-i18n="action.delete" data-i18n-attr="title"></i></center></td>`);
+    
+    return row;
+}
+
+
+
+
+// Formatar data/hora
+function formatDateTime(dt) {
+    if (!dt) return '';
+    const d = new Date(dt);
+    return d.toLocaleString('pt-PT', { 
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+    });
+}
+
+// Evento para atualizar Data Início
+
+
+// Evento para atualizar Data Fim automaticamente ao alterar Data Início ou Duração
+$('#testesTableBody').on('change', '.datainicio-input', function() {
+    const tr = $(this).closest('tr');
+    const datainicio = $(this).val();
+    const duracaoCell = tr.find('td').eq(7);
+    const duracao = parseFloat(duracaoCell.text().trim());
+    if (datainicio && duracao) {
+        // Calcular data de fim
+        const inicioDate = new Date(datainicio);
+        inicioDate.setTime(inicioDate.getTime() + duracao * 60 * 60 * 1000);
+        const fimStr = inicioDate.toISOString().slice(0, 16); // yyyy-mm-ddThh:mm
+        tr.find('.datafim-input').val(fimStr).trigger('change');
+    }
+    // Atualizar backend (já existe no código original)
+    const id = tr.data('id');
+    if (tr.data('novo') === 'true') return;
+    fetch(`/testes/update/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ datainicio: datainicio })
+    }).then(r => r.json()).then(data => {
+        if (data.error) mostrarNotificacao(data.error, 'error');
+        else mostrarNotificacao(data.message, 'success');
+    });
+});
+
+
+function atualizarDataFim(tr) {
+    const datainicio = tr.find('.datainicio-input').val();
+    const duracaoCell = tr.find('td').eq(7);
+    const duracao = parseFloat(duracaoCell.text().trim());
+    if (datainicio && duracao) {
+        const inicioDate = new Date(datainicio);
+        inicioDate.setTime(inicioDate.getTime() + duracao * 60 * 60 * 1000);
+        const fimStr = inicioDate.toISOString().slice(0, 16);
+        tr.find('.datafim-input').val(fimStr).trigger('change');
+    }
+}
+
+// Evento para preencher automaticamente Data Fim quando Duração for alterada
+$('#testesTableBody').on('blur', 'td[contenteditable="true"]', function() {
+    const tr = $(this).closest('tr');
+    const colIndex = $(this).index();
+    // Se for a coluna de duração (7)
+    if (colIndex === 7 || colIndex === 8) {
+        const duracao = parseFloat($(this).text().trim());
+        const datainicio = tr.find('.datainicio-input').val();
+        if (duracao && datainicio) {
+            const inicioDate = new Date(datainicio);
+            inicioDate.setTime(inicioDate.getTime() + duracao * 60 * 60 * 1000);
+            const fimStr = inicioDate.toISOString().slice(0, 16); // yyyy-mm-ddThh:mm
+            tr.find('.datafim-input').val(fimStr).trigger('change');
+        }
+    }
+
+});
+
+
+
+// Evento para atualizar Data Fim manualmente
+$('#testesTableBody').on('change', '.datafim-input', function() {
+    const tr = $(this).closest('tr');
+    const id = tr.data('id');
+    const val = $(this).val();
+    if (tr.data('novo') === 'true') return;
+    fetch(`/testes/update/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ datafim: val })
+    }).then(r => r.json()).then(data => {
+        if (data.error) mostrarNotificacao(data.error, 'error');
+        else mostrarNotificacao(data.message, 'success');
+    });
+});
+
+$('#testesTableBody').on('change', '.duracao', function() {
+    const tr = $(this).closest('tr');
+    const colIndex = $(this).index();
+    // Se for a coluna de duração (7)
+    if (colIndex === 7) {
+        atualizarDataFim(tr);
+    }
+});
+
+
+
+////////////////////////////////////////////////////////////
+// Adicionar novo teste
+
+$('#addTeste').on('click', function(e) {
+    e.preventDefault();
+    const ensaioNumero = $('#ensaio').val();
+    if (!ensaioNumero) {
+        mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');
+        return;
+    }
+
+    // Obter valores do ensaio
+    const qtdDefault = $('#npecasrecebidas').val() || '';
+    const prefixoDefault = $('#prefixo').val() || '';
+    const primeiraPecaDefault = $('#primeira_peca').val() || '';
+
+    const novoTeste = {
+        id: null,
+        teste_id: null,
+        qtd: qtdDefault,
+        prefixo: prefixoDefault,
+        primeirapeca: primeiraPecaDefault,
+        datainicio: null,
+        duracao: null,
+        datafim: null,
+        maquina_id: null,
+        user_id: null,
+        fator: null,
+        bemprimeira: null,
+        obs: '',
+        novo: true
+    };
+
+    const tbody = $('#testesTableBody');
+    const ordem = tbody.find('tr').length + 1;
+    const $row = criarLinhaTeste(novoTeste, ordem);
+    tbody.append($row);
+    initSelect2Tabela($row.find(".tipoteste-select, .maquina-select, .tecnico-select"));
+});
+
+
+// Editar células (blur)
+$('#testesTableBody').on('blur', 'td[contenteditable="true"]', function() {
+    const tr = $(this).closest('tr');
+    const id = tr.data('id');
+    
+    const colIndex = $(this).index();
+    const val = $(this).text().trim();
+    
+    const fieldMap = {
+        3: 'qtd',
+        4: 'prefixo',
+        5: 'primeirapeca',
+        6: 'datainicio',
+        7: 'duracao',
+        8: 'datafim',
+        11: 'fator',
+        12: 'bemprimeira',
+        13: 'obs'
+    };
+    
+    const field = fieldMap[colIndex];
+    if (!field) return;
+    
+    if (tr.data('novo') === 'true') {
+        // Linha nova - não salva ainda
+        salvarNovoTeste(tr);
+        return;
+    }
+    
+    // Atualizar teste existente
+    let payload = {};
+    payload[field] = val || null;
+    
+    // Converter tipos
+    if (field === 'qtd' || field === 'primeirapeca') {
+        payload[field] = val ? parseInt(val, 10) : null;
+    } else if (field === 'duracao') {
+        payload[field] = val ? parseFloat(val) : null;
+    }
+    
+    
+    fetch(`/testes/update/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            mostrarNotificacao(data.error, 'error');
+        } else {
+            mostrarNotificacao(data.message, 'success');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        mostrarNotificacao(i18n.t('msg.erro_atualizar'), 'error');
+    });
+});
+
+// Alterar selects
+$('#testesTableBody').on('change', 'select', function() {
+    const tr = $(this).closest('tr');
+    const id = tr.data('id');
+   
+        if (tr.data('novo')) {
+        salvarNovoTeste(tr);
+        return;
+    }
+    
+    const field = $(this).hasClass('tipoteste-select') ? 'teste_id' :
+                  $(this).hasClass('maquina-select') ? 'maquina_id' : 'user_id';
+    const val = $(this).val() ? parseInt($(this).val(), 10) : null;
+    
+    fetch(`/testes/update/${id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: val })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) mostrarNotificacao(data.error, 'error');
+        else mostrarNotificacao(data.message, 'success');
+    })
+    .catch(err => {
+        console.error(err);
+        mostrarNotificacao(i18n.t('msg.erro_atualizar'), 'error');
+    });
+});
+
+/////////////////////////////////////////////////////////////
+// GUARDAR novo teste
+function salvarNovoTeste(tr) {
+    const cells = tr.find('td');
+    const novo = {
+        ensaio_id: $('#ensaio_id').val(),
+        teste_id: cells.eq(2).find('select').val() ? parseInt(cells.eq(2).find('select').val(), 10) : null,
+        qtd: cells.eq(3).text().trim() ? parseInt(cells.eq(3).text().trim(), 10) : null,
+        prefixo: cells.eq(4).text().trim() || null,
+        primeirapeca: cells.eq(5).text().trim() ? parseInt(cells.eq(5).text().trim(), 10) : null,
+        datainicio: cells.eq(6).text().trim() || null,
+        duracao: cells.eq(7).text().trim() ? parseFloat(cells.eq(7).text().trim()) : null,
+        datafim: cells.eq(8).text().trim() || null,
+        maquina_id: cells.eq(9).find('select').val() ? parseInt(cells.eq(9).find('select').val(), 10) : null,
+        user_id: cells.eq(10).find('select').val() ? parseInt(cells.eq(10).find('select').val(), 10) : null,
+        fator: cells.eq(11).text().trim() || null,
+        bemprimeira: cells.eq(12).text().trim() ? parseInt(cells.eq(12).text().trim(), 10) : null,
+        obs: cells.eq(13).text().trim() || null
+    };
+    
+    if (!novo.teste_id) {
+        mostrarNotificacao(i18n.t('field.tipo_teste') + ' ' + i18n.t('msg.erro_obrigatorio'), 'error');
+        return;
+    }
+    
+    fetch('/testes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novo)
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            mostrarNotificacao(data.error, 'error');
+        } else {
+            mostrarNotificacao(data.message, 'success');
+            // Após salvar no backend e receber o id:
+            tr.attr('data-id', data.id);
+            tr.data('id', data.id);
+            tr.attr('data-novo', 'false');
+        }
+    })
+    .catch(err => {
+        console.error(err);
+        mostrarNotificacao(i18n.t('msg.erro_criar') + ' ' + i18n.t('field.teste'), 'error');
+    });
+}
+
+//////////////////////////////////////////////////////////////
+// Eliminar teste
+$('#testesTableBody').on('click', '.delete-teste', function() {
+    const tr = $(this).closest('tr');
+    const id = tr.data('id');
+    
+    if (!id || tr.data('novo') === 'true') {
+        tr.remove();
+        renumerar();
+        return;
+    }
+    
+    if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.teste') + '?')) return;
+    
+    fetch(`/testes/${id}`, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) {
+                mostrarNotificacao(data.error, 'error');
+            } else {
+                mostrarNotificacao(data.message, 'success');
+                tr.remove();
+                renumerar();
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            mostrarNotificacao(i18n.t('msg.error_delete'), 'error');
+        });
+});
+
+// Renumerar ordem
+function renumerar() {
+    $('#testesTableBody tr').each(function(index) {
+        $(this).find('td:eq(1)').text(index + 1);
+    });
+}
+
+// ========== DRAG & DROP ==========
+function inicializarDragDrop() {
+    const tbody = document.getElementById('testesTableBody');
+    let draggedElement = null;
+    
+    tbody.addEventListener('dragstart', function(e) {
+        if (e.target.tagName === 'TR') {
+            draggedElement = e.target;
+            e.target.classList.add('dragging');
+        }
+    });
+    
+    tbody.addEventListener('dragend', function(e) {
+        if (e.target.tagName === 'TR') {
+            e.target.classList.remove('dragging');
+        }
+    });
+    
+    tbody.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(tbody, e.clientY);
+        if (afterElement == null) {
+            tbody.appendChild(draggedElement);
+        } else {
+            tbody.insertBefore(draggedElement, afterElement);
+        }
+    });
+    
+    tbody.addEventListener('drop', function(e) {
+        e.preventDefault();
+        renumerar();
+        salvarOrdem();
+    });
+}
+
+function getDragAfterElement(container, y) {
+    const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
+    
+    return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = y - box.top - box.height / 2;
+        
+        if (offset < 0 && offset > closest.offset) {
+            return { offset: offset, element: child };
+        } else {
+            return closest;
+        }
+    }, { offset: Number.NEGATIVE_INFINITY }).element;
+}
+
+// GUARDAR nova ordem
+function salvarOrdem() {
+    const ordens = [];
+    $('#testesTableBody tr').each(function(index) {
+        const id = $(this).data('id');
+        if (id) {
+            ordens.push({ id: id, ordem: index + 1 });
+        }
+    });
+    
+    fetch('/testes/reordenar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ordens: ordens })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) mostrarNotificacao(data.error, 'error');
+        else mostrarNotificacao(i18n.t('msg.ordem_atualizada'), 'success');
+    })
+    .catch(err => {
+        console.error(err);
+        mostrarNotificacao(i18n.t('msg.erro_ao_guardar') + ' ' + i18n.t('field.ordem'), 'error');
+    });
+}
+
+// Carregar testes quando seleciona ensaio
+$('#ensaio').on('change', function() {
+    carregarTestes($(this).val());
+});
+
+
+////////////////////////////////////////////////////////////////////////////
+//preencher ensaio
+
+document.addEventListener('DOMContentLoaded', function() {
+
+    refreshLaboratorioSelectUI(); 
+    refreshNormaSelectUI();
+    refreshClienteSelectUI();
+    refreshProjectoSelectUI();
+    refreshTipoPecaSelectUI();
+    refreshFaseSelectUI();
+    refreshSolicitanteSelectUI();
+    refreshTecnicoSelectUI();
+    refreshMotivoAtrasoSelectUI();
+
+
+    // Se houver parâmetro ?ensaio=... na URL, dispara o evento Enter no campo #ensaio
+    const urlParams = new URLSearchParams(window.location.search);
+    const ensaioParam = urlParams.get('ensaio');
+    if (ensaioParam) {
+        const $ensaio = $('#ensaio');
+        $ensaio.val(ensaioParam);
+        // Dispara o evento Enter para acionar o preenchimento automático
+        const e = $.Event('keypress');
+        e.which = 13;
+        setTimeout(() => {
+            $ensaio.trigger(e);
+        }, 300); // ou 400ms se necessário
+            }
+});
+
+let ultimaPesquisa = null;
+
+function carregarEnsaio(ensaioNumero) {
+
+    
+    if (!ensaioNumero || ensaioNumero === ultimaPesquisa) return;
+
+    ultimaPesquisa = ensaioNumero;
+
+
+    if (!ensaioNumero) return;
+
+    fetch(`/ensaios/${ensaioNumero}`)
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.error) {
+                mostrarNotificacao(
+                    i18n.t('msg.ensaio_nao_encontrado'),
+                    "warning"
+                );
+                return;
+            }
+
+            // ✅ NOVO: aviso de ensaio existente
+            mostrarNotificacao(i18n.t('msg.ensaio_ja_existe'),"info");
+
+            ensaioIdAtual = data.id;
+            $('#ensaio_id').val(data.id);
+
+            // --- resto do teu código (igual)
+            if (data.destinopecas === 'Devolution') {
+                $('#destinoGroup').show();
+                $('#destinoGroup2').show();
+            } else {
+                $('#destinoGroup').hide();
+                $('#destinoGroup2').hide();
+                $('#destinoInput').val('');
+                $('#moradadevol').val('');
+            }
+
+            $('#laboratorio_id').val(data.laboratorio_id).trigger("change.select2");
+            $("#norma_id").val(data.norma_id).trigger("change.select2");
+            $('#npecasrecebidas').val(data.npecasrecebidas);
+            $('#destino_pecas').val(data.destinopecas);
+            $('#destinodevol').val(data.destinodevol);
+            $('#moradadevol').val(data.moradadevol);
+            $('#datapedido').val(data.datapedido);
+            $('#data_solicitada').val(data.datasolicitada);
+            $('#pep').val(data.pep);
+            $('#network').val(data.network);
+            $('#part_number').val(data.partnzf);
+            $('#partnumbercli').val(data.partncliente);
+            $('#data_entrega_pecas').val(data.dataentregapecas);
+            $('#data_acordada').val(data.dataacordada);
+            $('#concluido').val(data.concluido);
+            $("#cliente_id").val(data.cliente_id).trigger("change.select2");
+            $("#projecto_select").val(data.projeto_id).trigger("change.select2");
+            $('#denominacao').val(data.projeto_descricao || '');
+            $("#tipopeca_id").val(data.tipopeca_id).trigger("change.select2");
+            $("#fase_id").val(data.fase_id).trigger("change.select2");
+            $('#corecustomer').val(data.corecustomer);
+            $('#atrasado').val(data.atrasado);
+            $("#motivoatraso_id").val(data.motivoatraso_id).trigger("change.select2");
+            $("#solicitante_id").val(data.solicitante_id).trigger("change.select2");
+            $("#tecnico_id").val(data.user_id).trigger("change.select2");
+            $('#prefixo').val(data.prefixo);
+            $('#observacoes').val(data.obs);
+            $('#primeira_peca').val(data.primeirapeca);
+
+            carregarTestes(ensaioNumero);
+        })
+        .catch(() => {
+            mostrarNotificacao(
+                i18n.t('common.error_loading') + ' ' + i18n.t('field.ensaio'),
+                'error'
+            );
+        });
+}
+
+$('#ensaio').on('keypress', function(e) {
+    if (e.which === 13) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const ensaioNumero = $(this).val();
+        carregarEnsaio(ensaioNumero);
+    }
+});
+
+$('#ensaio').on('blur', function() {
+    const ensaioNumero = $(this).val();
+    carregarEnsaio(ensaioNumero);
+});
+
+
+///////////////////////////////////////////////////////////
+//REVERTER ANULAÇÃO DO ENSAIO
+function reverterAnulacao() {
+    const numeroInforme = document.getElementById('ensaio').value;
+    if (!numeroInforme) {
+        alert(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'));
+        return;
+    }
+    if (confirm('Tem a certeza que quer reverter a anulação deste ensaio?')) {
+        fetch(`/reverter_anulacao/${numeroInforme}`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                // Atualiza o estado do formulário
+                // Se usas populateInformeData, garante que existe essa função ou usa o mesmo fetch do Enter
+                $('#ensaio').trigger($.Event('keypress', { which: 13 }));
+            } else {
+                alert(data.error || i18n.t('msg.erro_reverter'));
+            }
+        })
+        .catch(error => {
+            alert(i18n.t('msg.erro_reverter'));
+            console.error(error);
+        });
+    }
+}
+
+////////////////////////////////////////////////////////////
+//AO SELECIONAR DEVOLUÇÃO
+$('#destino_pecas').on('change', function() {
+    if ($(this).val() === 'Devolution') {
+        $('#destinoGroup').show();
+        $('#destinoGroup2').show();
+    } else {
+        $('#destinoGroup').hide();
+        $('#destinoGroup2').hide();
+        $('#destinoInput').val('');
+        $('#moradadevol').val('');
+    }
+});
+
+
+
+$('#laboratorio_id').on('change', function() {
+    const laboratorioId = $(this).val();
+    const $normaSelect = $('#norma_id');
+    $normaSelect.prop('disabled', true);
+    $normaSelect.html('<option value="" selected disabled></option>');
+    if (!laboratorioId) {
+        $normaSelect.html('<option value="" selected disabled></option>');
+        $normaSelect.prop('disabled', false);
+        return;
+    }
+    const selectedText = $('#laboratorio_id option:selected').text().trim().toLowerCase();
+    let url = '';
+    if (selectedText === 'geral') {
+        url = '/api/normas_todas';
+    } else {
+        url = `/api/normas_by_laboratorio?laboratorio_id=${laboratorioId}`;
+    }
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            $normaSelect.empty();
+            $normaSelect.append('<option value="" selected disabled></option>');
+            let normas = Array.isArray(data) ? data : (data.normas || []);
+            if (normas.length) {
+                normas.forEach(norma => {
+                    $normaSelect.append(`<option value="${norma.id}">${norma.norma}</option>`);
+                });
+            }
+            $normaSelect.prop('disabled', false);
+        })
+        .catch(() => {
+            $normaSelect.html('<option value="" selected disabled><span data-i18n="common.error_loading">Erro ao carregar</span></option>');
+            $normaSelect.prop('disabled', false);
+        });
+});
+
+///////////////////////////////////////////////////////////////
+//FOLHA DE ACOMPANHAMENTO
+async function generateFolhaAcompanhamento() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Cabeçalho com fundo cinza escuro
+    doc.setFillColor(176, 176, 176); // cinza mais escuro
+    doc.rect(10, 8, 190, 12, 'F');
+
+    // Logotipo: altura 8, largura automática
+    let logoBase64 = '';
+    try {
+        const response = await fetch('/assets/img/logo.png');
+        const blob = await response.blob();
+        const reader = new FileReader();
+        const base64Promise = new Promise(resolve => { reader.onloadend = () => resolve(reader.result); });
+        reader.readAsDataURL(blob);
+        logoBase64 = await base64Promise;
+    } catch (e) { logoBase64 = null; }
+    if (logoBase64) {
+        doc.addImage(logoBase64, 'PNG', 13, 10, 0, 8); // altura 18, largura auto
+    }
+
+    // Título
+    doc.setFontSize(13);
+    doc.setTextColor(60, 60, 60);
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('action.tracking_sheet'), 105, 15, { align: 'center' });
+
+    // Dados do cabeçalho em duas colunas
+    doc.setFontSize(9);
+    doc.setTextColor(50, 50, 50);
+    doc.setFont(undefined, 'normal');
+    let yStart = 24, y = yStart, x1 = 15, x2 = 105, gap = 5;
+
+    // Obter dados do projeto selecionado
+    const projetoId = document.getElementById('projecto_select').value;
+    let torque = '', testfixture = '';
+    if (window.todosProjectos && projetoId) {
+        const proj = window.todosProjectos.find(p => String(p.id) === String(projetoId));
+        if (proj) {
+            torque = proj.torque || '';
+            testfixture = proj.testfixture || '';
+        }
+    }
+
+    // Dados para as duas colunas
+    const col1 = [
+        [i18n.t('field.ensaio'), document.getElementById('ensaio').value],
+        [i18n.t('field.norma'), document.getElementById('norma_id').selectedOptions[0]?.text || ''],
+        [i18n.t('field.projeto'), document.getElementById('projecto_select').selectedOptions[0]?.text || ''],
+        [i18n.t('field.cliente'), document.getElementById('cliente_id').selectedOptions[0]?.text || ''],
+    ];
+    const col2 = [
+        [i18n.t('field.tipo_peca'), document.getElementById('tipopeca_id').selectedOptions[0]?.text || ''],
+        [i18n.t('field.network'), document.getElementById('network').value],
+        [i18n.t('field.torque'), torque],
+        [i18n.t('field.test_fixture'), testfixture],
+    ];
+
+    for (let i = 0; i < col1.length; i++) {
+        doc.setFont(undefined, 'bold');
+        doc.text(col1[i][0] + ':', x1, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(col1[i][1] || '-', x1 + 35, y);
+
+        doc.setFont(undefined, 'bold');
+        doc.text(col2[i][0] + ':', x2, y);
+        doc.setFont(undefined, 'normal');
+        doc.text(col2[i][1] || '-', x2 + 35, y);
+
+        y += gap;
+    }
+
+    // Campo manual
+    y += 2;
+    doc.setFont(undefined, 'bold');
+    doc.text(i18n.t('field.empty_boxes'), x1, y);
+    doc.setFont(undefined, 'normal');
+    doc.text('_______________', x1 + 35, y);
+
+
+   
+    // Buscar testes do ensaio
+    const ensaioNumero = document.getElementById('ensaio').value;
+    let testes = [];
+    if (ensaioNumero) {
+        try {
+            const resp = await fetch(`/testes/pdf_export/${encodeURIComponent(ensaioNumero)}`);
+            testes = await resp.json();
+        } catch (e) { testes = []; }
+    }
+    testes = Array.isArray(testes) ? testes.sort((a, b) => {
+        if (a.ordem == null && b.ordem == null) return 0;
+        if (a.ordem == null) return 1;
+        if (b.ordem == null) return -1;
+        return a.ordem - b.ordem;
+    }) : [];
+    
+    // --- TABELA DE TESTES DO ENSAIO COM BORDAS E CABEÇALHO CINZA CLARO ---
+    y += 7;
+    //const colWidths = [33, 40, 40, 40, 47];
+    const headerHeight = 8;
+    const rowHeight = 24;
+    //const xCols = [x1 - 2, x1 + 31, x1 + 71, x1 + 111, x1 + 151];
+    const colWidths = [40, 28, 28, 44, 50]; // Teste, Início, Fim, Máquina, Notas
+    const xCols = [10, 50, 78, 106, 150];   // começa em 10, soma as larguras
+    
+
+    
+    // Fundo cinza claro do cabeçalho
+    doc.setFillColor(230, 230, 230); // cinza claro
+    doc.rect(10, y - 5, 190, headerHeight, 'F'); // fundo do cabeçalho igual ao topo
+    //doc.rect(x1 - 2, y - 5, colWidths.reduce((a, b) => a + b, 0), headerHeight, 'F');
+    
+    // Cabeçalho com bordas
+    doc.setFont(undefined, 'bold');
+    doc.setFontSize(8);
+    doc.text(i18n.t('field.teste'), xCols[0] + 2, y, { maxWidth: colWidths[0] - 4 });
+    doc.text(i18n.t('field.inicio'), xCols[1] + 2, y, { maxWidth: colWidths[1] - 4 });
+    doc.text(i18n.t('field.fim'), xCols[2] + 2, y, { maxWidth: colWidths[2] - 4 });
+    doc.text(i18n.t('field.maquina'), xCols[3] + 2, y, { maxWidth: colWidths[3] - 4 });
+    doc.text(i18n.t('field.notas'), xCols[4] + 2, y, { maxWidth: colWidths[4] - 4 });
+    doc.setFont(undefined, 'normal');
+    doc.setFontSize(8);
+    // Bordas do cabeçalho
+    for (let i = 0; i < colWidths.length; i++) {
+        doc.rect(xCols[i], y - 5, colWidths[i], headerHeight);
+    }
+    
+    // Linhas da tabela
+    let yTable = y + headerHeight;
+    for (const teste of testes) {
+        const nomeTipo = teste.teste || '-';
+        const inicio = formatarDataHora(teste.datainicio);
+        const fim = formatarDataHora(teste.datafim);
+        const maquina = teste.maquina || '-';
+        const prefixo = (teste.prefixo || '').toUpperCase();
+        const primeira = teste.primeirapeca != null ? String(teste.primeirapeca) : '';
+        const qtd = teste.qtd != null ? String(teste.qtd) : '';
+        const obs = teste.obs != null ? String(teste.obs) : '';
+        let ultima = '';
+        if (primeira && qtd) {
+            const nPrimeira = parseInt(primeira);
+            const nQtd = parseInt(qtd);
+            if (!isNaN(nPrimeira) && !isNaN(nQtd) && nQtd > 0) {
+                ultima = String(nPrimeira + nQtd - 1);
+            }
+        }
+
+        let pecasLinha =(primeira && ultima)? `${i18n.t('field.pecas')} ${prefixo}${primeira} ${i18n.t('field.a')} ${prefixo}${ultima}`: (primeira ? `${i18n.t('field.pecas')} ${prefixo}${primeira}` : '');
+
+        let qntLinha = qtd ? `${i18n.t('field.qtd')}: ${qtd}`: '';
+
+        const notas = i18n.t('field.resistencias') + ':___ ' + i18n.t('field.fotos') + ':____ ' + i18n.t('field.pesos') + ':___';
+    
+        if (obs && obs.trim() !== '') {
+            doc.text('Obs: ' + obs, xCols[4] + 2, yTable + 7, { maxWidth: colWidths[4] - 4 });
+        }
+
+
+        // Células com borda
+        doc.rect(xCols[0], yTable - 5, colWidths[0], rowHeight);
+        doc.rect(xCols[1], yTable - 5, colWidths[1], rowHeight);
+        doc.rect(xCols[2], yTable - 5, colWidths[2], rowHeight);
+        doc.rect(xCols[3], yTable - 5, colWidths[3], rowHeight);
+        doc.rect(xCols[4], yTable - 5, colWidths[4], rowHeight);
+    
+        // Conteúdo das células
+        doc.text(nomeTipo, xCols[0] + 2, yTable, { maxWidth: colWidths[0] - 4 });
+        doc.text(inicio, xCols[1] + 2, yTable, { maxWidth: colWidths[1] - 4 });
+        doc.text(fim, xCols[2] + 2, yTable, { maxWidth: colWidths[2] - 4 });
+    
+        // Máquina: nome, linha em branco, peças, qnt
+        let yMaquina = yTable;
+        doc.text(maquina, xCols[3] + 2, yMaquina, { maxWidth: colWidths[3] - 4 });
+        yMaquina += 6; // primeira linha em branco
+        yMaquina += 6; // segunda linha em branco
+        if (pecasLinha) {
+            doc.text(pecasLinha, xCols[3] + 2, yMaquina, { maxWidth: colWidths[3] - 4 });
+            yMaquina += 6;
+        } else {
+            yMaquina += 6;
+        }
+        if (qntLinha) {
+            doc.text(qntLinha, xCols[3] + 2, yMaquina, { maxWidth: colWidths[3] - 4 });
+        }
+    
+        doc.text(notas, xCols[4] + 2, yTable, { maxWidth: colWidths[4] - 4 });
+        yTable += rowHeight;
+    }
+
+    doc.save( i18n.t('action.tracking_sheet') + '_' + (document.getElementById('ensaio').value || i18n.t('field.ensaio')) + '.pdf');
+}
+
+function formatarDataHora(str) {
+    if (!str) return '-';
+    // Aceita formatos ISO ou yyyy-mm-dd hh:mm:ss
+    let d = null;
+    if (str.includes('T')) {
+        d = new Date(str);
+    } else {
+        // Tenta converter yyyy-mm-dd hh:mm:ss
+        const partes = str.split(/[- :]/);
+        if (partes.length >= 5) {
+            d = new Date(partes[0], partes[1] - 1, partes[2], partes[3], partes[4]);
+        } else {
+            return str;
+        }
+    }
+    if (isNaN(d)) return str;
+    const pad = n => String(n).padStart(2, '0');
+    return pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
+}
+
+</script>
+
+{% if user.funcao_id == 1 %}
+<script>
+function tornarTabelaSomenteLeitura() {
+    // Desabilita todos os inputs, selects e textareas dentro da tabela de testes
+    document.querySelectorAll('#testesTable input, #testesTable select, #testesTable textarea').forEach(function(el) {
+        el.setAttribute('readonly', true);
+        el.setAttribute('disabled', true);
+        el.classList.add('readonly');
+    });
+    // Remove contenteditable das células
+    document.querySelectorAll('#testesTable [contenteditable]').forEach(function(el) {
+        el.removeAttribute('contenteditable');
+    });
+    // Desabilita todos os botões dentro da tabela
+    document.querySelectorAll('#testesTable button').forEach(function(btn) {
+        btn.setAttribute('disabled', true);
+    });
+}
+
+// Executa ao carregar
+document.addEventListener('DOMContentLoaded', function() {
+    tornarTabelaSomenteLeitura();
+    // Observa mudanças na tabela para aplicar sempre que houver alterações
+    const target = document.getElementById('testesTable');
+    if (target) {
+        const observer = new MutationObserver(function() {
+            tornarTabelaSomenteLeitura();
+        });
+        observer.observe(target, { childList: true, subtree: true });
+    }
+});
+
+
+
+
+
+
+</script>
+{% endif %}
+
+{% endblock %}
+

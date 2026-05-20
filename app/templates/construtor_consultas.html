@@ -1,0 +1,913 @@
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.query_builder">Construtor de Consultas</span>{% endblock %}
+
+{% block navbar %}
+<h4 class="page-title"><span data-i18n="nav.query_builder">Construtor de Consultas</span></h4>
+{% endblock %}
+
+{% block content %}
+<style>
+.qb-card .card-header { padding: 0.55rem 0.75rem; }
+.qb-card .card-body { padding: 0.75rem; }
+#qbCamposTable th, #qbCamposTable td,
+#qbCalcTable th, #qbCalcTable td,
+#qbLayoutsTable th, #qbLayoutsTable td,
+#qbPreviewTable th, #qbPreviewTable td {
+    font-size: 0.85rem;
+    vertical-align: middle;
+}
+.small-help { font-size: 0.78rem; color: #6c757d; }
+</style>
+
+<div class="tabelas-page">
+    <form id="formconsulta" class="mb-3">
+        <input type="hidden" id="consulta_id">
+
+        <div class="card qb-card mb-3">
+            <div class="card-header"><strong>1) <span data-i18n="field.configuracao">Configuração</span></strong></div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label form-label-sm"><span data-i18n="field.nome">Nome</span></label>
+                        <input type="text" class="form-control form-control-sm" id="consulta_nome" maxlength="100" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label form-label-sm"><span data-i18n="field.descricao">Descrição</span></label>
+                        <input type="text" class="form-control form-control-sm" id="consulta_descricao" maxlength="200">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label form-label-sm"><span data-i18n="field.status">Estado</span></label>
+                        <select class="form-select form-select-sm" id="consulta_obsoleto">
+                            <option value="0"><span data-i18n="field.ativo">Ativo</span></option>
+                            <option value="1"><span data-i18n="field.obsolete">Obsoleto</span></option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label form-label-sm"><span data-i18n="field.tabela_principal">Tabela principal</span></label>
+                        <select class="form-select form-select-sm" id="tabela_principal"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card qb-card mb-3">
+            <div class="card-header"><strong>2) <span data-i18n="field.visibilidade">Visibilidade</span></strong></div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-3">
+                        <label class="form-label form-label-sm"><span data-i18n="field.quem_pode_ver">Quem pode ver</span></label>
+                        <select class="form-select form-select-sm" id="visibilidade">
+                            <option value="private"><span data-i18n="field.so_para_mim">Só para mim</span></option>
+                            <option value="all"><span data-i18n="common.all">Todos</span></option>
+                            <option value="role_tecnicos"><span data-i18n="field.tecnicos">Técnicos</span></option>
+                            <option value="role_coordenadores"><span data-i18n="field.coordenadores">Coordenadores</span></option>
+                            <option value="selected_users"><span data-i18n="field.utilizadores especificos">Utilizadores específicos</span></option>
+                        </select>
+                    </div>
+                    <div class="col-md-9" id="usersSpecificWrap" style="display:none;">
+                        <label class="form-label form-label-sm"><span data-i18n="field.users">Utilizadores</span></label>
+                        <select id="selected_user_ids" class="form-select form-select-sm" multiple size="6"></select>
+                        <div class="small-help"><span data-i18n="field.selecionar_varios">Use Ctrl para selecionar vários.</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card qb-card mb-3">
+            <div class="card-header"><strong>3) <span data-i18n="field.tabelas_relacionadas">Tabelas relacionadas</span></strong></div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label form-label-sm"><span data-i18n="field.nivel">Nível</span> 1 (N1)</label>
+                        <select id="tabelas_relacionadas_n1" class="form-select form-select-sm" multiple size="6"></select>
+                        <div class="small-help"><span data-i18n="field.tabelasn1">Tabelas diretamente ligadas à tabela principal.</span></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label form-label-sm"><span data-i18n="field.nivel">Nível</span> 2 (N2)</label>
+                        <select id="tabelas_relacionadas_n2" class="form-select form-select-sm" multiple size="6"></select>
+                        <div class="small-help"><span data-i18n="field.tabelasn2">Tabelas ligadas através de uma tabela N1.</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card qb-card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>4) <span data-i18n="field.campos">Campos</span></strong>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddCampo"><span data-i18n="field.adicionar_campo">Adicionar Campo</span></button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-bordered mb-0" id="qbCamposTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th><span data-i18n="field.tabela">Tabela</span></th>
+                            <th><span data-i18n="field.campo">Campo</span></th>
+                            <th><span data-i18n="action.label">Etiqueta</span></th>
+                            <th><span data-i18n="field.operacao">Operação</span></th>
+                            <th><span data-i18n="field.agrupar">Agrupar</span></th>
+                            <th><span data-i18n="field.ordenar">Ordenar</span></th>
+                            <th style="width:70px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="qbCamposBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card qb-card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>5) <span data-i18n="field.campos_calculados">Campos calculados</span></strong>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddCalc"><span data-i18n="field.adicionar_calculo">Adicionar Cálculo</span></button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-bordered mb-0" id="qbCalcTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th><span data-i18n="field.tipo">Tipo</span></th>
+                            <th><span data-i18n="action.label">Etiqueta</span></th>
+                            <th><span data-i18n="field.data_inicio">Data inicial</span></th>
+                            <th><span data-i18n="field.data_fim">Data final</span></th>
+                            <th style="width:70px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="qbCalcBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+                <div class="card qb-card mb-3">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>6) <span data-i18n="field.filtros">Filtros</span></strong>
+                <button type="button" class="btn btn-sm btn-outline-primary" id="btnAddFiltro"><span data-i18n="field.adicionar_filtro">Adicionar Filtro</span></button>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-bordered mb-0" id="qbFiltersTable">
+                    <thead class="table-light">
+                        <tr>
+                            <th><span data-i18n="field.tabela">Tabela</span></th>
+                            <th><span data-i18n="field.campo">Campo</span></th>
+                            <th><span data-i18n="field.operador">Operador</span></th>
+                            <th><span data-i18n="field.valor">Valor</span></th>
+                            <th><span data-i18n="field.valor">Valor</span> 2</th>
+                            <th style="width:70px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="qbFiltersBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+            <div class="d-flex gap-2 mb-3">
+            <button type="button" class="btn btn-sm btn-info" id="btnPreview">
+                <span data-i18n="field.testar_consulta">
+                Testar Consulta
+                </span>
+            </button>
+        
+            <button type="button" class="btn btn-warning btn-sm" id="btnNovo">
+                <span data-i18n="action.clear">
+                Limpar
+                </span>
+            </button>
+        
+            <button type="button" class="btn btn-success btn-sm ms-auto" id="btnSave">
+                <span data-i18n="action.save">
+                Gravar
+                </span>
+            </button>
+        </div>
+    </form>
+
+    <div class="card qb-card mb-3">
+        <div class="card-header"><strong><span data-i18n="field.pre_visualizacao">Pré-visualização</span></strong></div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-striped table-bordered mb-0" id="qbPreviewTable">
+                <thead id="qbPreviewHead"></thead>
+                <tbody id="qbPreviewBody">
+                    <tr><td class="text-muted text-center py-3"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card qb-card">
+        <div class="card-header"><strong><span data-i18n="field.consultas_criadas">Consultas Criadas</span></strong></div>
+        <div class="card-body p-0">
+            <table class="table table-sm table-striped table-bordered mb-0" id="qbLayoutsTable">
+                <thead class="table-light">
+                    <tr>
+                        <th><span data-i18n="field.nome">Nome</span></th>
+                        <th><span data-i18n="field.descricao">Descrição</span></th>
+                        <th><span data-i18n="field.tabela">Tabela</span></th>
+                        <th><span data-i18n="field.visibilidade">Visibilidade</span></th>
+                        <th><span data-i18n="field.criador">Criador</span></th>
+                        <th><span data-i18n="field.status">Estado</span></th>
+                        <th style="width:180px;"><center><span data-i18n="field.acoes">Ações</span></center></th>
+                    </tr>
+                </thead>
+                <tbody id="qbLayoutsBody"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let QB_META_FIELDS = {};
+let QB_TABLES = [];
+let QB_RELATED = [];
+
+
+
+function getAllowedCalcTables() {
+    let tables = [document.getElementById('tabela_principal').value]
+        .concat(getSelectedRelatedTables());
+    tables = tables.filter(Boolean);
+    return tables;
+}
+
+function getDateFieldOptions(tableName, selectedField) {
+    const table = QB_META_FIELDS[tableName];
+    if (!table || !table.columns) return '';
+
+    const dateLike = ['date', 'datetime', 'timestamp'];
+    const cols = table.columns.filter(c => {
+        const t = String(c.type || '').toLowerCase();
+        return dateLike.some(k => t.includes(k));
+    });
+
+    return cols.map(c => optHtml(c.name, c.name, c.name === selectedField)).join('');
+}
+
+function getCalcTableOptions(selectedTable) {
+    const tables = getAllowedCalcTables();
+    return tables.map(t => {
+        const tb = QB_META_FIELDS[t] || { label: t };
+        return optHtml(t, tb.label || t, t === selectedTable);
+    }).join('');
+}
+
+function refreshCalcRows() {
+    document.querySelectorAll('#qbCalcBody tr').forEach(tr => {
+        const st = tr.querySelector('.qb-calc-start-table');
+        const sf = tr.querySelector('.qb-calc-start-field');
+        const et = tr.querySelector('.qb-calc-end-table');
+        const ef = tr.querySelector('.qb-calc-end-field');
+
+        const oldST = st.value;
+        const oldET = et.value;
+        const oldSF = sf.value;
+        const oldEF = ef.value;
+
+        st.innerHTML = getCalcTableOptions(oldST);
+        et.innerHTML = getCalcTableOptions(oldET);
+
+        sf.innerHTML = getDateFieldOptions(st.value, oldSF);
+        ef.innerHTML = getDateFieldOptions(et.value, oldEF);
+    });
+}
+
+
+
+function optHtml(value, label, selected) {
+    return `<option value="${value}" ${selected ? 'selected' : ''}>${label}</option>`;
+}
+
+function getSelectedValues(sel) {
+    return Array.from(sel.selectedOptions).map(o => o.value);
+}
+
+function getRelatedSelects() {
+    return {
+        n1: document.getElementById('tabelas_relacionadas_n1'),
+        n2: document.getElementById('tabelas_relacionadas_n2')
+    };
+}
+
+function getSelectedRelatedTables() {
+    const { n1, n2 } = getRelatedSelects();
+    const selected = getSelectedValues(n1).concat(getSelectedValues(n2));
+    return [...new Set(selected)];
+}
+
+function getTabelaOptions(selected) {
+    let tables = [document.getElementById('tabela_principal').value]
+        .concat(getSelectedRelatedTables());
+    tables = tables.filter(Boolean);
+    return tables.map(t => {
+        const tb = QB_META_FIELDS[t] || { label: t };
+        return optHtml(t, tb.label || t, t === selected);
+    }).join('');
+}
+
+function getFieldOptions(tableName, selectedField) {
+    const table = QB_META_FIELDS[tableName];
+    if (!table || !table.columns) return '';
+    return table.columns.map(c => optHtml(c.name, c.name, c.name === selectedField)).join('');
+}
+
+function newCampoRow(data = {}) {
+    const tr = document.createElement('tr');
+    const tableVal = data.table || document.getElementById('tabela_principal').value || '';
+    const aggVal = data.aggregate || '';
+    tr.innerHTML = `
+        <td><select class="form-select form-select-sm qb-campo-table">${getTabelaOptions(tableVal)}</select></td>
+        <td><select class="form-select form-select-sm qb-campo-field">${getFieldOptions(tableVal, data.field || '')}</select></td>
+        <td><input class="form-control form-control-sm qb-campo-label" value="${data.label || ''}"></td>
+        <td>
+            <select class="form-select form-select-sm qb-campo-agg">
+                ${optHtml('', '(' + i18n.t('field.sem_operacao') + ')', aggVal === '')}
+                ${optHtml('sum', i18n.t('field.somar') , aggVal === 'sum')}
+                ${optHtml('count', i18n.t('field.contar') , aggVal === 'count')}
+                ${optHtml('count_distinct', i18n.t('field.contar_distintos') , aggVal === 'count_distinct')}
+                ${optHtml('avg', i18n.t('field.media') , aggVal === 'avg')}
+                ${optHtml('min', i18n.t('field.minimo') , aggVal === 'min')}
+                ${optHtml('max', i18n.t('field.maximo') , aggVal === 'max')}
+            </select>
+        </td>
+        <td class="text-center"><input type="checkbox" class="form-check-input qb-campo-group" ${data.group_by ? 'checked' : ''}></td>
+        <td>
+            <select class="form-select form-select-sm qb-campo-sort">
+                ${optHtml('', '(' + i18n.t('field.sem') + ')', !data.sort)}
+                ${optHtml('asc', i18n.t('field.asc'), data.sort === 'asc')}
+                ${optHtml('desc', i18n.t('field.desc'), data.sort === 'desc')}
+            </select>
+        </td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger qb-del-row">X</button></td>
+    `;
+    document.getElementById('qbCamposBody').appendChild(tr);
+}
+
+
+function newCalcRow(data = {}) {
+    const tr = document.createElement('tr');
+
+    const startTable = data.start_table || document.getElementById('tabela_principal').value || '';
+    const endTable = data.end_table || document.getElementById('tabela_principal').value || '';
+
+    tr.innerHTML = `
+        <td>
+            <select class="form-select form-select-sm qb-calc-type">
+                ${optHtml('datediff_days', i18n.t('field.dias_entre'), true)}
+            </select>
+        </td>
+        <td><input class="form-control form-control-sm qb-calc-label" value="${data.label || i18n.t('field.dias')}"></td>
+        <td>
+            <div class="d-flex gap-1">
+                <select class="form-select form-select-sm qb-calc-start-table">
+                    ${getCalcTableOptions(startTable)}
+                </select>
+                <select class="form-select form-select-sm qb-calc-start-field">
+                    ${getDateFieldOptions(startTable, data.start_field || '')}
+                </select>
+            </div>
+        </td>
+        <td>
+            <div class="d-flex gap-1">
+                <select class="form-select form-select-sm qb-calc-end-table">
+                    ${getCalcTableOptions(endTable)}
+                </select>
+                <select class="form-select form-select-sm qb-calc-end-field">
+                    ${getDateFieldOptions(endTable, data.end_field || '')}
+                </select>
+            </div>
+        </td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger qb-del-row">X</button></td>
+    `;
+
+    document.getElementById('qbCalcBody').appendChild(tr);
+}
+
+
+function refreshFieldMetaPayload(metaTables) {
+    QB_META_FIELDS = {};
+    metaTables.forEach(t => QB_META_FIELDS[t.table] = t);
+}
+
+function buildPayload() {
+    const campos = [];
+    const sort = [];
+
+    document.querySelectorAll('#qbCamposBody tr').forEach(tr => {
+        const table = tr.querySelector('.qb-campo-table').value;
+        const field = tr.querySelector('.qb-campo-field').value;
+        const label = tr.querySelector('.qb-campo-label').value.trim();
+        const aggregate = tr.querySelector('.qb-campo-agg').value;
+        const group_by = tr.querySelector('.qb-campo-group').checked;
+        const sortDir = tr.querySelector('.qb-campo-sort').value;
+
+        if (!table || !field) return;
+
+        campos.push({
+            table,
+            field,
+            label: label || `${table}.${field}`,
+            aggregate,
+            group_by
+        });
+
+        if (sortDir) {
+            sort.push({ table, field, direction: sortDir });
+        }
+    });
+
+    const calculated_fields = [];
+    document.querySelectorAll('#qbCalcBody tr').forEach(tr => {
+        const type = tr.querySelector('.qb-calc-type').value;
+        const label = tr.querySelector('.qb-calc-label').value.trim() || i18n.t('field.dias');
+
+        const start_table = tr.querySelector('.qb-calc-start-table').value;
+        const start_field = tr.querySelector('.qb-calc-start-field').value;
+        const end_table = tr.querySelector('.qb-calc-end-table').value;
+        const end_field = tr.querySelector('.qb-calc-end-field').value;
+
+        if (!start_table || !start_field || !end_table || !end_field) return;
+
+        calculated_fields.push({
+            type,
+            label,
+            start_table,
+            start_field,
+            end_table,
+            end_field
+        });
+    });
+
+    const filters = [];
+    document.querySelectorAll('#qbFiltersBody tr').forEach(tr => {
+        const table = tr.querySelector('.qb-filter-table').value;
+        const field = tr.querySelector('.qb-filter-field').value;
+        const op = tr.querySelector('.qb-filter-op').value;
+        let value = tr.querySelector('.qb-filter-value').value;
+        const value2 = tr.querySelector('.qb-filter-value2').value;
+    
+        if (!table || !field || !op) return;
+    
+        if (op === 'in') {
+            value = value.split(',').map(s => s.trim()).filter(Boolean);
+        }
+    
+        if (op !== 'is_null' && op !== 'is_not_null' && (value === '' || value == null)) return;
+        if (op === 'between' && (value2 === '' || value2 == null)) return;
+    
+        filters.push({
+            table,
+            field,
+            op,
+            value,
+            value2: op === 'between' ? value2 : null
+        });
+    });
+
+    return {
+        nome: document.getElementById('consulta_nome').value.trim(),
+        descricao: document.getElementById('consulta_descricao').value.trim(),
+        obsoleto: document.getElementById('consulta_obsoleto').value === '1',
+        tabela_principal: document.getElementById('tabela_principal').value,
+        visibilidade: document.getElementById('visibilidade').value,
+        selected_user_ids: getSelectedValues(document.getElementById('selected_user_ids')).map(v => Number(v)),
+        tabelas_relacionadas: getSelectedRelatedTables(),
+        campos,
+        calculated_fields,
+        filters,   
+        sort,
+        definicao: {
+            base_table: document.getElementById('tabela_principal').value,
+            joins: getSelectedRelatedTables(),
+            fields: campos,
+            calculated_fields,
+            filters,
+            sort
+        }
+    };
+}
+
+async function loadUsers() {
+    const res = await fetch('/api/consultas/users');
+    const data = await res.json();
+    const sel = document.getElementById('selected_user_ids');
+    sel.innerHTML = '';
+    data.forEach(u => {
+        sel.insertAdjacentHTML('beforeend', `<option value="${u.id}">${u.nome}</option>`);
+    });
+}
+
+async function loadBaseTables() {
+    const res = await fetch('/api/consultas/meta/tabelas');
+    QB_TABLES = await res.json();
+    const sel = document.getElementById('tabela_principal');
+    sel.innerHTML = QB_TABLES.map(t => optHtml(t.key, t.label, false)).join('');
+}
+
+async function loadRelatedTables() {
+    const base = document.getElementById('tabela_principal').value;
+    const { n1, n2 } = getRelatedSelects();
+
+    if (!base) {
+        n1.innerHTML = '';
+        n2.innerHTML = '';
+        return;
+    }
+
+    const prevSelected = getSelectedRelatedTables();
+    const res = await fetch(
+        `/api/consultas/meta/tabelas_relacionadas?base=${encodeURIComponent(base)}&selecionadas=${encodeURIComponent(prevSelected.join(','))}`
+    );
+    const data = await res.json();
+
+    const level1 = data.filter(t => Number(t.level) === 1);
+    const level2 = data.filter(t => Number(t.level) === 2);
+
+    n1.innerHTML = level1.map(t => {
+        const label = `${t.label}${t.via ? ` (via ${t.via})` : ''}`;
+        return optHtml(t.key, label, prevSelected.includes(t.key));
+    }).join('');
+
+    n2.innerHTML = level2.map(t => {
+        const viaTxt = t.via ? ` via ${t.via}` : '';
+        const label = `${t.label}${viaTxt ? ` (${viaTxt.trim()})` : ''}`;
+        return optHtml(t.key, label, prevSelected.includes(t.key));
+    }).join('');
+}
+
+async function loadFieldMeta() {
+    const base = document.getElementById('tabela_principal').value;
+    const tabs = getSelectedRelatedTables().join(',');
+    const res = await fetch(`/api/consultas/meta/campos?base=${encodeURIComponent(base)}&tabelas=${encodeURIComponent(tabs)}`);
+    const data = await res.json();
+    refreshFieldMetaPayload(data.tables || []);
+
+    document.querySelectorAll('#qbCamposBody tr').forEach(tr => {
+        const tSel = tr.querySelector('.qb-campo-table');
+        const oldTable = tSel.value;
+        tSel.innerHTML = getTabelaOptions(oldTable);
+        const currentTable = tSel.value;
+        const fSel = tr.querySelector('.qb-campo-field');
+        const oldField = fSel.value;
+        fSel.innerHTML = getFieldOptions(currentTable, oldField);
+    });
+
+      refreshCalcRows();
+}
+
+async function loadLayouts() {
+    const res = await fetch('/api/consultas/layouts');
+    const rows = await res.json();
+    const tbody = document.getElementById('qbLayoutsBody');
+    tbody.innerHTML = '';
+
+    rows.forEach(r => {
+        tbody.insertAdjacentHTML('beforeend', `
+            <tr>
+                <td>${r.nome || ''}</td>
+                <td>${r.descricao || ''}</td>
+                <td>${r.tabela_principal || ''}</td>
+                <td>${r.visibilidade || ''}</td>
+                <td>${r.owner_nome || ''}</td>
+                <td>${r.obsoleto ? 'Obsoleto' : 'Ativo'}</td>
+                <td class="text-center">
+                    <i class="fas fa-edit text-primary me-2 qb-edit"
+                       data-id="${r.id}"
+                       style="cursor:pointer;"
+                       title="Editar" data-i18n="action.edit" data-i18n-attr="title"></i>
+                    ${r.can_edit ? `
+                        <i class="fas fa-trash-alt text-danger qb-del"
+                           data-id="${r.id}"
+                           style="cursor:pointer;"
+                           title="Eliminar" data-i18n="action.delete" data-i18n-attr="title"></i>
+                    ` : ''}
+                </td>
+            </tr>
+        `);
+    });
+}
+
+function renderPreview(columns, rows) {
+    const thead = document.getElementById('qbPreviewHead');
+    const tbody = document.getElementById('qbPreviewBody');
+
+    if (!columns || !columns.length) {
+        thead.innerHTML = '';
+        tbody.innerHTML = '<tr><td class="text-muted text-center py-3"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>';
+        return;
+    }
+
+    thead.innerHTML = `<tr>${columns.map(c => `<th>${c}</th>`).join('')}</tr>`;
+    tbody.innerHTML = '';
+
+    if (!rows || !rows.length) {
+        tbody.innerHTML = `<tr><td colspan="${columns.length}" class="text-center text-muted py-3"><span data-i18n="field.sem_dados">Sem dados</span></td></tr>`;
+        return;
+    }
+
+    rows.forEach(r => {
+        const tds = columns.map(c => `<td>${r[c] ?? ''}</td>`).join('');
+        tbody.insertAdjacentHTML('beforeend', `<tr>${tds}</tr>`);
+    });
+}
+
+async function editLayout(id) {
+    const res = await fetch(`/api/consultas/layouts/${id}`);
+    const data = await res.json();
+
+    document.getElementById('consulta_id').value = data.id;
+    document.getElementById('consulta_nome').value = data.nome || '';
+    document.getElementById('consulta_descricao').value = data.descricao || '';
+    document.getElementById('consulta_obsoleto').value = data.obsoleto ? '1' : '0';
+    document.getElementById('tabela_principal').value = data.tabela_principal || '';
+    document.getElementById('visibilidade').value = data.visibilidade || 'private';
+
+    document.getElementById('usersSpecificWrap').style.display =
+        (document.getElementById('visibilidade').value === 'selected_users') ? '' : 'none';
+
+    Array.from(document.getElementById('selected_user_ids').options).forEach(o => {
+        o.selected = (data.selected_user_ids || []).includes(Number(o.value));
+    });
+
+    await loadRelatedTables();
+
+    const joins = (data.definicao && data.definicao.joins) ? data.definicao.joins : [];
+    Array.from(document.getElementById('tabelas_relacionadas_n1').options).forEach(o => {
+        o.selected = joins.includes(o.value);
+    });
+    Array.from(document.getElementById('tabelas_relacionadas_n2').options).forEach(o => {
+        o.selected = joins.includes(o.value);
+    });
+
+    await loadFieldMeta();
+
+    document.getElementById('qbCamposBody').innerHTML = '';
+    const fields = (data.definicao && data.definicao.fields) ? data.definicao.fields : [];
+    fields.forEach(f => {
+        newCampoRow({
+            table: f.table,
+            field: f.field,
+            label: f.label,
+            aggregate: f.aggregate || '',
+            group_by: !!f.group_by
+        });
+    });
+
+    document.getElementById('qbCalcBody').innerHTML = '';
+    const cfs = (data.definicao && data.definicao.calculated_fields) ? data.definicao.calculated_fields : [];
+
+    cfs.forEach(cf => {
+        if (cf.type === 'datediff_days') {
+            newCalcRow({
+                label: cf.label || 'Dias',
+                start_table: cf.start_table,
+                start_field: cf.start_field,
+                end_table: cf.end_table,
+                end_field: cf.end_field
+            });
+        }
+    });
+
+    document.getElementById('qbFiltersBody').innerHTML = '';
+    const flt = (data.definicao && data.definicao.filters) ? data.definicao.filters : [];
+    flt.forEach(f => {
+        newFilterRow({
+            table: f.table,
+            field: f.field,
+            op: f.op || 'eq',
+            value: Array.isArray(f.value) ? f.value.join(',') : (f.value ?? ''),
+            value2: f.value2 ?? ''
+        });
+    });
+
+}
+
+function resetForm() {
+    document.getElementById('consulta_id').value = '';
+    document.getElementById('consulta_nome').value = '';
+    document.getElementById('consulta_descricao').value = '';
+    document.getElementById('consulta_obsoleto').value = '0';
+    document.getElementById('visibilidade').value = 'private';
+    document.getElementById('usersSpecificWrap').style.display = 'none';
+    Array.from(document.getElementById('selected_user_ids').options).forEach(o => o.selected = false);
+
+    document.getElementById('qbCamposBody').innerHTML = '';
+    document.getElementById('qbCalcBody').innerHTML = '';
+    renderPreview([], []);
+
+    document.getElementById('qbFiltersBody').innerHTML = '';
+}
+
+$(document).ready(async function () {
+    await loadUsers();
+    await loadBaseTables();
+    await loadRelatedTables();
+    await loadFieldMeta();
+    await loadLayouts();
+
+    newCampoRow();
+
+    $('#visibilidade').on('change', function () {
+        $('#usersSpecificWrap').toggle(this.value === 'selected_users');
+    });
+
+    $('#tabela_principal').on('change', async function () {
+        document.getElementById('tabelas_relacionadas_n1').innerHTML = '';
+        document.getElementById('tabelas_relacionadas_n2').innerHTML = '';
+        await loadRelatedTables();
+        await loadFieldMeta();
+        document.getElementById('qbCamposBody').innerHTML = '';
+        newCampoRow();
+    });
+    
+    $('#tabelas_relacionadas_n1, #tabelas_relacionadas_n2').on('change', async function () {
+        await loadRelatedTables();
+        await loadFieldMeta();
+    });
+
+   
+    $('#btnAddCampo').on('click', function () {
+        newCampoRow();
+    });
+
+    $('#btnAddCalc').on('click', function () {
+        newCalcRow();
+    });
+
+    $(document).on('click', '.qb-del-row', function () {
+        $(this).closest('tr').remove();
+    });
+
+    $(document).on('change', '.qb-campo-table', function () {
+        const tr = $(this).closest('tr')[0];
+        const tableName = this.value;
+        tr.querySelector('.qb-campo-field').innerHTML = getFieldOptions(tableName, '');
+    });
+
+    $('#btnPreview').on('click', async function () {
+        const payload = buildPayload();
+        const res = await fetch('/api/consultas/preview', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    
+        const ct = (res.headers.get('content-type') || '').toLowerCase();
+        const body = ct.includes('application/json') ? await res.json() : { error: await res.text() };
+    
+        if (!res.ok) {
+            alert(body.error || i18n.t('common.error_loading'));
+            return;
+        }
+    
+        renderPreview(body.columns || [], body.rows || []);
+    });
+
+    $('#btnSave').on('click', async function () {
+        const payload = buildPayload();
+
+        if (!payload.nome) {
+            alert(i18n.t('field.nome') + ' ' + i18n.t('msg.erro_obrigatorio'));
+            return;
+        }
+        if (!payload.tabela_principal) {
+            alert(i18n.t('field.tabela_principal') + ' ' + i18n.t('msg.erro_obrigatorio'));
+            return;
+        }
+        if (!payload.campos.length) {
+            alert(i18n.t('field.campo') + ' ' + i18n.t('msg.erro_obrigatorio'));
+            return;
+        }
+        if (payload.visibilidade === 'selected_users' && !payload.selected_user_ids.length) {
+            alert(i18n.t('field.users') + ' ' + i18n.t('msg.erro_obrigatorio'));
+            return;
+        }
+
+        const id = $('#consulta_id').val();
+        const method = id ? 'PUT' : 'POST';
+        const url = id ? `/api/consultas/layouts/${id}` : '/api/consultas/layouts';
+
+        const res = await fetch(url, {
+            method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+            alert(data.error || i18n.t('msg.erro_ao_guardar'));
+            return;
+        }
+
+        alert(i18n.t('msg.dados_guardados_sucesso'));
+        resetForm();
+        await loadLayouts();
+    });
+
+    $('#btnNovo').on('click', function () {
+        resetForm();
+    });
+
+    $(document).on('click', '.qb-edit', async function () {
+        await editLayout($(this).data('id'));
+    });
+
+    $(document).on('click', '.qb-del', async function () {
+        const id = $(this).data('id');
+        if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.consulta') + '?')) return;
+
+        const res = await fetch(`/api/consultas/layouts/${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (!res.ok) {
+            alert(data.error || i18n.t('msg.error_delete'));
+            return;
+        }
+
+        await loadLayouts();
+    });
+
+    $('#btnAddFiltro').on('click', function () {
+        newFilterRow();
+    });
+    
+    $(document).on('change', '.qb-filter-table', function () {
+        const tr = $(this).closest('tr')[0];
+        const tableName = this.value;
+        tr.querySelector('.qb-filter-field').innerHTML = getFieldOptions(tableName, '');
+    });
+    
+    $(document).on('change', '.qb-filter-op', function () {
+        const tr = $(this).closest('tr')[0];
+        updateFilterValueInputs(tr);
+    });
+});
+
+
+$(document).on('change', '.qb-calc-start-table', function () {
+    const tr = $(this).closest('tr')[0];
+    const tableName = this.value;
+    tr.querySelector('.qb-calc-start-field').innerHTML = getDateFieldOptions(tableName, '');
+});
+
+$(document).on('change', '.qb-calc-end-table', function () {
+    const tr = $(this).closest('tr')[0];
+    const tableName = this.value;
+    tr.querySelector('.qb-calc-end-field').innerHTML = getDateFieldOptions(tableName, '');
+});
+
+function getFilterOperatorOptions(selected) {
+    const ops = [
+        ['eq', i18n.t('field.igual') + ' (=)'],
+        ['neq', i18n.t('field.diferente') + ' (!=)'],
+        ['gt', i18n.t('field.maior') + ' (>)'],
+        ['gte', i18n.t('field.maior_igual') + ' (>=)'],
+        ['lt', i18n.t('field.menor') + ' (<)'],
+        ['lte', i18n.t('field.menor_igual') + ' (<=)'],
+        ['contains', i18n.t('field.contem')],
+        ['starts_with', i18n.t('field.comeca_por')],
+        ['ends_with', i18n.t('field.termina_em')],
+        ['in', i18n.t('field.em_lista')],
+        ['between', i18n.t('field.entre')],
+        ['is_null', i18n.t('field.nulo')],
+        ['is_not_null', i18n.t('field.nao_nulo')]
+    ];
+    return ops.map(([v, l]) => optHtml(v, l, v === selected)).join('');
+}
+
+function updateFilterValueInputs(tr) {
+    const op = tr.querySelector('.qb-filter-op').value;
+    const v1 = tr.querySelector('.qb-filter-value');
+    const v2 = tr.querySelector('.qb-filter-value2');
+
+    const noValue = (op === 'is_null' || op === 'is_not_null');
+    const needSecond = (op === 'between');
+
+    v1.disabled = noValue;
+    v1.placeholder = (op === 'in') ? 'ex: A,B,C' : 'valor';
+
+    v2.disabled = (!needSecond || noValue);
+    v2.placeholder = needSecond ? i18n.t('field.valor_final') : '';
+}
+
+function newFilterRow(data = {}) {
+    const tr = document.createElement('tr');
+
+    const tableVal = data.table || document.getElementById('tabela_principal').value || '';
+    const opVal = (data.op || 'eq').toLowerCase();
+
+    tr.innerHTML = `
+        <td><select class="form-select form-select-sm qb-filter-table">${getTabelaOptions(tableVal)}</select></td>
+        <td><select class="form-select form-select-sm qb-filter-field">${getFieldOptions(tableVal, data.field || '')}</select></td>
+        <td>
+            <select class="form-select form-select-sm qb-filter-op">
+                ${getFilterOperatorOptions(opVal)}
+            </select>
+        </td>
+        <td><input class="form-control form-control-sm qb-filter-value" value="${data.value ?? ''}"></td>
+        <td><input class="form-control form-control-sm qb-filter-value2" value="${data.value2 ?? ''}"></td>
+        <td class="text-center"><button type="button" class="btn btn-sm btn-outline-danger qb-del-row">X</button></td>
+    `;
+
+    document.getElementById('qbFiltersBody').appendChild(tr);
+    updateFilterValueInputs(tr);
+}
+
+</script>
+{% endblock %}

@@ -1,0 +1,371 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.pep">PLME</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="nav.pep">PLME</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+/* Tabela compacta */
+#testesPendentesTable {
+    font-size: 0.85em;
+}
+#testesPendentesTable thead th {
+    font-size: 1.0em;
+    font-weight: 500;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+#testesPendentesTable tbody td {
+    font-size: 1.0em;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+.dataTables_wrapper .dataTables_paginate .pagination {
+    font-size: 0.8em !important;
+}
+.dataTables_wrapper .dataTables_paginate .page-item .page-link {
+    font-size: 0.8em !important;
+    padding: 2px 8px !important;
+}
+
+/* Tabela compacta */
+#historicoTable {
+    font-size: 0.85em;
+}
+#historicoTable thead th {
+    font-size: 1.0em;
+    font-weight: 500;
+    padding-top: 6px;
+    padding-bottom: 6px;
+}
+#historicoTable tbody td {
+    font-size: 1.0em;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+</style>
+
+
+
+
+<div class="tabelas-page">
+	<div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <h6><b>Laboratório</b></h6>
+                                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;">
+                                    <option value=""><span data-i18n="common.all">Todos</span></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-7">  </div>
+                        <div class="col-md-1" style="text-align:right;">
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+                                <i class="fas fa-bars"></i> <span data-i18n="field.acoes">Ações</span>
+                                </button>
+                                <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="exportarConsultaParaExcel(); return false;">
+                                        <i class="fas fa-file-excel"></i> <span data-i18n="action.export">Exportar</span>
+                                    </a>
+                                </li>
+                                
+                                </ul>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <br><br>
+                            <table id="testesPendentesTable">
+                                <thead>
+                                    <tr>
+                                    <th><span data-i18n="field.referencia">Referência</span></th>
+                                    <th><span data-i18n="field.descricao">Descrição</span></th>
+                                    <th><span data-i18n="field.network">Network</span></th>
+                                    <th><span data-i18n="field.qtd">Qtd</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                     
+
+
+			</div>
+		</div>
+	</div>
+    </div>
+
+    <div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+                    <div class="row align-items-center">
+                        <div class="col-md-4">
+                            <div class="d-flex align-items-center gap-2">
+                                <h6><b><span data-i18n="field.historico">Histórico</span></b></h6>
+                            </div>
+                        </div>
+                        
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <br><br>
+                            <table id="historicoTable">
+                                <thead>
+                                    <tr>
+                                    <th><span data-i18n="field.data">Data</span></th>
+                                    <th><span data-i18n="action.export">Exportar</span></th>
+                                    <th><span data-i18n="action.anular">Anular</span></th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+			</div>
+		</div>
+	</div>
+    </div>
+
+
+
+
+
+
+</div>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+////////////////////////////////////////////
+//TABELA HISTORICO
+$(document).ready(function() {
+    $('#historicoTable').DataTable({
+        ajax: {
+            url: '/api/movimentostock_exportados', 
+            dataSrc: ''
+        },
+        columns: [
+            { 
+                data: 'exportado', 
+                render: function(data) {
+                    // Formatar data se necessário
+                    return data ? new Date(data).toLocaleString('pt-PT') : '';
+                }
+            },
+            { 
+                data: 'exportado',
+                orderable: false,
+                render: function(data) {
+                    return `<button class="btn btn-link p-0" title="Exportar" data-i18n="action.export" data-i18n-attr="title" onclick="exportarExcelData('${data}')">
+                        <i class="fas fa-file-excel text-success" style="font-size:1.3em;"></i>
+                    </button>`;
+                }
+            },
+            { 
+                data: 'exportado',
+                orderable: false,
+                render: function(data, type, row) {
+                    return `<button class="btn btn-link p-0" title="Anular" data-i18n="action.anular" data-i18n-attr="title" onclick="anularExportacao('${data}')">
+                        <i class="fas fa-times text-danger" style="font-size:1.3em;"></i>
+                    </button>`;
+                }
+            }
+        ],
+        order: [[0, 'desc']],
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: false,
+        language: { url: i18n.getDataTablesLanguageUrl() }
+    });
+});
+
+
+////////////////////////////////////////////////////
+//Eliminar Exportação
+function anularExportacao(dataExportado) {
+   
+    if (!dataExportado) return;
+    if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.exportacao') + '?')) return;
+    fetch('/api/plme_anular_exportacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({ exportado: dataExportado })
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            $('#historicoTable').DataTable().ajax.reload(null, false);
+            $('#testesPendentesTable').DataTable().ajax.reload(null, false);
+        } else {
+            alert(result.error || i18n.t('msg.erro_anular') + ' ' + i18n.t('field.exportacao'));
+        }
+    })
+    .catch(() => alert(i18n.t('msg.erro_anular') + ' ' + i18n.t('field.exportacao')));
+}
+
+
+////////////////////////////////////////////////////
+//EXPORTAÇÃO PARA EXCEL
+function exportarConsultaParaExcel() {
+    const table = $('#testesPendentesTable').DataTable();
+    const data = table.rows({ search: 'applied' }).data().toArray();
+    const excelData = [];
+  
+    data.forEach(row => {
+        excelData.push([
+            row.referencia,
+            row.quantidade,
+            '',
+            '',
+            row.network,
+            '',
+            '752S',
+            '',
+            'IS01',
+            '',
+            '',
+            ''
+        ]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(excelData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, i18n.t('field.plme') + '_' + i18n.t('field.exportacao'));
+
+    // Obter nome do laboratório selecionado
+    const labSelect = document.getElementById('laboratorio');
+    let labNome = labSelect ? labSelect.options[labSelect.selectedIndex].text : 'LAB';
+    labNome = labNome.replace(/[^a-zA-Z0-9]/g, '_'); 
+
+    // Obter data e hora
+    const now = new Date();
+    const pad = n => n.toString().padStart(2, '0');
+    const dataHora = `${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+    const filename = `MIGO_GI_${labNome}_${dataHora}.xlsx`;
+    XLSX.writeFile(wb, filename);
+
+    // Atualizar campo exportado nos movimentos
+    const timestamp = now.toISOString();
+    fetch('/api/plme_exportar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify({
+            referencia_ids: data.map(row => row.referencia),
+            timestamp: timestamp
+        })
+    })
+    .then(r => r.json())
+    .then(result => {
+        if (result.success) {
+            table.ajax.reload(null, false);
+            $('#historicoTable').DataTable().ajax.reload(null, false); 
+        } else {
+            alert(result.error || i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.exportacao'));
+        }
+    })
+    .catch(() => alert(i18n.t('msg.erro_atualizar') + ' ' + i18n.t('field.exportacao')));
+}
+
+$(document).ready(function() {
+    $('#testesPendentesTable').DataTable({
+        ajax: {
+            url: '/api/plme_pendentes',
+            dataSrc: ''
+        },
+        columns: [
+            { data: 'referencia' },
+            { data: 'descricao' },
+            { data: 'network' },
+            { data: 'quantidade', className: 'text-end' }
+        ],
+        paging: true,
+        searching: true,
+        ordering: true,
+        info: false,
+        language: { url: i18n.getDataTablesLanguageUrl() },
+        rowGroup: {
+            dataSrc: ['referencia', 'descricao', 'network']
+        },
+        drawCallback: function(settings) {
+            // Agrupar e somar quantidades manualmente se necessário
+        }
+    });
+});
+
+
+///////////////////////////////////////////
+//NOVA EXPORTAÇÃO
+function exportarExcelData(dataExportado) {
+    if (!dataExportado) return;
+    // Vai buscar os movimentos exportados com esta data
+    fetch(`/api/plme_movimentos_exportados?exportado=${encodeURIComponent(dataExportado)}`)
+        .then(r => r.json())
+        .then(data => {
+            if (!data || !data.length) {
+                alert(i18n.t('field.sem_dados'));
+                return;
+            }
+            const excelData = [];
+            data.forEach(row => {
+                excelData.push([
+                    row.referencia,
+                    row.quantidade,
+                    '',
+                    '',
+                    row.network,
+                    '',
+                    '752S',
+                    '',
+                    'IS01',
+                    '',
+                    '',
+                    ''
+                ]);
+            });
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, i18n.t('field.plme') + "_" + i18n.t('field.exportacao'));
+
+            // Nome do ficheiro com data
+            const now = new Date();
+            const pad = n => n.toString().padStart(2, '0');
+            const dataHora = `${pad(now.getDate())}${pad(now.getMonth()+1)}${now.getFullYear()}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+            const filename = `MIGO_GI_Exportado_${dataHora}.xlsx`;
+            XLSX.writeFile(wb, filename);
+        })
+        .catch(() => alert(i18n.t('msg.erro_gerar') ));
+}
+
+
+
+</script>
+
+
+
+{% endblock %}
