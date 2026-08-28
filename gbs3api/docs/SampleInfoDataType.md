@@ -19,8 +19,8 @@ Name | Type | Description | Notes
 **checked_in_by** | **str** |  | [optional] 
 **photo** | [**List[ImageType]**](ImageType.md) |  | [optional] 
 **additional_group** | [**List[AdditionalGroup]**](AdditionalGroup.md) |  | [optional] 
-**element_name** | **str** |  | [optional] 
 **prnumber** | **str** |  | [optional] 
+**element_name** | **str** |  | [optional] 
 
 ## Example
 

@@ -1,6 +1,6 @@
-from api_client import Configuration, ApiClient
-from api_client.api.master_data_controller_api import MasterDataControllerApi
-from api_client.rest import ApiException
+from openapi_client import Configuration, ApiClient
+from openapi_client.api.master_data_controller_api import MasterDataControllerApi
+from openapi_client.rest import ApiException
 from pprint import pprint
 
 configuration = Configuration(

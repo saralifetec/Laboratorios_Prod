@@ -733,7 +733,7 @@ document.getElementById('formInserirHoras').addEventListener('submit', async fun
         obs: $('#modalObs').val()
     };
 
-    const res = await fetch('/horas/inserir', {
+    const res = await fetch('horas/horas/inserir', {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(body)
@@ -825,17 +825,13 @@ document.addEventListener('DOMContentLoaded', async function () {
    
     ensaiosDisponiveisTable = $('#ensaiosdisponiveisTable').DataTable({
         ajax: {
-        url: '/ensaios/disponiveis',
+        url: '/testes/disponiveis',
         data: function (d) {
             const val = document.getElementById('laboratorio').value;
             d.lab_id = (val && val !== 'todos') ? val : undefined;
         },
-        dataSrc: function (json) {
-            const tolerancia = 0.05;
-            // Só retorna linhas com horas_disponiveis >= tolerancia (positivo ou negativo)
-            return json.filter(row => (Number(row.horas_disponiveis) || 0) >= tolerancia);
-        }
-        },
+            dataSrc: '',
+    },
         columns: [
             {   // Ensaio com link
                 data: 'link',
@@ -979,9 +975,11 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
             const limiteInferior = horasDiaConfig - TOLERANCE_HOURS;
 
             // 2) Buscar horas já existentes
-            fetch(`/horas_mensal?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
+            fetch(`/horas_dia?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
                 .then(r => r.json())
                 .then(horasPorDia => {
+
+                    console.log(horasPorDia);
 
                     const diasSemana = [
                         i18n.t('day.sun'),
@@ -1015,6 +1013,10 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
                         const dt = new Date(ano, mes - 1, dia);
                         const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
                         const horas = horasPorDia[dia] ?? 0;
+                        const horasPrevistas = parseFloat(horasPorDia[dia + '_prev'] || 0);
+                        const temHorasPrevistas = horasPrevistas > 0;
+
+                            
 
                         // === MESMA LÓGICA DE CORES DO TEU CALENDÁRIO ORIGINAL ===
                         let bg = '';
@@ -1025,11 +1027,11 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
                             (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() < hoje.getMonth()) ||
                             (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() === hoje.getMonth() && dt.getDate() <= hoje.getDate());
 
-                        if (isWeekend) {
+                        if (isWeekend && !temHorasPrevistas) {
                             bg = 'background:#dddddd;';
-                        } else if (isDiaPassado && parseFloat(horas) > limiteSuperior) {
+                        } else if (isDiaPassado && horasPrevistas > 0 && parseFloat(horas) > (horasPrevistas + TOLERANCE_HOURS)) {
                             bg = 'background:#b7e1cd;';
-                        } else if (isDiaPassado && parseFloat(horas) < limiteInferior) {
+                        } else if (isDiaPassado && horasPrevistas > 0 && parseFloat(horas) < (horasPrevistas - TOLERANCE_HOURS)) {
                             bg = 'background:#ffe5b4;';
                         }
 
@@ -1041,21 +1043,23 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
 
                         // === LÓGICA PARA CHECKBOX ===
                         const devePreSelecionar =
-                            !isWeekend &&
                             isDiaPassado &&
-                            parseFloat(horas) < limiteInferior;
+                            horasPrevistas > 0 &&
+                            parseFloat(horas) < (horasPrevistas - TOLERANCE_HOURS);
 
                         const dataDia = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
 
                         html += `
                         <td style="height:38px; ${bg} ${color}">
                             <div><strong>${dia}</strong></div>
-                            ${isWeekend ? '' : `<div>${horas.toFixed(2)}h</div>`}
-                            ${!isWeekend ? `
+                            ${(!isWeekend || temHorasPrevistas)
+                                ? `<div>${horas.toFixed(2)}h</div>`
+                                : ''
+                            }
+                            ${(!isWeekend || temHorasPrevistas) ? `
                                 <div>
                                     <input type="checkbox" class="chk-auto-dia"
-                                           data-dia="${dataDia}"
-                                           ${devePreSelecionar ? 'checked' : ''}>
+                                           data-dia="${dataDia}" ${devePreSelecionar ? 'checked' : ''}>
                                 </div>
                             ` : ''}
                         </td>
@@ -1075,6 +1079,8 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
 
                 });
         });
+
+
 }
 
 
@@ -1283,7 +1289,7 @@ horas.forEach(h => {
 //ELIMINAR HORAS
 function eliminarHora(id) {
     if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.registo'))) return;
-    fetch(`/horas/${id}`, {
+    fetch(`horas/horas/${id}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
     })
@@ -1707,10 +1713,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            let url = '/horas';
+
+
+            let url = 'horas/horas/inserir';
             let method = 'POST';
             if (window.editHoraId) {
-                url = `/horas/${window.editHoraId}`;
+                url = `horas/horas/inserir/${window.editHoraId}`;
                 method = 'PUT';
             }
             try {
@@ -1896,7 +1904,7 @@ function editarHora(id) {
             return;
         }
 
-        const res = await fetch(`/horas/${id}`, {
+        const res = await fetch(`horas/horas/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -2028,6 +2036,8 @@ function renderCalendario(ano, mes, tecnico_id) {
                         const dt = new Date(ano, mes - 1, dia);
                         const isWeekend = dt.getDay() === 0 || dt.getDay() === 6;
                         const horas = horasPorDia[dia] !== undefined ? parseFloat(horasPorDia[dia]) : 0;
+                        const horasPrevistas = parseFloat(horasPorDia[dia + '_prev'] || 0);
+                        const temHorasPrevistas = horasPrevistas > 0;
                         const horasTxt = decimalToHHMM(horas);
                         let bg = '';
                         let color = '';
@@ -2037,7 +2047,7 @@ function renderCalendario(ano, mes, tecnico_id) {
                             (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() === hoje.getMonth() && dt.getDate() <= hoje.getDate())
                         );
                         
-                        if (isWeekend) {
+                        if (isWeekend && !temHorasPrevistas) {
                             bg = 'background:#dddddd;';
                         } else if (isDiaPassado) {
                             const horasG = parseFloat(horasPorDia[dia + '_g']) || 0;
@@ -2046,16 +2056,21 @@ function renderCalendario(ano, mes, tecnico_id) {
                             if (pctGerais > limite_azul) {
                                 bg = 'background:#b3d1ff;';
                                 color = 'color:#003366;';
-                            } else if (horas < limite_laranja) {
+                            } else if (horasPrevistas > 0 && horas < (horasPrevistas - TOLERANCE_HOURS)) {
                                 bg = 'background:#ffe5b4;';
-                            } else if (horas > limite_verde) {
+                            } else if (horasPrevistas > 0 && horas > (horasPrevistas + TOLERANCE_HOURS)) {
                                 bg = 'background:#b7e1cd;';
                             }
                         }
                         
                         html += `<td style="height:38px;${bg}${color}" class="cal-dia" data-dia="${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}">
                             <div><strong>${dia}</strong></div>
-                            <div>${(!isWeekend || horas > 0) ? horasTxt : ''}</div>
+                            <div>
+                                ${(!isWeekend || temHorasPrevistas)
+                                    ? horasTxt
+                                    : ''
+                                }
+                            </div>
                         </td>`;
                         if (dt.getDay() === 6 && dia !== ultimoDia) html += '</tr><tr>';
                     }

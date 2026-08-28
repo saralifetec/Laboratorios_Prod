@@ -77,7 +77,7 @@
           <div class="sidebar-logo">
             <!-- Logo Header -->
             <div class="logo-header" data-background-color="dark">
-              <a href="{{ url_for('index') }}" class="logo">
+              <a href="{{ url_for('dashboard.index') }}" class="logo">
                 <img src="{{ url_for('static', filename='img/logo.png') }}" alt="navbar brand" class="navbar-brand" height="30" />
               </a>
               <div class="nav-toggle">
@@ -108,7 +108,7 @@
                 <h4 class="text-section" data-i18n="nav.menu">Menu</h4>
               </li>
                 <li class="nav-item active">
-                  <a href="{{ url_for('index') }}">
+                  <a href="{{ url_for('dashboard.index') }}">
                     <i class="fas fa-home"></i>
                     <p data-i18n="nav.home">Início</p>
                   </a>
@@ -153,6 +153,15 @@
                         <span class="sub-item" data-i18n="nav.hours_person">Horas Pessoa</span>
                       </a>
                     </li>
+                    {% if user and user.funcao_id != 1 %}
+                      <li>
+                        <a href="{{ url_for('horas_horasauto.horas_horasauto') }}">
+                          <span class="sub-item" data-i18n="nav.automatic_hours"> 
+                          Horas Automáticas
+                          </span>
+                        </a>
+                      </li>
+                    {% endif %}
                     {% if user and user.funcao_id != 1 %}
                     <li>
                       <a href="{{ url_for('horas_maquina') }}">
@@ -263,49 +272,85 @@
               </li>
               
 
+              {% set endpoint = request.endpoint %}
+
               {% if user and user.funcao_id != 1 %}
-              <li class="nav-item">
-                <a data-bs-toggle="collapse" href="#gestao">
-                  <i class="fas fa-gears"></i>
-                  <p data-i18n="nav.management">Gestão</p>
-                  <span class="caret"></span>
-                </a>
-                <div class="collapse" id="gestao">
-                  <ul class="nav nav-collapse">
-                    <li>
-                      <a href="{{ url_for('tabelas') }}">
-                        <span class="sub-item" data-i18n="nav.tables">Tabelas</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="{{ url_for('horasauto') }}">
-                        <span class="sub-item" data-i18n="nav.automatic_hours">Horas Automáticas</span>
-                      </a>
-                    </li>
-                    <li>
-                      <a href="{{ url_for('emailsauto') }}">
-                        <span class="sub-item" data-i18n="nav.automatic_emails">Emails Automáticos</span>
-                      </a>
-                    </li>
-                    {% if user and user.funcao_id == 3 %}
-                    <li>
-                      <a href="{{ url_for('dadosgerais') }}">
-                        <span class="sub-item" data-i18n="nav.validation_rules">Regras Validação</span>
-                      </a>
-                    </li>
-                    {% endif %}
-                    {% if user and user.funcao_id == 3 %}
-                    <li>
-                      <a href="{{ url_for('construtorconsultas') }}">
-                        <span class="sub-item" data-i18n="nav.query_builder">Construtor de Consultas</span>
-                      </a>
-                    </li>
-                    {% endif %}
-                    
-                  </ul>
-                </div>
-              </li>  
+              <li class="nav-item {% if endpoint.startswith('tabelas') or endpoint.startswith('horasauto') or endpoint.startswith('calendario') %}active{% endif %}">
+                  
+                  <a data-bs-toggle="collapse" href="#gestao"
+                    class="{% if endpoint.startswith('tabelas') or endpoint.startswith('horasauto') or endpoint.startswith('calendario') %}active{% endif %}">
+                      <i class="fas fa-gears"></i>
+                      <p data-i18n="nav.management">Gestão</p>
+                      <span class="caret"></span>
+                  </a>
+
+                  <div class="collapse {% if endpoint.startswith('tabelas') or endpoint.startswith('horasauto') or endpoint.startswith('calendario') %}show{% endif %}" id="gestao">
+                      
+                      <ul class="nav nav-collapse">
+
+                          <!--  TABELAS -->
+                          <li class="{% if endpoint == 'tabelas' %}active{% endif %}">
+                              <a href="{{ url_for('tabelas') }}">
+                                  <span class="sub-item" data-i18n="nav.tables">Tabelas</span>
+                              </a>
+                          </li>
+
+                          <!--  SUBMENU HORAS AUTOMÁTICAS -->
+                          <li class="{% if 'horasauto' in endpoint or 'calendario' in endpoint %}active{% endif %}">
+                              
+                              <a data-bs-toggle="collapse" href="#horasAutoMenu"
+                                class="{% if 'horasauto' in endpoint or 'calendario' in endpoint %}active{% endif %}">
+                                  <span class="sub-item" data-i18n="nav.automatic_hours">Horas Automáticas</span>
+                                  <span class="caret"></span>
+                              </a>
+
+                              <div class="collapse {% if 'horasauto' in endpoint or 'calendario' in endpoint %}show{% endif %}" id="horasAutoMenu">
+                                  
+                                  <ul class="nav nav-collapse subnav">
+
+                                      <li class="{% if endpoint == 'horasauto.horasauto' %}active{% endif %}">
+                                          <a href="{{ url_for('horasauto.horasauto') }}">
+                                              <span class="sub-item" data-i18n="nav.config">Configuração</span>
+                                          </a>
+                                      </li>
+
+                                      <li class="{% if endpoint == 'calendario.calendario' %}active{% endif %}">
+                                          <a href="{{ url_for('calendario.calendario') }}">
+                                              <span class="sub-item" data-i18n="nav.calendario">Calendário</span>
+                                          </a>
+                                      </li>
+
+
+                                  </ul>
+                              </div>
+                          </li>
+
+                          <!--  EMAILS -->
+                          <li class="{% if endpoint == 'emailsauto' %}active{% endif %}">
+                              <a href="{{ url_for('emailsauto') }}">
+                                  <span class="sub-item" data-i18n="nav.automatic_emails">Emails Automáticos</span>
+                              </a>
+                          </li>
+
+                          {% if user and user.funcao_id == 3 %}
+                          <li class="{% if endpoint == 'dadosgerais' %}active{% endif %}">
+                              <a href="{{ url_for('dadosgerais') }}">
+                                  <span class="sub-item" data-i18n="nav.validation_rules">Regras Validação</span>
+                              </a>
+                          </li>
+
+                          <li class="{% if endpoint == 'construtorconsultas' %}active{% endif %}">
+                              <a href="{{ url_for('construtorconsultas') }}">
+                                  <span class="sub-item" data-i18n="nav.query_builder">Construtor de Consultas</span>
+                              </a>
+                          </li>
+                          {% endif %}
+
+                      </ul>
+                  </div>
+              </li>
               {% endif %}
+
 
             
               </ul>

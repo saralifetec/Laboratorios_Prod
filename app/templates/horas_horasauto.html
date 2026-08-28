@@ -1,0 +1,1986 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.automatic_hours">Horas Automáticas</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title"><span data-i18n="nav.automatic_hours">Horas Automáticas</span></h4>
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+    
+
+#tabelaPreviewHorasAuto thead th,
+#resumoHorasAutoNetwork thead th,
+#resumoHorasAutoDetalhe thead th {
+    font-weight: 600 !important;
+}
+
+#tabelaPreviewHorasAuto tbody td,
+#resumoHorasAutoNetwork tbody td,
+#resumoHorasAutoDetalhe tbody td {
+    font-weight: 400 !important;
+}
+
+/* Tornar a DataTable da home mais compacta */
+#tabelaPreviewHorasAuto.dataTable,
+#resumoHorasAutoNetwork.dataTable,
+#resumoHorasAutoDetalhe.dataTable {
+    font-size: 10px !important;
+}
+
+/* Células (td + th) mais compactas */
+
+#tabelaPreviewHorasAuto.dataTable th,
+#resumoHorasAutoNetwork.dataTable th,
+#resumoHorasAutoDetalhe.dataTable th {
+    padding: 9px 6px !important;
+    font-size: 11px !important;
+}
+
+
+/* Cabeçalho */
+#tabelaPreviewHorasAuto.dataTable thead th,
+#resumoHorasAutoNetwork.dataTable thead th,
+#resumoHorasAutoDetalhe.dataTable thead th {
+    font-size: 9.5px !important;
+    font-weight: 600;
+}
+
+/* Linhas pares */
+#tabelaPreviewHorasAuto.dataTable tbody tr:nth-child(even),
+#resumoHorasAutoNetwork.dataTable tbody tr:nth-child(even),
+#resumoHorasAutoDetalhe.dataTable tbody tr:nth-child(even) {
+    background: #f3f3f3 !important;
+}
+
+/* Hover */
+#tabelaPreviewHorasAuto.dataTable tbody tr:hover, 
+#resumoHorasAutoNetwork.dataTable tbody tr:hover, 
+#resumoHorasAutoDetalhe.dataTable tbody tr:hover {
+    background: #e2e6ea !important;
+}
+
+
+.table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+#tabelaPreviewHorasAuto td,
+#tabelaPreviewHorasAuto th,
+#resumoHorasAutoNetwork td,
+#resumoHorasAutoNetwork th,
+#resumoHorasAutoDetalhe td,
+#resumoHorasAutoDetalhe th {
+    padding: 3px 4px;
+    min-width: 50px;
+    font-size: 11px;
+}
+
+/* Histórico Horas Automáticas */
+
+.tabelaHistoricoHorasAuto {
+    font-size: 10px !important;
+}
+
+.tabelaHistoricoHorasAuto td,
+.tabelaHistoricoHorasAuto th {
+    padding: 4px 5px !important;
+    font-size: 10px !important;
+    font-weight: 200 !important;
+    white-space: nowrap !important;
+}
+
+.tabelaHistoricoHorasAuto thead th {
+    font-size: 10px !important;
+    font-weight: 200 !important;
+}
+
+/* paginação */
+
+/* Texto "Mostrar X registos" e "A mostrar..." */
+
+#tabelaHistoricoHorasAuto_wrapper {
+    font-size: 11px !important;
+}
+
+#tabelaEsgotarHoras_wrapper,
+#tabelaRecalcularHoras_wrapper {
+    font-size: 11px !important;
+}
+
+#tabelaHistoricoHorasAuto_wrapper .dataTables_length,
+#tabelaHistoricoHorasAuto_wrapper .dataTables_filter,
+#tabelaHistoricoHorasAuto_wrapper .dataTables_info {
+    font-size: 11px !important;
+}
+
+#tabelaEsgotarHoras_wrapper .dataTables_length,
+#tabelaEsgotarHoras_wrapper .dataTables_filter,
+#tabelaEsgotarHoras_wrapper .dataTables_info {
+    font-size: 11px !important;
+}
+
+#tabelaRecalcularHoras_wrapper .dataTables_length,
+#tabelaRecalcularHoras_wrapper .dataTables_filter,
+#tabelaRecalcularHoras_wrapper .dataTables_info {
+    font-size: 11px !important;
+}
+
+/* Combobox de nº registos */
+#tabelaEsgotarHoras_wrapper .dataTables_length select,
+#tabelaRecalcularHoras_wrapper .dataTables_length select,
+#tabelaHistoricoHorasAuto_wrapper .dataTables_length select {
+    font-size: 11px !important;
+    height: 28px !important;
+    padding: 2px 4px !important;
+}
+
+/* Caixa de pesquisa */
+
+
+#tabelaEsgotarHoras_wrapper .dataTables_filter input,
+#tabelaRecalcularHoras_wrapper .dataTables_filter input,
+#tabelaHistoricoHorasAuto_wrapper .dataTables_filter input {
+    font-size: 11px !important;
+    height: 28px !important;
+    padding: 2px 6px !important;
+}
+
+#tabelaEsgotarHoras .linha-total td,
+#tabelaRecalcularHoras .linha-total td,
+#resumoHorasAutoDetalhe .linha-total td {
+    font-weight: 700 !important;
+    background-color: #f8f9fa;
+}
+
+
+
+#tabelaEsgotarHoras .secao-titulo td,
+#tabelaRecalcularHoras .secao-titulo td,
+#resumoHorasAutoDetalhe .secao-titulo td {
+    background-color: #dfe6ee !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-top: 2px solid #adb5bd !important;
+}
+
+.texto-pequeno-resumo {
+    font-size: 11px;
+}
+
+.texto-pequeno-resumo strong {
+    font-size: 11px;
+}
+
+.resumo-network {
+    max-width: 320px;
+    font-size: 11px;
+}
+
+/* Tabela Esgotar Horas */
+
+.tabelaEsgotarHoras,
+.tabelaRecalcularHoras {
+    font-size: 10px !important;
+}
+
+.tabelaRecalcularHoras td,
+.tabelaRecalcularHoras th,
+.tabelaEsgotarHoras td,
+.tabelaEsgotarHoras th {
+    padding: 4px 5px !important;
+    font-size: 10px !important;
+    font-weight: 400 !important;
+    white-space: nowrap !important;
+}
+
+.tabelaEsgotarHoras thead th,
+.tabelaRecalcularHoras thead th {
+    font-size: 10px !important;
+    font-weight: 600 !important;
+}
+
+.tabelaRecalcularHoras tbody tr:nth-child(even),
+.tabelaEsgotarHoras tbody tr:nth-child(even) {
+    background: #f3f3f3 !important;
+}
+
+.tabelaRecalcularHoras tbody tr:hover,
+.tabelaEsgotarHoras tbody tr:hover {
+    background: #e2e6ea !important;
+}
+
+
+</style>
+
+<div class="tabelas-page">
+	<div class="row">    
+		<div class="col-md-12">
+			<div class="card">
+				<div class="card-header">
+					<div class="card-title">
+
+
+                        <div class="row align-items-center">
+                            <div class="col-md-11" style="text-align:right;"></div>
+                            <div class="col-md-1" style="text-align:right;">
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-secondary dropdown-toggle" type="button" id="menuAcoes" data-bs-toggle="dropdown" aria-expanded="false" style="border-radius: 0;">
+                                        <i class="fas fa-bars" ></i> <span data-i18n="field.acoes">Ações</span>
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="menuAcoes">
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="abrirModalEsgotarHoras()">
+                                            <i class="fas fa-hourglass-end"></i> <span data-i18n="action.esgotar_horas"> Esgotar Horas</span>
+                                            </a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="#" onclick="abrirModalRecalcularHoras()">
+                                            <i class="fas fa-calculator"></i><span data-i18n="action.recalcular">Recalcular Horas</span>
+                                            </a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+					
+    
+                        </div>
+
+
+
+
+						<div class="row">
+
+                            <div class="col-md-2">
+                                <label class="form-label" data-i18n="field.ano">Ano</label>
+                                <select id="anoHorasAuto" class="form-control form-control-sm"></select>
+                            </div>
+
+                            <div class="col-md-2">
+                                <label class="form-label" data-i18n="field.mes">Mês</label>
+                                <select id="mesHorasAuto" class="form-control form-control-sm"></select>
+                            </div>
+
+                            <div class="col-md-7">
+                                <label class="form-label" data-i18n="field.semana">Semana</label>
+                                <select id="semanaHorasAuto" class="form-control form-control-sm"></select>
+                            </div>
+
+                            <div class="col-md-1 d-flex flex-column justify-content-end">
+
+                                <label class="form-label invisible">
+                                   
+                                </label>
+
+                                <button class="btn btn-sm btn-success" onclick="iniciarGeracaoHorasAuto()">
+                                    >
+                                </button>
+
+                            </div>
+
+                        </div>
+			
+
+                    <!-- GERAÇÃO -->
+                    <div id="geracaoHorasAuto" class="mt-3" style="display:none;">
+
+                        <div class="card">
+
+                            <div class="card-header d-flex align-items-center">
+
+                            <h5 id="tituloPassoHorasAuto" class="col-md-11 mb-0">
+                            </h5>
+
+                            <div class="d-flex gap-1">
+
+                                <button
+                                    id="btnPassoAnterior"
+                                    class="btn btn-sm btn-light"
+                                    style="visibility:hidden;">
+                                    ←
+                                </button>
+
+                                <button
+                                    id="btnProximoPasso"
+                                    class="btn btn-sm btn-primary"
+                                    style="visibility:hidden;">
+                                    →
+                                </button>
+
+                            </div>
+
+                        </div> 
+
+                            <div class="card-body">
+
+                                <div id="resumoHorasAuto"></div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- HISTÓRICO -->
+                    <div id="historicoHorasAuto" class="mt-3">
+
+                        <div class="card shadow-sm">
+
+                            <div class="card-header">
+                                <h5 class="mb-0" data-i18n="field.historico_exportacoes">
+                                    Histórico de Exportações
+                                </h5>
+                            </div>
+
+                            <div class="card-body">
+
+                                <table
+                                    id="tabelaHistoricoHorasAuto"
+                                    class="table table-sm table-bordered table-striped w-100 tabelaHistoricoHorasAuto">
+
+                                    <thead>
+                                        <tr>
+                                            <th data-i18n="field.data">Data</th>
+                                            <th data-i18n="field.data_inicio">Data Início</th>
+                                            <th data-i18n="field.data_fim">Data Fim</th>
+                                            <th data-i18n="field.criado_por">Criado por</th>
+                                            <th data-i18n="action.anular">Anular</th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                    </tbody>
+
+                                </table>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+
+        			
+				</div>
+			</div>
+		</div>
+	</div>
+
+
+</div>
+
+
+<!-- modal esgotar horas -->
+<div class="modal fade" id="modalEsgotarHoras" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="action.esgotar_horas">
+                    Esgotar Horas
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="row mb-3">
+
+                    <div class="col-md-3">
+                        <label class="form-label" data-i18n="field.laboratorio">
+                            Laboratório
+                        </label>
+
+                        <select id="laboratorioEsgotarHoras" class="form-select form-select-sm">
+                            <option value="" data-i18n="common.all">Todos</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-7">
+                    </div>
+
+                    <div class="col-md-2 text-end">
+                        <label class="form-label invisible" data-i18n="field.laboratorio">
+                            Laboratório
+                        </label>
+
+                        <button
+                            class="btn btn-warning btn-sm"
+                            onclick="esgotarTestesSelecionados()"
+                            data-i18n="action.esgotar_selecionados">
+                            Esgotar Selecionados
+                        </button>
+                    </div>
+
+                </div>
+
+                <table id="tabelaEsgotarHoras"
+                       class="table table-sm table-bordered table-striped w-100 tabelaEsgotarHoras">
+
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th data-i18n="field.laboratorio">Laboratório</th>
+                            <th data-i18n="field.ensaio">Ensaio</th>
+                            <th data-i18n="field.teste">Teste</th>
+                            <th data-i18n="field.data_inicio">Data Início</th>
+                            <th data-i18n="field.data_fim">Data Fim</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    </tbody>
+
+                </table>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Recalcular Horas -->
+<div class="modal fade" id="modalRecalcularHoras" tabindex="-1">
+
+    <div class="modal-dialog modal-xl">
+
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="action.recalcular">
+                    Recalcular Horas
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+
+                <div class="alert alert-info" data-i18n="msg.recalcular_horas_info">
+                    Ao executar esta função, a aplicação vai voltar a calcular
+                    todas as horas disponíveis e as horas gastas para cada teste.
+                </div>
+
+                <div class="row mb-3">
+
+                    <!-- Laboratório -->
+                    <div class="col-md-3">
+                        <label
+                            class="form-label"
+                            data-i18n="field.laboratorio">
+                            Laboratório
+                        </label>
+
+                        <select id="laboratorioRecalcularHoras" class="form-select form-select-sm">
+                            <option value="" data-i18n="common.all">
+                                Todos
+                            </option>
+
+                        </select>
+                    </div>
+
+                    <!-- Ano -->
+                    <div class="col-md-2">
+                        <label class="form-label" data-i18n="field.ano">
+                            Ano
+                        </label>
+
+                        <select id="anoRecalcularHoras" class="form-select form-select-sm">
+                        </select>
+                    </div>
+
+                    <!-- Incluir esgotados -->
+                    <div class="col-md-3">
+                        <label class="form-label invisible">
+                            Opções
+                        </label>
+
+                        <div class="d-flex align-items-center" style="height:31px;">
+                            <input
+                                type="checkbox"
+                                id="incluirEsgotadosManual"
+                                class="me-2">
+
+                            <label
+                                for="incluirEsgotadosManual"
+                                class="mb-0"
+                                data-i18n="field.incluir_esgotados_manualmente">
+                                Incluir esgotados manualmente
+                            </label>
+                        </div>
+                    </div>
+
+
+                    <!-- Botão -->
+                    <div class="col-md-4 d-flex flex-column align-items-end">
+
+                        <label class="form-label invisible">
+                            Ação
+                        </label>
+
+                        <button
+                            class="btn btn-success btn-sm"
+                            onclick="recalcularHorasSelecionadas()"
+                            data-i18n="action.recalcular">
+                            Recalcular
+                        </button>
+                                            </div>
+                </div>
+                <table id="tabelaRecalcularHoras" class="table table-sm table-bordered table-striped w-100 tabelaRecalcularHoras">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th data-i18n="field.laboratorio">Laboratório</th>
+                            <th data-i18n="field.ensaio">Ensaio</th>
+                            <th data-i18n="field.teste">Teste</th>
+                            <th data-i18n="field.data_inicio">Data Início</th>
+                            <th data-i18n="field.data_fim">Data Fim</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.3/js/dataTables.select.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
+
+
+
+<script>
+
+const diasSemana = [
+    'day.sun',
+    'day.mon',
+    'day.tue',
+    'day.wed',
+    'day.thu',
+    'day.fri',
+    'day.sat'
+];
+
+
+
+//ao abrir a página
+document.addEventListener(
+    'DOMContentLoaded',
+    async () => {
+
+        await i18n.init();
+
+        i18n.applyTranslations();
+
+        carregarPeriodosHistorico();
+        carregarHistoricoExportacoes();
+
+    }
+);
+
+//variaveis globais
+let periodosHistorico = [];
+let periodoDefault = null;
+let dadosHorasAuto = {};
+let diasPeriodo = [];
+let periodoAtualLabel = "";
+let periodoSelecionado = null;
+
+
+async function recalcularHorasSelecionadas() {
+
+    const tabela =
+        $('#tabelaRecalcularHoras')
+            .DataTable();
+
+    const selecionados = [];
+
+    tabela.$(
+        '.chk-recalcular-teste:checked',
+        { page: 'all' }
+    ).each(function () {
+
+        selecionados.push(
+            parseInt(this.value)
+        );
+
+    });
+
+    if (selecionados.length === 0) {
+
+        alert(
+            i18n.t('msg.selecione_pelo_menos_um_teste')
+        );
+
+        return;
+    }
+
+    if (
+        !confirm(i18n.t('msg.confirmar_recalcular_testes','',{ total: selecionados.length }))
+    ) {
+        return;
+    }
+
+    try {
+
+        const res = await fetch(
+            "/horas_horasauto/recalcular_testes",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    testes: selecionados
+                })
+            }
+        );
+
+        const resultado =
+            await res.json();
+
+        if (resultado.success) {
+
+            alert(
+                i18n.t('msg.testes_recalculados','',
+                    { total: resultado.total }
+                )
+            );
+
+            carregarTabelaRecalcularHoras();
+
+        } else {
+
+            alert(
+                resultado.error_key
+                    ? i18n.t(resultado.error_key)
+                    : i18n.t('msg.erro_recalcular')
+            );
+
+        }
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        alert(
+            i18n.t('msg.falha_comunicacao_servidor')
+        );
+
+    }
+
+}
+
+
+
+async function abrirModalRecalcularHoras() {
+
+    await carregarLaboratoriosRecalcularHoras();
+
+    carregarAnosRecalcularHoras();
+
+    carregarTabelaRecalcularHoras();
+
+    new bootstrap.Modal(
+        document.getElementById(
+            "modalRecalcularHoras"
+        )
+    ).show();
+
+}
+
+async function carregarLaboratoriosRecalcularHoras() {
+
+    const select = document.getElementById(
+        "laboratorioRecalcularHoras"
+    );
+
+    select.innerHTML = `
+        <option value="">
+            ${i18n.t('common.all')}
+        </option>
+    `;
+
+    const res = await fetch(
+        "/laboratorios/ativos"
+    );
+
+    const labs = await res.json();
+
+    labs.forEach(lab => {
+
+        select.innerHTML += `
+            <option value="${lab.id}">
+                ${lab.laboratorio}
+            </option>
+        `;
+
+    });
+
+}
+
+function carregarAnosRecalcularHoras() {
+
+    const anoAtual = new Date().getFullYear();
+
+    const select = document.getElementById(
+        "anoRecalcularHoras"
+    );
+
+    select.innerHTML = `
+        <option value="${anoAtual}">
+            ${anoAtual}
+        </option>
+        <option value="${anoAtual - 1}">
+            ${anoAtual - 1}
+        </option>
+    `;
+
+}
+
+document
+    .getElementById(
+        "laboratorioRecalcularHoras"
+    )
+    .addEventListener(
+        "change",
+        carregarTabelaRecalcularHoras
+    );
+
+document
+    .getElementById(
+        "anoRecalcularHoras"
+    )
+    .addEventListener(
+        "change",
+        carregarTabelaRecalcularHoras
+    );
+
+document.getElementById("incluirEsgotadosManual").addEventListener("change", carregarTabelaRecalcularHoras );
+
+function carregarTabelaRecalcularHoras() {
+
+    const laboratorioId =
+        document.getElementById(
+            "laboratorioRecalcularHoras"
+        ).value;
+
+    const ano =
+        document.getElementById(
+            "anoRecalcularHoras"
+        ).value;
+
+    const incluirEsgotados =
+        document.getElementById(
+            "incluirEsgotadosManual"
+        ).checked;
+
+    $('#tabelaRecalcularHoras').DataTable({
+
+        destroy: true,
+
+        ajax: {
+            url: '/horas_horasauto/testes_recalcular',
+            data: {
+                laboratorio_id: laboratorioId,
+                ano: ano,
+                incluir_esgotados:
+                    incluirEsgotados ? 1 : 0
+            },
+            dataSrc: ''
+        },
+
+        columns: [
+            {
+                data: 'selecionar',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'laboratorio'
+            },
+            {
+                data: 'ensaio'
+            },
+            {
+                data: 'teste'
+            },
+            {
+                data: 'datainicio'
+            },
+            {
+                data: 'datafim'
+            }
+        ],
+
+        pageLength: 10,
+
+        language: {
+            url: i18n.getDataTablesLanguageUrl()
+        }
+
+    });
+
+}
+
+async function esgotarTestesSelecionados() {
+
+    const selecionados = [];
+
+    document
+        .querySelectorAll('.chk-esgotar-teste:checked')
+        .forEach(chk => {
+            selecionados.push(
+                parseInt(chk.value)
+            );
+        });
+
+    if (selecionados.length === 0) {
+        alert(
+            i18n.t('msg.selecione_pelo_menos_um_teste')
+        );
+        return;
+    }
+
+    if (
+        !confirm(
+            i18n.t('msg.confirmar_esgotar_testes')
+        )
+    ) {
+        return;
+    }
+
+    try {
+
+        const res = await fetch(
+            "/horas_horasauto/esgotar_testes",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+                body: JSON.stringify({
+                    testes: selecionados
+                })
+            }
+        );
+
+        const resultado =
+            await res.json();
+
+        if (resultado.success) {
+
+            alert(
+                i18n.t('msg.testes_esgotados_sucesso','',{ total: selecionados.length })
+            );
+
+            carregarTabelaEsgotarHoras();
+
+        } else {
+
+            alert(
+                resultado.error_key
+                    ? i18n.t(resultado.error_key)
+                    : i18n.t('msg.erro_esgotar_testes')
+            );
+
+        }
+
+    } catch (erro) {
+
+        console.error(erro);
+
+        alert(
+            i18n.t('msg.erro_comunicar_servidor')
+        );
+    }
+}
+
+async function abrirModalEsgotarHoras() {
+
+    await carregarLaboratoriosEsgotarHoras();
+
+    carregarTabelaEsgotarHoras();
+
+    new bootstrap.Modal(
+        document.getElementById(
+            'modalEsgotarHoras'
+        )
+    ).show();
+}
+
+document.getElementById("laboratorioEsgotarHoras").addEventListener("change", carregarTabelaEsgotarHoras);
+
+async function carregarLaboratoriosEsgotarHoras() {
+
+    const select =
+        document.getElementById(
+            "laboratorioEsgotarHoras"
+        );
+
+    select.innerHTML = `
+        <option value="">
+            ${i18n.t('common.all')}
+        </option>
+    `;
+
+    const res = await fetch(
+        '/laboratorios/ativos'
+    );
+
+    const labs = await res.json();
+
+    labs.forEach(lab => {
+
+        select.innerHTML += `
+            <option value="${lab.id}">
+                ${lab.laboratorio}
+            </option>
+        `;
+
+    });
+}
+
+function carregarTabelaEsgotarHoras() {
+
+    const laboratorioId =
+        document.getElementById(
+            "laboratorioEsgotarHoras"
+        ).value;
+
+
+    $('#tabelaEsgotarHoras').DataTable({
+
+        destroy: true,
+
+        ajax: {
+            url: '/horas_horasauto/testes_disponiveis',
+            data: {
+                laboratorio_id: laboratorioId
+            },
+            dataSrc: ''
+        },
+
+        columns: [
+            {
+                data: 'selecionar',
+                orderable: false,
+                searchable: false
+            },
+            {
+                data: 'laboratorio'
+            },
+            {
+                data: 'ensaio'
+            },
+            {
+                data: 'teste'
+            },
+            {
+                data: 'datainicio'
+            },
+            {
+                data: 'datafim'
+            }
+        ],
+
+        pageLength: 10,
+
+        language: {
+            url: i18n.getDataTablesLanguageUrl()
+        }
+    });
+}
+
+
+async function iniciarGeracaoHorasAuto() {
+
+    const semanaSelect =
+        document.getElementById("semanaHorasAuto");
+
+    const semanaIndex =
+        Number(semanaSelect.value);
+
+    const ano =
+        Number(document.getElementById("anoHorasAuto").value);
+
+    const mes =
+        Number(document.getElementById("mesHorasAuto").value);
+
+    const semanas = periodosHistorico.filter(p =>
+        p.ano === ano &&
+        p.mes === mes
+    );
+
+    const periodo = semanas[semanaIndex];
+    periodoSelecionado = periodo;
+
+    if (!periodo) {
+        alert(i18n.t('msg.periodo_invalido'));
+        return;
+    }
+
+    const res = await fetch(
+        `/horas_horasauto/preview_periodo?start=${periodo.inicio}&end=${periodo.fim}`
+    );
+
+    const data = await res.json();
+    
+    if (!data.ok) {
+        alert(i18n.t('msg.erro_gerar_preview'));
+        return;
+    }
+
+    dadosHorasAuto = data.resumo.resumo;
+
+    diasPeriodo = Object.keys(
+        Object.values(data.resumo.resumo)[0].dias
+    ).sort();
+
+    periodoAtualLabel =
+        `${periodo.inicio} → ${periodo.fim}`;
+
+    document.getElementById("geracaoHorasAuto").style.display = "block";
+
+    document.getElementById("tituloPassoHorasAuto").innerText =
+    i18n.t('field.confirmar_presencas');
+
+    preencherTabelaPreview(
+        data.resumo.resumo
+    );
+
+    document.getElementById(
+        "btnProximoPasso"
+    ).style.visibility = "visible";
+
+    document.getElementById(
+        "btnProximoPasso"
+    ).onclick = irParaDetalhe;
+
+    document.getElementById(
+        "btnProximoPasso"
+    ).innerText = "→";
+
+}
+
+function preencherSelectUtilizadores() {
+
+    const select = document.getElementById("selectUserHorasAuto");
+    select.innerHTML = "";
+
+    Object.entries(dadosHorasAuto).forEach(([userId, user]) => {
+
+        const opt = document.createElement("option");
+        opt.value = userId;
+        opt.textContent = user.nome;
+
+        select.appendChild(opt);
+    });
+
+    if (select.options.length > 0) {
+        select.value = select.options[0].value;
+    }
+}
+
+function mostrarUtilizadorSelecionado() {
+
+    const userId = document.getElementById("selectUserHorasAuto").value;
+
+    const user = dadosHorasAuto[userId];
+
+    preencherTabelaUtilizador(user);
+}
+
+function preencherTabelaUtilizador(user) {
+
+    const container = document.getElementById("resumoHorasAutoDetalhe");
+    container.innerHTML = "";
+
+    const table = document.createElement("table");
+    table.className = "table table-sm table-bordered text-center small";
+
+    let thead = "<thead><tr><th></th>";
+
+    diasPeriodo.forEach(d => {
+        const data = new Date(d);
+        const diaSemana = data.toLocaleDateString(undefined, { weekday: 'short' });
+        thead += `<th>${diaSemana}</th>`;
+    });
+
+    thead += "</tr></thead>";
+
+    let tbody = "<tbody>";
+
+    // TOTAL
+    tbody += `<tr class='linha-total'><td class='text-start'>${i18n.t('field.total')}</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.total || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+
+    // 🔹 ENSAIOS BLOCO
+    tbody += `
+    <tr class="secao-titulo">
+        <td colspan="${diasPeriodo.length + 1}" class="text-start">
+            ${i18n.t('field.ensaio')}
+        </td>
+    </tr>`;
+
+    // Necessárias
+    tbody += `<tr><td class="text-start">${i18n.t('field.necessarias')}</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.n_necessario || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+    // Colocadas
+    tbody += `<tr><td class="text-start">${i18n.t('field.colocadas')}</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.n_existente || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+
+    // 🔹 GERAIS BLOCO
+    tbody += `<tr class="secao-titulo">
+        <td colspan="${diasPeriodo.length + 1}" class="text-start">
+            ${i18n.t('field.gerais')}
+        </td>
+    </tr>`;
+
+    // Necessárias
+    tbody += `<tr><td class='text-start'>${i18n.t('field.necessarias')}</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.g_necessario || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+    // Colocadas
+    tbody += `<tr><td class='text-start'>${i18n.t('field.colocadas')}</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.g_existente || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+
+    // 🔹 A GERAR BLOCO
+    tbody += `<tr class="secao-titulo">
+        <td colspan="${diasPeriodo.length + 1}" class="text-start">
+            ${i18n.t('field.a_gerar')}
+        </td>
+    </tr>`;
+
+    // Ensaios
+    tbody += `<tr><td class='text-start'>${i18n.t('field.ensaio')}</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.n_gerar || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+    // Gerais
+    tbody += `<tr><td class='text-start'>${i18n.t('field.gerais')}</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.g_gerar || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+
+
+    tbody += "</tr>";
+
+    tbody += "</tbody>";
+
+
+    table.innerHTML = thead + tbody;
+    container.appendChild(table);
+}
+
+function irParaDetalhe() {
+
+    document.getElementById(
+        "tituloPassoHorasAuto"
+    ).innerText =
+        i18n.t('field.confirmar_horas_pessoa');
+
+
+    document.getElementById(
+        "resumoHorasAuto"
+    ).innerHTML = `
+
+        <div class="row mb-3">
+
+            <div class="col-4"></div>
+
+            <div class="col-4">
+
+                <select
+                id="selectUserHorasAuto"
+                class="form-control form-control-sm">
+                </select>
+
+            </div>
+
+            <div class="col-4"></div>
+
+        </div>
+
+        <div id="resumoHorasAutoDetalhe"></div>
+
+    `;
+
+    preencherSelectUtilizadores();
+
+    document
+        .getElementById("selectUserHorasAuto")
+        .addEventListener(
+            "change",
+            mostrarUtilizadorSelecionado
+        );
+
+    mostrarUtilizadorSelecionado();
+
+    document.getElementById(
+        "btnPassoAnterior"
+    ).style.visibility = "visible";
+
+    document.getElementById(
+        "btnPassoAnterior"
+    ).onclick = voltarParaPasso1;
+
+    document.getElementById(
+        "btnProximoPasso"
+    ).onclick = irParaNetwork;
+
+    document.getElementById(
+        "btnProximoPasso"
+    ).innerText = "→";
+
+}
+
+function irParaNetwork() {
+
+    document.getElementById(
+        "tituloPassoHorasAuto"
+    ).innerText =
+        i18n.t('field.horas_descontar_networks');
+
+    document.getElementById(
+        "resumoHorasAuto"
+    ).innerHTML = `
+        <div id="resumoHorasAutoNetwork"></div>
+    `;
+
+    document.getElementById(
+        "btnPassoAnterior"
+    ).onclick = voltarParaDetalhe;
+
+    document.getElementById(
+        "btnPassoAnterior"
+    ).style.visibility = "visible";
+
+    document.getElementById(
+    "btnProximoPasso"
+).style.visibility = "visible";
+
+document.getElementById(
+    "btnProximoPasso"
+).innerText = i18n.t('action.start');
+
+document.getElementById(
+    "btnProximoPasso"
+).onclick = iniciarGeracao;
+
+preencherTabelaNetwork();
+}
+
+function preencherTabelaNetwork() {
+
+    const container = document.getElementById("resumoHorasAutoNetwork");
+    container.innerHTML = "";
+
+    const dias = diasPeriodo;
+
+    const table = document.createElement("table");
+    table.className = "table table-sm table-bordered text-center small";
+
+    let thead = "<thead><tr><th>Nome</th>";
+
+    dias.forEach(d => {
+        const data = new Date(d);
+        const diaSemana =i18n.t(diasSemana[data.getDay()]);
+        thead += `<th>${diaSemana}</th>`;
+    });
+
+    thead += "</tr></thead>";
+
+    let tbody = "<tbody>";
+
+    Object.values(dadosHorasAuto).forEach(user => {
+
+        //  FILTRO NETWORK
+        if (user.pepnet !== "network") return;
+
+        tbody += `<tr><td class="text-start">${user.nome}</td>`;
+
+        dias.forEach(d => {
+
+            const info = user.dias[d];
+            const v = info?.n_gerar || 0;
+
+            tbody += `
+                <td>
+                    ${v ? v + "h" : "-"}
+                </td>
+            `;
+        });
+
+        tbody += "</tr>";
+    });
+
+    tbody += "</tbody>";
+
+    table.innerHTML = thead + tbody;
+    container.appendChild(table);
+
+    //  calcular total gerar
+    const totalGerar = calcularTotalHorasGerar();
+
+    //  ir buscar horas disponíveis
+    fetch('/horasauto/disponivel')   
+        .then(res => res.json())
+        .then(res => {
+
+            const totalDisponivel = res.total || 0;
+
+            mostrarResumoNetwork(totalGerar, totalDisponivel);
+
+        });
+    }
+
+function voltarParaDetalhe() {
+
+    irParaDetalhe();
+
+    document.getElementById(
+        "btnPassoAnterior"
+    ).style.visibility = "visible";
+
+    document.getElementById(
+        "btnProximoPasso"
+    ).style.visibility = "visible";
+}
+
+function voltarParaPasso1() {
+
+    document.getElementById(
+        "tituloPassoHorasAuto"
+    ).innerText =
+        i18n.t('field.confirmar_presencas');
+
+    preencherTabelaPreview(
+        dadosHorasAuto
+    );
+
+    document.getElementById(
+        "btnPassoAnterior"
+    ).style.visibility = "hidden";
+
+    document.getElementById(
+        "btnProximoPasso"
+    ).onclick = irParaDetalhe;
+}
+
+function preencherTabelaPreview(resumo) {
+
+    if (!resumo || Object.keys(resumo).length === 0) return;
+
+    const container = document.getElementById("resumoHorasAuto");
+
+    container.innerHTML = "";
+
+    const dias = Object.keys(
+        Object.values(resumo)[0].dias
+    ).sort();
+
+    const table = document.createElement("table");
+
+    table.id = "tabelaPreviewHorasAuto";
+
+    table.className =
+        "table table-sm table-bordered text-center small";
+
+    let thead =
+    `<thead><tr><th>${i18n.t('field.nome')}</th>`;
+
+    dias.forEach(d => {
+
+        const data = new Date(d);
+
+        const diaSemana = i18n.t(diasSemana[data.getDay()]);
+
+        thead += `<th>${diaSemana}</th>`;
+
+    });
+
+
+    thead += "</tr></thead>";
+
+    let tbody = "<tbody>";
+
+    Object.values(resumo).forEach(user => {
+
+        tbody += `
+            <tr>
+                <td class="text-start">
+                    ${user.nome}
+                </td>
+        `;
+
+        dias.forEach(d => {
+
+            const info = user.dias[d];
+
+            const total =
+                info?.total || 0;
+
+            tbody += `
+                <td>
+                    ${total > 0 ? total + "h" : "-"}
+                </td>
+            `;
+        });
+
+        tbody += "</tr>";
+    });
+
+    tbody += "</tbody>";
+
+    table.innerHTML = thead + tbody;
+
+    container.appendChild(table);
+}
+
+async function carregarPeriodosHistorico() {
+
+    const res = await fetch('/horas_horasauto/periodos');
+
+    const data = await res.json();
+
+    console.log(data);
+    console.log(data.resumo);
+
+    periodosHistorico = data.periodos || [];
+    periodoDefault = data.periodo_default;
+
+    preencherAnos();
+}
+
+function preencherAnos() {
+
+    const select = document.getElementById('anoHorasAuto');
+
+    select.innerHTML = '';
+
+    const anos = [
+        ...new Set(
+            periodosHistorico.map(p => p.ano)
+        )
+    ];
+
+    anos.sort((a, b) => b - a);
+
+    anos.forEach(ano => {
+
+        select.innerHTML += `
+            <option value="${ano}">
+                ${ano}
+            </option>
+        `;
+    });
+
+    if (periodoDefault) {
+        select.value = periodoDefault.ano;
+    }
+
+    preencherMeses();
+}
+
+function preencherMeses() {
+
+    const ano = Number(
+        document.getElementById('anoHorasAuto').value
+    );
+
+    const select = document.getElementById('mesHorasAuto');
+
+    select.innerHTML = '';
+
+    const meses = [
+        ...new Set(
+            periodosHistorico
+                .filter(p => p.ano === ano)
+                .map(p => p.mes)
+        )
+    ];
+
+    meses.sort((a, b) => a - b);
+
+    meses.forEach(mes => {
+
+        select.innerHTML += `
+            <option value="${mes}">
+                ${mes}
+            </option>
+        `;
+
+    });
+
+    if (periodoDefault) {
+        select.value = periodoDefault.mes;
+    }
+
+    preencherSemanas();
+}
+
+
+function preencherSemanas() {
+
+    const ano = Number(
+        document.getElementById('anoHorasAuto').value
+    );
+
+    const mes = Number(
+        document.getElementById('mesHorasAuto').value
+    );
+
+    const select = document.getElementById('semanaHorasAuto');
+
+    select.innerHTML = '';
+
+    const semanas = periodosHistorico.filter(p =>
+        p.ano === ano &&
+        p.mes === mes
+    );
+
+    let defaultIndex = -1;
+
+    semanas.forEach((s, idx) => {
+
+        if (
+            periodoDefault &&
+            s.inicio === periodoDefault.inicio
+        ) {
+            defaultIndex = idx;
+        }
+
+        select.innerHTML += `
+            <option value="${idx}">
+                ${s.inicio} → ${s.fim}
+            </option>
+        `;
+    });
+
+    if (defaultIndex >= 0) {
+        select.selectedIndex = defaultIndex;
+    }
+}
+
+document.getElementById('anoHorasAuto').addEventListener('change',
+    preencherMeses
+);
+
+document.getElementById('mesHorasAuto').addEventListener('change',
+    preencherSemanas
+);
+
+
+//TABELA HISTORICO
+function carregarHistoricoExportacoes() {
+
+    $('#tabelaHistoricoHorasAuto').DataTable({
+
+        destroy: true,
+
+        ajax: {
+            url: '/horas_horasauto/historico_exportacoes',
+            dataSrc: ''
+        },
+
+        columns: [
+            { data: 'data_execucao' },
+
+            {
+                data: 'data_inicio',
+                className: 'text-center'
+            },
+
+            {
+                data: 'data_fim',
+                className: 'text-center'
+            },
+
+            {
+                data: 'utilizador',
+                className: 'text-center'
+            },
+
+            {
+                data: 'anular',
+                className: 'text-center',
+                orderable: false,
+                searchable: false
+            }
+        ],
+
+        order: [[0, 'desc']],
+
+        pageLength: 10,
+
+        lengthMenu: [
+            [10, 25, 50, 100],
+            [10, 25, 50, 100]
+        ],
+
+        language: {
+            url: i18n.getDataTablesLanguageUrl()
+        }
+    });
+}
+
+$(document).on(
+    'click',
+    '.anular-exportacao',
+    async function () {
+
+        const execucaoId =
+            $(this).data('id');
+
+        if (!confirm(i18n.t('msg.confirmar_anular_exportacao'))) {
+            return;
+        }
+
+        const res = await fetch(
+            `/horas_horasauto/anular/${execucaoId}`,
+            {
+                method: 'DELETE'
+            }
+        );
+
+        const data = await res.json();
+
+        console.log(data);
+    console.log(data.resumo);
+
+        if (!data.ok) {
+
+            alert(
+                data.error_key
+                    ? i18n.t(data.error_key)
+                    : i18n.t('msg.erro_anular_exportacao')
+            );
+
+            return;
+        }
+
+        alert(i18n.t('msg.exportacao_anulada_sucesso'));
+
+        $('#tabelaHistoricoHorasAuto')
+            .DataTable()
+            .ajax
+            .reload();
+    }
+);
+
+function calcularTotalHorasGerar() {
+
+    let total = 0;
+
+    Object.values(dadosHorasAuto).forEach(user => {
+
+        if (user.pepnet !== "network") return;
+
+        diasPeriodo.forEach(d => {
+            total += (user.dias[d]?.n_gerar || 0);
+        });
+    });
+
+    return total;
+}
+
+function mostrarResumoNetwork(totalGerar, totalDisponivel) {
+
+    const container = document.getElementById("resumoHorasAutoNetwork");
+
+    const { totalCodigosG, totalPepEnsaios } = calcularTotaisExtra();
+
+    const resumo = document.createElement("div");
+    resumo.className = "mt-3 p-2 border-top resumo-network";
+
+    resumo.innerHTML = `
+        <table class="table table-sm table-bordered small mt-2 w-auto">
+
+            <thead>
+                <tr>
+                    <th></th>
+                    <th class="text-center">${i18n.t('field.a_gerar')}</th>
+                    <th class="text-center">${i18n.t('field.disponivel')}</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>${i18n.t('field.networks')}</td>
+                    <td class="text-center">${totalGerar.toFixed(2)}h</td>
+                    <td class="text-center">${totalDisponivel.toFixed(2)}h</td>
+                </tr>
+
+                <tr>
+                    <td>${i18n.t('field.peps')}</td>
+                    <td class="text-center">${totalPepEnsaios.toFixed(2)}h</td>
+                    <td class="text-center">∞</td>
+                </tr>
+
+                <tr>
+                    <td>${i18n.t('field.gerais')}</td>
+                    <td class="text-center">${totalCodigosG.toFixed(2)}h</td>
+                    <td class="text-center">∞</td>
+                </tr>
+
+            </tbody>
+
+        </table>
+    `;
+
+    container.appendChild(resumo);
+}
+
+function calcularTotaisExtra() {
+
+    let totalCodigosG = 0;
+    let totalPepEnsaios = 0;
+
+    Object.values(dadosHorasAuto).forEach(user => {
+
+        diasPeriodo.forEach(d => {
+
+            const info = user.dias[d];
+
+            if (!info) return;
+
+            // códigos G (todos)
+            totalCodigosG += (info.g_gerar || 0);
+
+            // PEP (ensaios)
+            if (user.pepnet === "pep") {
+                totalPepEnsaios += (info.n_gerar || 0);
+            }
+
+        });
+
+    });
+
+    return {
+        totalCodigosG,
+        totalPepEnsaios
+    };
+}
+
+function iniciarGeracao() {
+
+    document.getElementById(
+        "tituloPassoHorasAuto"
+    ).innerText =
+        i18n.t('field.gerar_horas_passo');
+
+
+    document.getElementById(
+        "resumoHorasAuto"
+    ).innerHTML = `
+
+        <div class="mb-3">
+
+            <div
+                class="progress"
+                style="height:30px;">
+
+                <div
+                    id="progressHorasAuto"
+                    class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                    role="progressbar"
+                    style="width:0%;">
+
+                    0%
+
+                </div>
+
+            </div>
+
+            <div
+                id="progressTextoHorasAuto"
+                class="small text-center mt-2">
+
+                ${i18n.t('msg.a_iniciar')}
+
+            </div>
+
+        </div>
+
+    `;
+
+    const btn = document.getElementById(
+        "btnProximoPasso"
+    );
+
+    btn.disabled = true;
+
+
+
+    timer = setInterval(
+        consultarEstado,
+        500
+    );
+
+    fetch('/horas_horasauto/gerar', {
+
+        method: 'POST',
+
+        headers: {
+            'Content-Type': 'application/json'
+        },
+
+        body: JSON.stringify({
+            periodos: [{
+                start: periodoSelecionado.inicio,
+                end: periodoSelecionado.fim,
+                resumo: dadosHorasAuto
+            }]
+        })
+
+    })
+    .then(res => res.json())
+    .then(res => {
+
+        console.log(res);
+
+        if (!res.ok) {
+
+            atualizarProgress(
+                100,
+                i18n.t('field.erro')
+            );
+
+            alert(
+                res.error ||
+                i18n.t('msg.erro_geracao_horas')
+            );
+
+
+            btn.disabled = false;
+
+            return;
+        }
+
+        atualizarProgress(
+            100,
+            i18n.t('field.concluido_exclamacao')
+        );
+
+        carregarHistoricoExportacoes();
+
+        alert(
+            i18n.t('msg.horas_geradas_sucesso', '', {
+                total: res.total_inserts
+            })
+        );
+
+        btn.style.visibility = "hidden";
+    })
+    .catch(err => {
+
+        console.error(err);
+
+        atualizarProgress(
+            100,
+            i18n.t('field.erro')
+        );
+
+        alert(
+            i18n.t('msg.erro_durante_geracao')
+        );
+
+        btn.disabled = false;
+    });
+}
+
+let timer = null;
+
+async function consultarEstado() {
+
+    const res =
+        await fetch('/horas_horasauto/estado');
+
+    const data =
+        await res.json();
+
+    atualizarProgress(
+        data.percentagem,
+        data.texto ? i18n.t(data.texto) : ''
+    );
+
+    if (data.percentagem >= 100) {
+
+        clearInterval(timer);
+
+    }
+}
+
+function atualizarProgress(percentagem, texto) {
+
+    const barra =
+        document.getElementById(
+            "progressHorasAuto"
+        );
+
+    barra.style.width =
+        `${percentagem}%`;
+
+    barra.innerText =
+        `${percentagem}%`;
+
+    document.getElementById(
+        "progressTextoHorasAuto"
+    ).innerText =
+        texto;
+}
+
+</script>
+
+{% endblock %}

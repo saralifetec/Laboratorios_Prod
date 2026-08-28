@@ -1,0 +1,618 @@
+
+{% extends "base.html" %}
+
+{% block page_title %}<span data-i18n="nav.calendario">Calendário</span>{% endblock %}
+
+{% block navbar %}
+  <h4 class="page-title" data-i18n="nav.calendario">Calendário</h4>
+{% endblock %}
+
+
+{% block content %}
+
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css' rel='stylesheet' />
+<link href="{{ url_for('static', filename='js/plugin/select2/select2.min.css') }}"/>
+
+<style>
+/* ---------- Base ---------- */
+
+html, body {
+    height: 100%;
+}
+
+#calendar {
+    height: 100%;
+}
+
+/* ---------- Toolbar ---------- */
+
+.fc-toolbar-title {
+    font-size: 16px !important;
+    font-weight: 500;
+}
+
+.fc .fc-button {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+    color: white;
+    font-size: 12px;
+    padding: 4px 8px;
+}
+
+.fc .fc-button:hover {
+    background-color: #0b5ed7;
+    border-color: #0a58ca;
+}
+
+.fc .fc-button-active {
+    background-color: #198754 !important;
+    border-color: #198754 !important;
+}
+
+/* ---------- Eventos (cores pastel) ---------- */
+
+.fc-bg-event {
+    opacity: 0.9 !important;  
+    pointer-events: none !important;
+    z-index: 0 !important;
+}
+
+.evt-ferias {
+    background-color: #cfe2ff !important;
+}
+
+.evt-falta {
+    background-color: #f8d7da !important;
+}
+
+.evt-parcial {
+    background-color: #fff3cd !important;
+}
+
+.evt-trabalhou {
+    background-color: #d1e7dd !important;
+}
+
+.evt-feriado {
+    background-color: #e2d9f3 !important;
+}
+
+.evt-normal {
+    background-color: #f5f5f5 !important;
+}
+
+/* ---------- Fins de semana ---------- */
+
+.fc-day-sat, 
+.fc-day-sun {
+    background-color: #dee2e6 !important;  /* mais escuro como querias */
+}
+
+/* ---------- Células ---------- */
+
+.fc-daygrid-day-frame {
+    border-radius: 8px;
+    position: relative;
+}
+
+/* ---------- Label dentro do dia ---------- */
+
+.fc-daygrid-day-top {
+    position: relative;
+}
+
+.day-label {
+    position: absolute;
+    top: 18px;      
+    left: 4px;
+    right: 4px;
+
+    z-index: 10;
+
+    display: inline-flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-size: 11px;
+    font-weight: 500;
+
+    padding: 2px 6px;
+
+    background: #ffffff;
+    color: #212529;
+
+    border-radius: 6px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.08);
+}
+
+
+
+.fc-daygrid-day-events {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 2px;   
+    position: relative;
+    z-index: 5 !important;
+}
+
+
+
+/* ---------- Ícone lixo ---------- */
+
+.delete-icon {
+    font-size: 10px;
+    color: #adb5bd;
+    cursor: pointer;
+    margin-left: 6px;
+
+    opacity: 1;
+    transition: 0.2s;
+    z-index: 20; 
+    pointer-events: all;  /* clickable */
+}
+
+
+
+.delete-icon:hover {
+    color: #dc3545;
+}
+
+/* ---------- Menu inline ---------- */
+
+.inline-menu {
+    position: absolute;
+    z-index: 50;
+    background: white;
+    border-radius: 6px;
+    min-width: 110px;
+    padding: 2px 0;
+
+    box-shadow: 0 1px 4px rgba(0,0,0,0.12);
+    font-size: 11px;
+}
+
+.menu-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    padding: 3px 8px;
+    cursor: pointer;
+}
+
+.menu-item:hover {
+    background-color: #f1f3f5;
+}
+
+/* ---------- Input parcial ---------- */
+
+.inline-hours {
+    width: 50px;
+    margin-left: 6px;
+    font-size: 11px;
+    padding: 1px 3px;
+}
+
+</style>
+
+<div class="tabelas-page">
+
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    
+                    <div class="card-body">
+
+                        <div class="card mt-3">
+
+                            <div class="card-body">
+
+                                <div class="mb-3 d-flex align-items-center gap-2">
+
+                                    <h6 class="mb-0" style="min-width: 60px;">
+                                        <span data-i18n="field.nome">Nome</span>
+                                    </h6>
+
+                                    <select class="form-control form-control-sm" id="tecnico_id" name="tecnico_id" style="width:200px;" onchange="onUserChange();">
+
+                                        <option value="all" selected data-i18n="common.all">
+                                            Todos
+                                        </option>
+
+                                        {% for tecnico in tecnicos %}
+                                        <option value="{{ tecnico.id }}">{{ tecnico.full_name }}</option>
+                                        {% endfor %}
+
+                                    </select>
+
+                                </div>
+
+                                <br>    
+
+                                
+                                <div class="card" style="height: 80vh;">
+                                    <div class="card-body d-flex flex-column" style="height: 100%;">
+                                        <div id="calendar" style="flex: 1;"></div>
+                                    </div>
+                                </div>
+  
+                            </div>
+                            </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+  
+
+    <hr>
+
+      
+   
+
+</div>
+{% endblock %}
+
+
+{% block scripts %}
+
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src="{{ url_for('static', filename='js/plugin/select2/select2.full.min.js') }}"></script>
+
+
+<script>
+
+function getEventStyles() {
+    return {
+        normal: { className: 'evt-normal', label: '' },
+        ferias: { className: 'evt-ferias', label: i18n.t('field.ferias') },
+        falta: { className: 'evt-falta', label: i18n.t('field.falta') },
+        parcial: { className: 'evt-parcial', label: i18n.t('field.parcial') },
+        trabalhou: { className: 'evt-trabalhou', label: i18n.t('field.trabalhou') },
+        feriado: { className: 'evt-feriado', label: i18n.t('field.feriado') }
+    };
+}
+
+let calendar;
+
+document.addEventListener('DOMContentLoaded', function () {
+
+    const calendarEl = document.getElementById('calendar');
+
+    calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        height: '100%',
+
+        locale: i18n.currentLang || 'pt',
+
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: ''
+        },
+
+        events: fetchEvents,
+        
+        eventContent: function() {
+            return { domNodes: [] }; 
+        },
+
+        
+
+    eventsSet: function() {
+        renderDayLabels();
+    },
+  
+
+    dateClick: function(info) {
+
+        if (info.jsEvent.target.closest('.inline-menu')) {
+            return;
+        }
+
+        info.jsEvent.stopPropagation();
+        openInlineEditor(info);
+    }
+
+    });
+
+    calendar.render();
+});
+
+function renderDayLabels() {
+
+    // limpar labels anteriores
+    document.querySelectorAll('.day-label').forEach(e => e.remove());
+
+    const userId = document.getElementById('tecnico_id').value;
+
+    calendar.getEvents().forEach(evt => {
+
+        const dateStr = evt.startStr.slice(0, 10);
+
+        const cell = document.querySelector(`[data-date="${dateStr}"]`);
+        if (!cell) return;
+
+        const content = cell.querySelector('.fc-daygrid-day-events');
+        if (!content) return;
+
+        //  criar primeiro o container
+        const container = document.createElement('div');
+        container.className = 'day-label';
+
+        // texto
+        const text = document.createElement('span');
+        text.innerText = evt.title;
+        container.appendChild(text);
+
+        // lixo
+        const trash = document.createElement('i');
+        trash.className = 'fa-solid fa-trash delete-icon';
+
+        trash.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            removeEvent(dateStr, userId);
+        });
+
+
+        trash.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+        });
+
+        container.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+
+        container.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+
+
+        container.appendChild(trash);
+
+        //  só agora fazemos append
+        content.appendChild(container);
+    });
+}
+
+
+function openInlineEditor(info) {
+
+    const dateStr = info.dateStr;
+    const cell = info.dayEl;
+    const userId = document.getElementById('tecnico_id').value;
+    const day = info.date.getDay();
+    const isWeekend = (day === 0 || day === 6);
+
+    // limpar anteriores
+    document.querySelectorAll('.inline-menu').forEach(e => e.remove());
+
+    let options = [];
+
+    if (userId === "all") {
+        options = [
+            { value: "feriado", label: i18n.t('field.feriado') }
+        ];
+
+    } else if (isWeekend) {
+        options = [
+            { value: "trabalhou", label: i18n.t('field.trabalhou') },
+            { value: "parcial", label: i18n.t('field.parcial') }
+        ];
+
+    } else {
+        options = [
+            { value: "ferias", label: i18n.t('field.ferias') },
+            { value: "falta", label: i18n.t('field.falta') },
+            { value: "trabalhou", label: i18n.t('field.trabalhou') },
+            { value: "parcial", label: i18n.t('field.parcial') }
+        ];
+
+    }
+
+    const menu = document.createElement('div');
+    menu.className = 'inline-menu';
+
+    menu.innerHTML = options.map(o =>
+        `<div class="menu-item" data-value="${o.value}">${o.label}</div>`
+    ).join('');
+
+    cell.style.position = 'relative';  // garantir contexto
+    menu.style.top = '18px';
+    menu.style.left = '2px';
+
+    cell.appendChild(menu);
+
+
+    // click em opção
+    menu.querySelectorAll('.menu-item').forEach(item => {
+        item.onclick = (e) => {
+            e.stopPropagation();              
+            e.stopImmediatePropagation();     
+
+            handleSelection(e, dateStr, item.dataset.value);
+            
+        };
+
+    });
+
+    menu.addEventListener('click', (e) => {
+        e.stopPropagation();  
+    });
+
+    setTimeout(() => {
+        document.addEventListener('click', function handler(e) {
+
+            if (!e.target.closest('.inline-menu')) {
+                menu.remove();
+                document.removeEventListener('click', handler);
+            }
+
+        });
+    }, 0);
+
+}
+
+function handleSelection(event, date, tipo) {
+
+    event.stopPropagation();
+    event.stopImmediatePropagation();
+
+    const userId = document.getElementById('tecnico_id').value;
+
+   
+
+    if (tipo === "parcial") {
+
+        const item = event.target.closest('.menu-item');
+
+        // já existe input?
+        if (item.querySelector('input')) return;
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.step = '0.5';
+        input.min = '0';
+        input.max = '24';
+        input.value = '';
+
+        input.className = 'inline-hours';
+
+        item.appendChild(input);
+        input.focus();
+
+        input.addEventListener('click', e => e.stopPropagation());
+
+        input.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                saveEvent(date, 'parcial', input.value);
+                document.querySelectorAll('.inline-menu').forEach(m => m.remove());
+            }
+        });
+
+        return;
+    }
+
+    saveEvent(date, tipo, null);
+
+    document.querySelectorAll('.inline-menu').forEach(m => m.remove());
+}
+
+
+function removeEvent(date, userId) {
+
+    fetch('/calendario/api/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            data: date,
+            user_id: userId
+        })
+    })
+    .then(() => {
+        calendar.refetchEvents();
+
+    
+    });
+}
+
+function saveEvent(date, tipo, horas) {
+
+    const userId = document.getElementById('tecnico_id').value;
+
+    fetch('/calendario/api/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            data: date,
+            tipo: tipo,
+            horas: horas,
+            user_id: userId
+        })
+    })
+    .then(() => {
+    calendar.refetchEvents();
+});
+
+}
+
+
+function fetchEvents(info, successCallback, failureCallback) {
+
+    const userId = document.getElementById('tecnico_id').value;
+
+    fetch(`/calendario/api/calendar?start=${info.startStr}&end=${info.endStr}&user_id=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+
+            const events = data.map(item => {
+
+            const EVENT_STYLES = getEventStyles();
+            const style = EVENT_STYLES[item.tipo];
+
+
+         
+            let title = style.label || '';
+
+            if (item.tipo === 'parcial' && item.horas) {
+                title += ` (${item.horas}h)`;
+            }
+
+            return {
+                title: title,
+                start: item.data,
+                allDay: true,
+                display: 'background',
+                classNames: [style.className],
+
+                extendedProps: {
+                    tipo: item.tipo,
+                    hasEvent: true   
+                }
+            };
+        });
+
+            successCallback(events);
+        })
+        .catch(err => failureCallback(err));
+}
+
+function onUserChange() {
+    calendar.refetchEvents();
+}
+
+
+$(document).ready(async function () {
+
+    
+    await i18n.init();
+
+    i18n.applyTranslations();
+
+
+    $('#tecnico_id').select2({
+    width: '200px',
+    placeholder: i18n.t('common.all'),
+    allowClear: false
+});
+
+//  focar automaticamente na pesquisa
+$('#tecnico_id').on('select2:open', function () {
+    setTimeout(() => {
+        document.querySelector('.select2-container--open .select2-search__field')?.focus();
+    }, 0);
+});
+
+});
+
+
+</script>
+
+{% endblock %}

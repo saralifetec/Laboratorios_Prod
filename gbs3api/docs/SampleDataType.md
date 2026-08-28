@@ -29,8 +29,8 @@ Name | Type | Description | Notes
 **prototype_sort_index** | **int** |  | [optional] 
 **sample_elements** | [**List[SampleElementDataType]**](SampleElementDataType.md) |  | [optional] 
 **additional_group** | [**List[AdditionalGroup]**](AdditionalGroup.md) |  | [optional] 
-**element_name** | **str** |  | [optional] 
 **pbsfin_good_id** | **str** |  | [optional] 
+**element_name** | **str** |  | [optional] 
 
 ## Example
 

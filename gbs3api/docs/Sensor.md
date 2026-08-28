@@ -114,16 +114,16 @@ Name | Type | Description | Notes
 **cost_center** | **str** |  | [optional] 
 **purchase_date** | **datetime** |  | [optional] 
 **location** | **str** |  | [optional] 
-**idmodule_type** | **str** |  | [optional] 
 **element_name** | **str** |  | [optional] 
+**swoffset_compensation** | **bool** |  | [optional] 
 **idmodule_string** | **str** |  | [optional] 
 **swoffset_compensation_type** | **str** |  | [optional] 
-**swoffset_compensation** | **bool** |  | [optional] 
-**swfilter_class_type** | **str** |  | [optional] 
-**swfilter_ad_hoc_frequency** | **float** |  | [optional] 
+**idmodule_type** | **str** |  | [optional] 
 **swoffset_calculation_start_sec** | **float** |  | [optional] 
 **swoffset_calculation_end_sec** | **float** |  | [optional] 
 **swoffset_fix_value** | **float** |  | [optional] 
+**swfilter_class_type** | **str** |  | [optional] 
+**swfilter_ad_hoc_frequency** | **float** |  | [optional] 
 
 ## Example
 

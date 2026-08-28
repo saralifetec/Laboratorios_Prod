@@ -21,6 +21,7 @@ Name | Type | Description | Notes
 **color** | **str** |  | [optional] 
 **status** | **str** |  | [optional] 
 **part_count** | **int** |  | 
+**version** | **int** |  | [optional] 
 **history_comment** | **str** |  | [optional] 
 **reason_for_change** | **str** |  | [optional] 
 **event_type** | **str** |  | [optional] 
@@ -29,6 +30,7 @@ Name | Type | Description | Notes
 **is_forecast** | **bool** |  | [optional] 
 **preceding** | **List[int]** |  | [optional] 
 **subsequent** | **List[int]** |  | [optional] 
+**active_parts** | **str** |  | [optional] [readonly] 
 
 ## Example
 

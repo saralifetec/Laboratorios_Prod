@@ -84,33 +84,33 @@
 			
 			
 			
-				<form method="POST" action="" enctype="multipart/form-data" id="form_Todos">
+				<form id="form_Todos">
 					<div class="card-body">
 						<div class="row">
 							<div class="col-md-12">
 								<h5><span data-i18n="field.gerar_horas_automaticamente_todos">Gerar Horas Automáticamente para Todos</span></h5>
 							</div>
 						</div>
+                        <br>
                         <div class="row">
 
 							<div class="d-flex align-items-center gap-2">
-								<div class="form-check form-switch m-0">
-									<input class="form-check-input custom-switch" type="checkbox" id="estadoSwitch">
-								</div>
-								<span id="estadoLabel" class="estado-label" data-i18n="field.inativo">Inativo</span>
+								<input class="form-check-input custom-switch" type="checkbox" id="estadoSwitch" name="estadoSwitch" {{ 'checked' if config.ativo else '' }}>
+								<span id="estadoLabel" class="estado-label" data-i18n="field.ativo">Ativo</span>
 							</div>
-
 
 
 							<div class="col-md-3 col-lg-2">
 								<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
-									<label for="frequencia" class="col-md-3 col-form-label" data-i18n="label.frequencia">
-										Frequência
-									</label>
+									<label for="frequencia" class="col-md-3 col-form-label" data-i18n="field.frequencia">
+                                        Frequência
+                                    </label>
 									<div class="col-md-12 p-0">
-										<select class="form-control form-control" id="frequencia" name="frequencia" required style="width:auto;">
-											<option value="semanal" selected><span data-i18n="field.semanal"> Semanal </span></option>
-										</select>
+										<select id="frequencia" name="frequencia" class="form-control">
+                                            <option value="semanal" data-i18n="field.semanal" {{ 'selected' if config.frequencia == 'semanal' else '' }}>
+                                                Semanal
+                                            </option>
+                                        </select>
 									</div>
 								</div>
 							</div>
@@ -121,13 +121,23 @@
 										Repete-se a cada
 									</label>
 									<div class="col-md-12 p-0">
-										<select class="form-control form-control" id="repeticao" name="repeticao" required style="width:auto;">
-											<option value="2" selected><span data-i18n="day.monday"> Segunda-Feira </span></option>
-											<option value="3"><span data-i18n="day.tuesday">Terça-Feira</span></option>
-											<option value="4"><span data-i18n="day.wednesday">Quarta-Feira</span></option>
-											<option value="5"><span data-i18n="day.thuesday">Quinta-Feira</span></option>
-											<option value="6"><span data-i18n="day.friday">Sexta-Feira</span></option>
-										</select>
+										<select id="repeticao" name="repeticao" class="form-control">
+                                            <option value="2" data-i18n="day.monday" {{ 'selected' if config.repeticao == 2 else '' }}>
+                                                Segunda-feira
+                                            </option>
+                                            <option value="3" data-i18n="day.tuesday" {{ 'selected' if config.repeticao == 3 else '' }}>
+                                                Terça-feira
+                                            </option>
+                                            <option value="4" data-i18n="day.wednesday" {{ 'selected' if config.repeticao == 4 else '' }}>
+                                                Quarta-feira
+                                            </option>
+                                            <option value="5" data-i18n="day.thursday" {{ 'selected' if config.repeticao == 5 else '' }}>
+                                                Quinta-feira
+                                            </option>
+                                            <option value="6" data-i18n="day.friday" {{ 'selected' if config.repeticao == 6 else '' }}>
+                                                Sexta-feira
+                                            </option>
+                                        </select>
 									</div>
 								</div>
 							</div>
@@ -138,7 +148,7 @@
 										A partir de
 									</label>
 									<div class="col-md-12 p-0">
-										<input type="date" class="form-control input-full" id="dia1" name="dia1"/>
+										<input type="date" id="dia1" name="dia1" class="form-control" value="{{ config.dia_inicio.strftime('%Y-%m-%d') if config.dia_inicio else '' }}">
 									</div>
 								</div>
 							</div>
@@ -149,11 +159,9 @@
                         <br><br>
                         <div class="row">
                             <div class="col-md-1">
-                                <button type="button" class="btn btn-warning btn-sm" onclick="limpar_todos()">
-                                    <span data-i18n="action.clear">Limpar</span>
-                                </button>
+                              
                             </div>
-                            <div class="col-md-9"></div>
+                            <div class="col-md-10"></div>
                             <div class="col-md-1 align-right">
                                 <button type="submit" class="btn btn-success btn-sm" name="save_todos">
                                     <span data-i18n="action.save">Guardar</span>
@@ -173,7 +181,10 @@
 	</div>
 	
 	<!--formulario individual-->
-	<div class="row">    
+	<div class="row">
+        
+        
+
 		<div class="col-md-12">
 			<div class="card">
 				<div class="card-body">
@@ -181,11 +192,19 @@
 					<form method="POST" action="" enctype="multipart/form-data" id="formHorasAuto">
    
                         <div class="row">
+                            <div class="col-md-12">
+            <h5>
+                <span data-i18n="field.configuracoes_pessoa">
+                    Configurações por Pessoa
+                </span>
+            </h5>
+
+        </div>
 							<div class="col-md-3 col-lg-2">
 								<div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
 									<label for="nome" class="col-md-1 col-form-label"><span data-i18n="field.nome">Nome</span></label>
 								
-									<select class="form-control form-control" id="tecnico_id" name="tecnico_id" required style="width:auto;">
+									<select class="form-control form-control" id="tecnico_id" name="tecnico_id" required style="width:auto;" disabled>
 										<option value="" selected>	</option>
 										{% for tecnico in tecnicos %}
 											<option value="{{ tecnico.id }}">{{ tecnico.full_name }}</option>
@@ -267,21 +286,7 @@
 									</div>
 								</div>
 							</div>
-							<div class="col-md-3 col-lg-3" id="limitar_wrap" style="display:none;">
-							  <div class="form-group form-inline" style="padding-right:0rem;padding-left:0rem;padding-bottom:0rem;">
-								<label for="limitar" class="col-md-3 col-form-label" data-i18n="label.limitar_horas_disponiveis_teste">
-								Limitar a horas disponíveis no teste
-								</label>
-
-								<div class="col-md-12 p-0">
-									<select class="form-control" id="limitar" name="limitar">
-										<option value="1" data-i18n="status.yes">Sim</option>
-										<option value="0" selected data-i18n="status.no">Não</option>
-									</select>
-								</div>
-
-							  </div>
-							</div>
+						
 								
 						</div>
 						<br><br>
@@ -317,7 +322,7 @@
 							<div class="col-md-2">
 								
 							</div>
-							<div class="col-md-7"></div>
+							<div class="col-md-8"></div>
 							
 							<div class="col-md-1 align-right">
 								<button type="submit" class="btn btn-success btn-sm" name="save_individual">
@@ -382,6 +387,50 @@
 
 
 <script>
+
+//GERAL
+document.addEventListener('DOMContentLoaded', function() {
+
+    //  FORM SUBMIT
+    const form = document.getElementById("form_Todos");
+    if (form) {
+        form.addEventListener("submit", function(e) {
+
+            e.preventDefault();
+
+            const data = {
+                ativo: document.getElementById("estadoSwitch").checked,
+                frequencia: document.getElementById("frequencia").value,
+                repeticao: document.getElementById("repeticao").value,
+                dia1: document.getElementById("dia1").value
+            };
+
+            fetch('/horasauto/save', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            })
+            .then(res => res.json())
+            .then(res => {
+
+                if (res.ok) {
+                    mostrarNotificacao("Guardado com sucesso", "success");
+                } else {
+                    mostrarNotificacao("Erro ao guardar", "error");
+                }
+
+            })
+            .catch(() => {
+                mostrarNotificacao("Erro ao guardar", "error");
+            });
+        });
+    }
+
+
+
+});
+
+
 
 
 let tabelaConfHorasAuto = null;
@@ -461,7 +510,6 @@ function limpar_individual() {
     document.getElementById('auto').value = '1';        // Sim
     document.getElementById('tipo').value = 'horas';
     document.getElementById('pepnet').value = 'pep';
-    document.getElementById('limitar').value = '0';
 
     // Limpar multiselects
     Array.from(document.getElementById('laboratorios').options)
@@ -470,10 +518,7 @@ function limpar_individual() {
     Array.from(document.getElementById('peps_gerais').options)
         .forEach(opt => opt.selected = false);
 
-    // Atualizar visibilidade do campo "Limitar"
-    if (typeof toggleLimitarField === 'function') {
-        toggleLimitarField();
-    }
+    
 
     // (Opcional) voltar ao topo do formulário
     window.scrollTo({
@@ -484,33 +529,9 @@ function limpar_individual() {
 
 
 
-// estado
-const sw = document.getElementById("estadoSwitch");
-const label = document.getElementById("estadoLabel");
-
-sw.addEventListener("change", () => {
-    if (sw.checked) {
-        label.textContent = "Ativo";
-        label.className = "text-success medium";
-    } else {
-        label.textContent = "Inativo";
-        label.className = "text-muted medium";
-    }
-});
 
 
-function toggleLimitarField() {
-    var pepnet = document.getElementById('pepnet').value;
-    var wrap = document.getElementById('limitar_wrap');
-    var limitar = document.getElementById('limitar');
 
-    if (pepnet === 'network') {
-        wrap.style.display = '';
-    } else {
-        wrap.style.display = 'none';
-        limitar.value = '0';
-    }
-}
 
 function preencherCamposConfig() {
     const tecnico_id = document.getElementById('tecnico_id').value;
@@ -526,9 +547,6 @@ function preencherCamposConfig() {
                 document.getElementById('horasgerais').value = '';
                 Array.from(document.getElementById('laboratorios').options).forEach(opt => opt.selected = false);
                 Array.from(document.getElementById('peps_gerais').options).forEach(opt => opt.selected = false);
-                // Also reset limitar and hide the field
-                document.getElementById('limitar').value = '0';
-                toggleLimitarField();
                 return;
             }
             document.getElementById('horasdia').value = resp.horasdia || '';
@@ -542,9 +560,6 @@ function preencherCamposConfig() {
             Array.from(document.getElementById('peps_gerais').options).forEach(opt => {
                 opt.selected = resp.peps_gerais && resp.peps_gerais.includes(parseInt(opt.value));
             });
-            // Set limitar and update field visibility
-            document.getElementById('limitar').value = String(resp.limitar || 0);
-            toggleLimitarField();
         });
 }
 
@@ -569,9 +584,6 @@ function editarRegra(tecnico_id) {
 
 document.addEventListener('DOMContentLoaded', function() {
    
-   document.getElementById('pepnet').addEventListener('change', toggleLimitarField);
-
- 
     // Submeter formulário
     document.getElementById('formHorasAuto').addEventListener('submit', function(e) {
         e.preventDefault();
@@ -581,16 +593,16 @@ document.addEventListener('DOMContentLoaded', function() {
         const auto = document.getElementById('auto').value;
         const tipo = document.getElementById('tipo').value;
         const pepnet = document.getElementById('pepnet').value;
-        const limitar = (pepnet === 'network') ? document.getElementById('limitar').value : '0';
+        
        
-        toggleLimitarField();
+    
         const laboratorios = Array.from(document.getElementById('laboratorios').selectedOptions).map(opt => opt.value);
         const peps_gerais = Array.from(document.getElementById('peps_gerais').selectedOptions).map(opt => opt.value);
 
         fetch('/api/confhorasauto', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ tecnico_id, horasdia, horasgerais, auto, tipo, pepnet, laboratorios, peps_gerais, limitar })
+            body: JSON.stringify({ tecnico_id, horasdia, horasgerais, auto, tipo, pepnet, laboratorios, peps_gerais })
         })
         .then(r => r.json())
         .then(resp => {

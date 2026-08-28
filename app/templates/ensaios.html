@@ -224,16 +224,13 @@ table.dataTable tbody td .form-control-sm {
                                 <i class="fas fa-file-pdf"></i> <span data-i18n="action.tracking_sheet">Folha Acompanhamento</span>
                                 </a>
 							</li>
+                            
                             <li>
-								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){relatorioFotos();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
-                                <i class="fas fa-file-word"></i> <span data-i18n="field.relatorio_fotos">Relatório Fotos</span>
+                                <a class="dropdown-item" href="#" onclick="abrirModalRelatorios(); return false;">
+                                <i class="fas fa-file-word"></i> <span data-i18n="field.relatorios">Relatórios</span>
                                 </a>
-							</li>
-                            <li>
-								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){relatorioFotosTeste();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
-                                <i class="fas fa-file-word"></i> <span data-i18n="field.relatorio_fotos_teste">Relatório Fotos por Teste</span>
-                                </a>
-							</li>
+                            </li>
+
                             <li>
 								<a class="dropdown-item" href="#" onclick="if(document.getElementById('ensaio').value){generateEtiqueta();}else{mostrarNotificacao(i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'), 'error');}">
                                 <i class="fas fa-tag"></i> <span data-i18n="action.test_label">Etiqueta Ensaio</span>
@@ -408,8 +405,7 @@ table.dataTable tbody td .form-control-sm {
                     <label for="fase_id" class="col-md-3 col-form-label">
                         <span data-i18n="field.cliente">Cliente</span>
                         
-                        <span id="atualizarClientesBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Clientes"  data-i18n="action.update_clientes" data-i18n-attr="title"
->
+                        <span id="atualizarClientesBtn" style="cursor:pointer; color:#cdd0d3; margin-left:5px;" title="Atualizar Clientes"  data-i18n="action.update_clientes" data-i18n-attr="title">
                             <i class="fas fa-sync-alt"></i>
                         </span>
 
@@ -863,6 +859,115 @@ table.dataTable tbody td .form-control-sm {
   </div>
 </div>
 
+<div class="modal fade" id="modalRelatorios" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 class="modal-title" data-i18n="field.relatorios">Relatórios</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <!-- Tipo de relatório -->
+        <div class="mb-3">
+
+          <label for="tipoRelatorio" class="form-label">
+            <strong data-i18n="field.tipo_relatorio">Tipo de relatório</strong>
+          </label>
+
+          <select id="tipoRelatorio" class="form-select" onchange="atualizarTipoRelatorio()">
+
+            <option value="" disabled selected data-i18n="field.selecione_tipo">
+              Selecionar tipo...
+            </option>
+
+            <option value="ensaio" data-i18n="field.relatorio_fotos">
+              Fotos Ensaio
+            </option>
+
+            <option value="ensaio_teste" data-i18n="field.relatorio_fotos_teste">
+              Fotos Ensaio por Teste
+            </option>
+
+            <option value="setup" data-i18n="field.relatorio_setup_teste">
+              Fotos Setup por Teste
+            </option>
+
+            <option value="resistencias" data-i18n="field.relatorio_resistencias">
+              Resistências
+            </option>
+
+          </select>
+        </div>
+
+        <hr>
+
+        <!-- Testes -->
+      
+        <div id="titulosTestes">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+
+                <strong data-i18n="field.testes">Testes</strong>
+
+                <div class="small">
+                <a href="#" onclick="marcarTodos(); return false;" class="me-2">
+                    <span data-i18n="action.marcar">Marcar</span>
+                </a>
+                <a href="#" onclick="desmarcarTodos(); return false;">
+                    <span data-i18n="action.desmarcar">Desmarcar</span>
+                </a>
+                </div>
+
+            </div>
+        </div>
+        <div id="listaTestes"> 
+        </div>
+
+        
+
+      <hr>
+
+        <!-- RESULTADO DA VERIFICAÇÃO -->
+        <div id="resultadoVerificacao" class="small mb-3" style="display:none;"></div>
+
+        <!-- BARRA DE PROGRESSO -->
+        <div id="progressContainer" style="display:none;">
+        
+        <div class="d-flex justify-content-between mb-1 small">
+            <span id="progressLabel" data-i18n="msg.a_gerar_relatorio">A gerar relatório...</span>
+            <span id="progressPercent">0%</span>
+        </div>
+
+        <div class="progress">
+            <div id="progressBar"
+                class="progress-bar progress-bar-striped progress-bar-animated"
+                role="progressbar"
+                style="width: 0%">
+            </div>
+        </div>
+
+        </div>  
+
+      </div>
+
+      <div class="modal-footer d-flex justify-content-between">
+
+        <button class="btn btn-warning btn-sm" onclick="verificarRelatorio()">
+          <span data-i18n="action.verificar">Verificar</span>
+        </button>
+
+        <button class="btn btn-success btn-sm" onclick="gerarRelatorio()">
+          <span data-i18n="action.gerar">Gerar</span>
+        </button>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
 {% endblock %}
 
@@ -883,32 +988,22 @@ table.dataTable tbody td .form-control-sm {
 /////////////////////////////////////////////////////////////
 //GBS
 document.addEventListener("DOMContentLoaded", function () {
-    
+
     const btn = document.getElementById("gbs");
     const ensaioInput = document.getElementById("ensaio");
 
     btn.addEventListener("click", function () {
+
         const ensaio = ensaioInput.value;
 
-        if (!ensaio || !ensaio.includes("_")) {
-            alert(i18n.t('msg.formato_ensaio_invalido'));
-            return;
-        }
+        fetch("/gbs/test-series", {
 
-        // separar function e série
-        const lastUnderscore = ensaio.lastIndexOf("_");
-        const functionNumber = ensaio.substring(0, lastUnderscore);
-        const seriesNumber = ensaio.substring(lastUnderscore + 1);
-
-        console.log("Function:", functionNumber);
-
-        fetch("/gbs/project", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
             },
             body: JSON.stringify({
-                function_number: functionNumber
+                full_series_number: ensaio
             })
         })
         .then(async response => {
@@ -916,147 +1011,538 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await response.json();
 
             if (!response.ok) {
-                console.error("ERRO BACKEND:", data);
+
+                console.error(
+                    "ERRO BACKEND:",
+                    data
+                );
                 throw data;
             }
-
             return data;
         })
-     .then(async response => {
+        .then(data => {
 
-        const data = await response.json();
+            console.log("Resposta GBS:", data);
 
-        if (!response.ok) {
-            console.error("ERRO BACKEND:", data);
-            throw data;
-        }
+            // observações
 
-        return data;
-    })
-    .catch(error => {
+            const observacoes = [];
 
-    console.error("ERRO COMPLETO:", error);
+            if (data.task) {
+                observacoes.push(data.task);
+            }
 
-    if (error?.error) {
-        alert(error.error);
-    } 
-    else if (error?.detail) {
-        alert(error.detail);
-    } 
-    else {
-        alert("Erro desconhecido");
-    }
-});
+            if (data.remark) {
+                observacoes.push(data.remark);
+            }
+
+            document.getElementById("observacoes").value = observacoes.join(" | ");
+
+            // laboratório
+
+            if (data.label) {
+
+                const partes = data.label.split("|");
+
+                const nomeLaboratorio = partes[partes.length - 1].trim();
+
+                console.log("Laboratório GBS:", nomeLaboratorio);
+
+                const combo = document.getElementById("laboratorio_id");
+
+                if (combo) {
+
+                    for (const option of combo.options) {
+
+                        if (option.text.trim().toUpperCase() === nomeLaboratorio.toUpperCase()) {
+
+                            $("#laboratorio_id").val(option.value).trigger("change");
+
+                            break;
+
+                        }
+                    }
+                }
+            }
+
+            if (data.deadlineLab) {
+                document.getElementById("data_solicitada").value = dataGbsParaInput(data.deadlineLab);
+            }
+
+            if (data.estimatedStart) {
+                document.getElementById("data_acordada").value = dataGbsParaInput(data.estimatedStart);
+            }
+
+            if (data.creationDate) {
+                document.getElementById("datapedido").value = dataGbsParaInput(data.creationDate);
+            }
+
+            if (data.labNetplan) {
+                document.getElementById("network").value = data.labNetplan;
+            }
+
+            if (data.wbsElement) {
+                document.getElementById("pep").value = data.wbsElement;
+            }
+
+            if (data.partNumber) {
+                document.getElementById("part_number").value = data.partNumber;
+            }
+
+            if (data.customerPartNumber) {
+                document.getElementById("partnumbercli").value = data.customerPartNumber;
+            }
+
+            if (data.customerName) {
+
+                const combo = document.getElementById("cliente_id");
+
+                for (const option of combo.options) {
+
+                    if (option.text.trim().toUpperCase() === data.customerName.trim().toUpperCase()) {
+
+                        $("#cliente_id").val(option.value).trigger("change");
+
+                        break;
+
+                    }
+                }
+            }
+
+            if (data.fullName && data.email) {
+
+                const textoGBS = `${data.fullName} - ${data.email}`.toUpperCase();
+
+                const combo = document.getElementById("solicitante_id");
+
+                for (const option of combo.options) {
+
+                    if (option.text.trim().toUpperCase() === textoGBS) {
+
+                        $("#solicitante_id").val(option.value).trigger("change");
+
+                        break;
+
+                    }
+                }
+            }
+
+            if (data.platformCode) {
+
+                const combo = document.getElementById("projecto_select");
+
+                for (const option of combo.options) {
+
+                    if (option.text.trim().toUpperCase() === data.platformCode.trim().toUpperCase()) {
+
+                        $("#projecto_select").val(option.value).trigger("change");
+
+                        break;
+                    }
+                }
+            }
+
+            if (data.developmentPhase) {
+
+                const combo = document.getElementById("fase_id");
+
+                for (const option of combo.options) {
+
+                    if (option.text.trim().toUpperCase() === data.developmentPhase.trim().toUpperCase()) {
+
+                        $("#fase_id").val(option.value).trigger("change");
+
+                        break;
+                    }
+                }
+            }
+
+            // test steps
+
+            if (data.testSeriesId) {
+
+                fetch("/gbs/test-step-details",{
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                        "application/json"
+                    },
+
+                    body: JSON.stringify({
+                        test_series_id:
+                        data.testSeriesId
+                    })
+                }
+                )
+                .then(async response => {
+
+                    const detalhes = await response.json();
+
+                    if (!response.ok) {
+                        throw detalhes;
+                    }
+
+                    return detalhes;
+
+                })
+                .then(detalhes => {
+
+                    console.log(
+                        "TEST STEP DETAILS:",
+                        detalhes
+                    );
+
+                })
+                .catch(error => {
+
+                    console.error(
+                        "ERRO TEST STEP DETAILS:",
+                        error
+                    );
+
+                });
+
+            }
 
 
 
+
+
+
+
+
+
+        })
+        .catch(error => {
+
+            console.error(
+                "ERRO COMPLETO:",
+                error
+            );
+
+            if (error?.error) {
+                alert(error.error);
+            }else if (error?.detail) {
+                alert(error.detail);
+            }else {
+                alert("Erro desconhecido");
+            }
+        });
     });
 });
 
 
 
+function dataGbsParaInput(dataGbs) {
 
+    if (!dataGbs) {return "";}
 
+    const data = new Date(dataGbs);
 
+    data.setHours(data.getHours() + 1);
 
-function relatorioFotos() {
+    return data.toISOString().split("T")[0];
+}
 
-    mostrarNotificacao(i18n.t('msg.gerar_relatorio_fotos'), "info");
+///////////////////////////////////////////////////////////////////////////////////////
+//MODAL DOS RELATÓRIOS
+
+function abrirModalRelatorios() {
+
+    resetProgresso();
+    limparResultadoVerificacao();
 
     const ensaio = document.getElementById('ensaio').value;
 
-    fetch('/relatorio_fotos', {
+    if (!ensaio) {
+        mostrarNotificacao(
+            i18n.t('msg.selecione') + ' ' + i18n.t('field.ensaio'),
+            'error'
+        );
+        return;
+    }
+
+    fetch(`/ensaios/${ensaio}/testes`) 
+    .then(res => res.json())
+    .then(data => {
+
+        const container = document.getElementById("listaTestes");
+        container.innerHTML = "";
+
+        data.forEach(t => {
+
+            if (!t.criarpasta) return;
+
+            const checked = "checked";
+
+            container.innerHTML += `
+                <div>
+                  <input type="checkbox" class="chk-teste" value="${t.ordem}" ${checked}>
+                  ${t.ordem} - ${t.nome}
+                </div>
+            `;
+        });
+
+        new bootstrap.Modal(document.getElementById('modalRelatorios')).show();
+    });
+}
+
+function atualizarTipoRelatorio() {
+
+    const tipo = document.getElementById('tipoRelatorio').value;
+    const blocoTestes = document.getElementById('listaTestes');
+    const tituloTestes = document.getElementById('titulosTestes');
+
+    if (tipo === "ensaio" || tipo === "resistencias") {
+        tituloTestes.classList.add("d-none"); 
+        blocoTestes.classList.add("d-none"); 
+    } else {
+        tituloTestes.classList.remove("d-none"); 
+        blocoTestes.classList.remove("d-none"); 
+    }
+
+    resetProgresso();
+    limparResultadoVerificacao();
+}
+
+
+function marcarTodos() {
+    document.querySelectorAll(".chk-teste").forEach(c => c.checked = true);
+}
+
+function desmarcarTodos() {
+    document.querySelectorAll(".chk-teste").forEach(c => c.checked = false);
+}
+
+function getTestesSelecionados() {
+    return Array.from(document.querySelectorAll(".chk-teste:checked")).map(c => Number.parseInt(c.value));
+}
+
+function verificarRelatorio() {
+
+    resetProgresso();
+
+    const ensaio = document.getElementById('ensaio').value;
+    const tipo = document.getElementById('tipoRelatorio').value;
+    const testes = getTestesSelecionados();
+
+    const box = document.getElementById("resultadoVerificacao");
+    limparResultadoVerificacao();
+
+    fetch('/relatorios/verificar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ensaio })
+        body: JSON.stringify({ ensaio, tipo, testes })
     })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(err => { throw err; });
-        }
-        return response.blob();
-    })
-    .then(blob => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `Relatorio_Fotos_${ensaio}.docx`;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        window.URL.revokeObjectURL(url);
+    .then(res => res.json())
+    .then(data => {
 
+        box.style.display = "block";
+
+        if (data.ok) {
+            box.className = "small text-success";
+            box.innerHTML = "✅ " + i18n.t("msg.verificacao_ok");
+        } else {
+            box.className = "small text-danger";
+
+            box.innerHTML =
+                "<strong>⚠️ " + i18n.t("msg.verificacao_com_erros") + "</strong><br>" +
+                data.erros.map(e => "• " + e).join("<br>");
+        }
+    });
+}
+
+function mostrarProgresso() {
+
+    const container = document.getElementById("progressContainer");
+    const bar = document.getElementById("progressBar");
+    const percent = document.getElementById("progressPercent");
+    const label = document.getElementById("progressLabel");
+
+    container.style.display = "block";
+
+    //  garantir estado inicial
+    bar.classList.add("progress-bar-animated");
+    bar.classList.remove("bg-success");
+
+    if (label) {
+        label.innerText = i18n.t("msg.a_gerar_relatorio");
+    }
+
+    let value = 0;
+
+    const interval = setInterval(() => {
+        value += 10;
+
+        if (value >= 90) {
+            clearInterval(interval);
+            return;
+        }
+
+        bar.style.width = value + "%";
+        percent.innerText = value + "%";
+
+    }, 300);
+
+    return () => {
+        clearInterval(interval);
+
+        bar.style.width = "100%";
+        percent.innerText = "100%";
+
+        //  MUDAR TEXTO AQUI
+        if (label) {
+            label.innerText = i18n.t("msg.relatorio_concluido");
+        }
+
+        //  mudar cor
+        bar.classList.remove("progress-bar-animated");
+        bar.classList.add("bg-success");
+    };
+}
+
+function resetProgresso() {
+
+    const container = document.getElementById("progressContainer");
+    const bar = document.getElementById("progressBar");
+    const percent = document.getElementById("progressPercent");
+
+    container.style.display = "none";   
+
+    bar.style.width = "0%";
+    percent.innerText = "0%";
+
+    // opcional: voltar estado original
+    bar.classList.remove("bg-success");
+    bar.classList.add("progress-bar-animated");
+}
+
+
+
+function gerarRelatorio() {
+
+    const ensaio = document.getElementById('ensaio').value;
+    const tipo = document.getElementById('tipoRelatorio').value;
+    const testes = getTestesSelecionados();
+
+    
+    if (!tipo) {
         mostrarNotificacao(
-            i18n.t('msg.relatorio_gerado_sucesso'),
-            'success'
+            i18n.t('msg.selecione') + ' ' + i18n.t('field.tipo_relatorio'),
+            'error'
         );
+        return;
+    }
+
+
+    //  FUNÇÃO QUE GERAR
+    function continuarGeracao() {
+
+        const finalizar = mostrarProgresso();
+
+        fetch('/relatorios/gerar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ensaio, tipo, testes })
+        })
+        .then(async res => {
+
+            const contentType = res.headers.get("content-type");
+
+            //  CASO FICHEIRO
+            if (!contentType || !contentType.includes("application/json")) {
+
+                const blob = await res.blob();
+
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+
+                a.href = url;
+                a.download = `Relatorio_${ensaio}.docx`;
+
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+
+                window.URL.revokeObjectURL(url);
+
+                finalizar(); 
+
+
+                return;
+            }
+
+            //  JSON
+            const data = await res.json();
+
+            finalizar(); 
+
+        })
+        .catch(err => {
+
+            finalizar(); 
+
+            console.error(err);
+
+        });
+    }
+
+
+    //  1. verificar se já existe
+    fetch('/relatorios/existe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ensaio, tipo, testes }) 
+    })
+    .then(res => res.json())
+    .then(data => {
+
+        //  perguntar ANTES
+        if (data.exists) {
+
+    let mensagem = i18n.t('msg.relatorio_ja_existe_confirmar');
+
+    if (data.testes_existentes && data.testes_existentes.length > 0) {
+            mensagem += "\n\n";
+            mensagem += data.testes_existentes
+                .map(t => "• " + t)
+                .join("\n");
+        }
+
+        const confirmar = confirm(mensagem);
+
+        if (!confirmar) return;
+    }
+
+
+        //  gerar só depois
+        continuarGeracao();
     })
     .catch(err => {
         console.error(err);
 
-        // Caso o backend já envie error_key (novo padrão)
-        if (err?.error_key) {
-            mostrarNotificacao(
-                i18n.t(err.error_key, '', err.params || {}),
-                'error'
-            );
-        }
-        // Caso antigo: backend ainda envia texto direto
-        else if (err?.error) {
-            mostrarNotificacao(err.error, 'error');
-        }
-        // Fallback genérico
-        else {
-            mostrarNotificacao(
-                i18n.t('msg.erro_gerar_relatorio'),
-                'error'
-            );
-        }
+        mostrarNotificacao(
+            i18n.t('msg.erro_gerar_relatorio'),
+            "error"
+        );
     });
 }
 
-function relatorioFotosTeste() {
+function limparResultadoVerificacao() {
 
-    mostrarNotificacao(i18n.t('msg.gerar_relatorio_fotos'), "info");
+    const box = document.getElementById("resultadoVerificacao");
 
-    const ensaio = document.getElementById('ensaio').value;
+    if (!box) return;
 
-    fetch('/relatorio_fotos_por_teste', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ensaio })
-    })
-    .then(async response => {
-    if (!response.ok) {
-        const err = await response.json();
-        console.error("ERRO BACKEND:", err);
-        throw err;
-    }
-    return response.json();
-})
-    .then(data => {
-        mostrarNotificacao(
-            i18n.t(data.message_key),
-            'success'
-        );
-    })
-    .catch(err => {
-    console.error("ERRO COMPLETO:", err);
+    box.style.display = "none";
+    box.innerHTML = "";
+    box.className = "";
 
-    if (err?.error_key) {
-        mostrarNotificacao(
-            i18n.t(err.error_key, '', err.params || {}),
-            'error'
-        );
-    } else {
-        mostrarNotificacao(
-            JSON.stringify(err),
-            'error'
-        );
-    }
-});
-``
+    resetProgresso();
 }
+
+
 
 
 function setSelectByText(selectElement, text) {
@@ -1820,7 +2306,7 @@ async function generateEtiqueta() {
     y += 20;
     
     doc.setFont(undefined, 'bold');
-    doc.text(i18n.t('field.tipopeca') + ':', xLabel, y);
+    doc.text(i18n.t('field.tipo_peca') + ':', xLabel, y);
     doc.setFont(undefined, 'normal');
     doc.text(tipopeca, xValue, y);
     y += 20;
@@ -2192,7 +2678,7 @@ $('#confirmarMotivoFalhaBtn').on('click', function() {
         // Obter o id do teste (assumindo que está em data-id ou similar na linha)
         const testeId = motivoFalhaRow.data('id');
         if (testeId) {
-            fetch(`/testes/update/${testeId}`, {
+            fetch(`testes/testes/update/${testeId}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ motivofalhaensaio_id: motivoId })
@@ -2338,14 +2824,13 @@ mostrarNotificacao(
         });
 };
 
+
 $('#testesTable').DataTable({
     searching: false,   
     ordering: false,    
     paging: false,     
     info: false,        
-    language: {
-        emptyTable: i18n.t('field.sem_dados')
-    }
+    language: { url: i18n.getDataTablesLanguageUrl() }
 });
 
 
@@ -2590,6 +3075,7 @@ $('#formEnsaio').on('submit', function(e) {
 ////////////////////////////////////////////////////////
 //PREENCHER MODAL ENSAIOS
 $(document).ready(function() {
+
 
     document.getElementById("abrirPastaBtn")
         .setAttribute("title", i18n.t("action.open_folder"));
@@ -3211,7 +3697,7 @@ $('#testesTableBody').on('change', '.datainicio-input', function() {
     // Atualizar backend (já existe no código original)
     const id = tr.data('id');
     if (tr.data('novo') === 'true') return;
-    fetch(`/testes/update/${id}`, {
+    fetch(`testes/testes/update/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datainicio: datainicio })
@@ -3260,7 +3746,7 @@ $('#testesTableBody').on('change', '.datafim-input', function() {
     const id = tr.data('id');
     const val = $(this).val();
     if (tr.data('novo') === 'true') return;
-    fetch(`/testes/update/${id}`, {
+    fetch(`testes/testes/update/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datafim: val })
@@ -3363,7 +3849,7 @@ $('#testesTableBody').on('blur', 'td[contenteditable="true"]', function() {
     }
     
     
-    fetch(`/testes/update/${id}`, {
+    fetch(`testes/testes/update/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -3396,7 +3882,7 @@ $('#testesTableBody').on('change', 'select', function() {
                   $(this).hasClass('maquina-select') ? 'maquina_id' : 'user_id';
     const val = $(this).val() ? parseInt($(this).val(), 10) : null;
     
-    fetch(`/testes/update/${id}`, {
+    fetch(`testes/testes/update/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ [field]: val })
@@ -3608,7 +4094,17 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(() => {
             $ensaio.trigger(e);
         }, 300); // ou 400ms se necessário
-            }
+    }
+
+    
+    const modalEl = document.getElementById('modalRelatorios');
+
+    modalEl.addEventListener('hidden.bs.modal', function () {
+        limparResultadoVerificacao();
+    });
+
+
+
 });
 
 let ultimaPesquisa = null;
@@ -3795,6 +4291,9 @@ async function generateFolhaAcompanhamento() {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
 
+    const pageHeight = doc.internal.pageSize.height;
+    const bottomMargin = 15;
+
     // Cabeçalho com fundo cinza escuro
     doc.setFillColor(176, 176, 176); // cinza mais escuro
     doc.rect(10, 8, 190, 12, 'F');
@@ -3948,6 +4447,32 @@ async function generateFolhaAcompanhamento() {
     
         if (obs && obs.trim() !== '') {
             doc.text('Obs: ' + obs, xCols[4] + 2, yTable + 7, { maxWidth: colWidths[4] - 4 });
+        }
+
+        if (yTable + rowHeight > pageHeight - bottomMargin) {
+
+            doc.addPage();
+
+            yTable = 20; // novo topo da página
+
+            //  redesenhar cabeçalho da tabela
+            doc.setFillColor(230, 230, 230);
+            doc.rect(10, yTable - 5, 190, headerHeight, 'F');
+
+            doc.setFont(undefined, 'bold');
+            doc.text(i18n.t('field.teste'), xCols[0] + 2, yTable);
+            doc.text(i18n.t('field.inicio'), xCols[1] + 2, yTable);
+            doc.text(i18n.t('field.fim'), xCols[2] + 2, yTable);
+            doc.text(i18n.t('field.maquina'), xCols[3] + 2, yTable);
+            doc.text(i18n.t('field.notas'), xCols[4] + 2, yTable);
+            doc.setFont(undefined, 'normal');
+
+            // bordas do header
+            for (let i = 0; i < colWidths.length; i++) {
+                doc.rect(xCols[i], yTable - 5, colWidths[i], headerHeight);
+            }
+
+            yTable += headerHeight;
         }
 
 

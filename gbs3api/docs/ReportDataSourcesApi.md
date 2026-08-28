@@ -4,16 +4,16 @@ All URIs are relative to */GBS*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**get_additional_groups_for_series**](ReportDataSourcesApi.md#get_additional_groups_for_series) | **GET** /webservice/additional-groups/series/{seriesId} | Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
+[**get_additional_groups_for_series**](ReportDataSourcesApi.md#get_additional_groups_for_series) | **GET** /webservice/additional-groups/series/{seriesId} | Retrieve test data by seriesId and vpnrPos (TestStep position No.)
 [**get_additional_groups_for_series1**](ReportDataSourcesApi.md#get_additional_groups_for_series1) | **GET** /webservice/additional-groups-and-series/series/{seriesId} | Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
 [**get_additional_groups_for_series2**](ReportDataSourcesApi.md#get_additional_groups_for_series2) | **GET** /webservice/general-book-data/series/{seriesId} | Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
 [**get_additional_groups_for_test**](ReportDataSourcesApi.md#get_additional_groups_for_test) | **GET** /webservice/additional-groups/tests/{testId} | Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
-[**get_additional_groups_for_test1**](ReportDataSourcesApi.md#get_additional_groups_for_test1) | **GET** /webservice/additional-groups/tests | Retrieve a ... by its test id and vpnrPos (TestStep position No.)
-[**get_additional_groups_for_test2**](ReportDataSourcesApi.md#get_additional_groups_for_test2) | **GET** /webservice/additional-groups-and-series/tests | Retrieve a ... by its test id and vpnrPos (TestStep position No.)
-[**get_additional_groups_for_test3**](ReportDataSourcesApi.md#get_additional_groups_for_test3) | **GET** /webservice/general-book-data/tests | Retrieve a ... by its test id and vpnrPos (TestStep position No.)
+[**get_additional_groups_for_test1**](ReportDataSourcesApi.md#get_additional_groups_for_test1) | **GET** /webservice/additional-groups/tests | Retrieve a test data by test ids and vpnrPos (TestStep position No.)
+[**get_additional_groups_for_test2**](ReportDataSourcesApi.md#get_additional_groups_for_test2) | **GET** /webservice/additional-groups-and-series/tests | Retrieve a test data and test series metadata by test ids
+[**get_additional_groups_for_test3**](ReportDataSourcesApi.md#get_additional_groups_for_test3) | **GET** /webservice/general-book-data/tests | Retrieve a test data by test ids and vpnrPos (TestStep position No.), testseries data, parts data, GBS system instance data
 [**get_boms_for_series**](ReportDataSourcesApi.md#get_boms_for_series) | **GET** /webservice/parts/boms/series/{seriesId} | Retrieve a bom by its Test series id
 [**get_boms_for_test**](ReportDataSourcesApi.md#get_boms_for_test) | **GET** /webservice/parts/boms/tests/{testId} | Retrieve a Bom by its testId 
-[**get_boms_for_test1**](ReportDataSourcesApi.md#get_boms_for_test1) | **GET** /webservice/parts/boms/tests | Retrieve a Bom by its testId
+[**get_boms_for_test1**](ReportDataSourcesApi.md#get_boms_for_test1) | **GET** /webservice/parts/boms/tests | Retrieve a Bom by testIds
 [**get_component_test_groups**](ReportDataSourcesApi.md#get_component_test_groups) | **GET** /webservice/component-matrix/component-groups/series/{seriesId} | Retrieve component group by its seriesId and active Tests
 [**get_devices_for_series**](ReportDataSourcesApi.md#get_devices_for_series) | **GET** /webservice/devices/series/{seriesId} | Retrieve a device by its seriesId and vpnrPos (TestStep position No.)
 [**get_devices_for_test**](ReportDataSourcesApi.md#get_devices_for_test) | **GET** /webservice/devices/tests/{testId} | Retrieve a device by its TestStep Id and vpnrPos (TestStep position No.)
@@ -21,17 +21,19 @@ Method | HTTP request | Description
 [**get_get_component_matrix_test_steps**](ReportDataSourcesApi.md#get_get_component_matrix_test_steps) | **GET** /webservice/component-matrix/steps/series/{seriesId} | Retrieve Matrix TestSteps by its seriesId and active tests only and wrap to one node
 [**get_parts_for_series**](ReportDataSourcesApi.md#get_parts_for_series) | **GET** /webservice/parts/series/{seriesId} | Retrieve parts by its seriesId
 [**get_parts_for_test**](ReportDataSourcesApi.md#get_parts_for_test) | **GET** /webservice/parts/tests/{testId} | Retrieve parts by its test Id
-[**get_parts_for_tests**](ReportDataSourcesApi.md#get_parts_for_tests) | **GET** /webservice/parts/tests | Retrieve parts by its test Ids
+[**get_parts_for_tests**](ReportDataSourcesApi.md#get_parts_for_tests) | **GET** /webservice/parts/tests | Retrieve parts by test Ids
 [**get_test_series_summary**](ReportDataSourcesApi.md#get_test_series_summary) | **GET** /webservice/general-information/series/{seriesId} | Retrieve General Information by its seriesId
-[**get_used_equipment_for_series**](ReportDataSourcesApi.md#get_used_equipment_for_series) | **GET** /webservice/equipment-devices/series/{seriesId} | Retrieve used equipment by its seriesId and vpnrPos (TestStep position No.)
+[**get_used_equipment_for_series**](ReportDataSourcesApi.md#get_used_equipment_for_series) | **GET** /webservice/equipment-devices/series/{seriesId} | Retrieve used equipment and devices by its seriesId and vpnrPos (TestStep position No.)
 [**get_used_equipment_for_series1**](ReportDataSourcesApi.md#get_used_equipment_for_series1) | **GET** /webservice/used-equipment/series/{seriesId} | Retrieve used equipment by its seriesId and vpnrPos (TestStep position No.)
 [**get_used_equipment_for_test**](ReportDataSourcesApi.md#get_used_equipment_for_test) | **GET** /webservice/used-equipment/tests/{testId} | Retrieve used equipment by its seriesId and vpnrPos (TestStep position No.)
 
 
 # **get_additional_groups_for_series**
-> TestSequenceDto get_additional_groups_for_series(series_id, category=category, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
+> TestSequenceDto get_additional_groups_for_series(series_id, category=category, region=region, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
 
-Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
+Retrieve test data by seriesId and vpnrPos (TestStep position No.)
+
+Returns test data organized as a list of test sequences associated with specified test series. Each returned test sequence contains its metadata and hierarchical component structure (from testStep to additionals ). Particular endpoint: http://localhost:8083/GBS/webservice/additional-groups/series/86212392?vpnrPos=2&vpnrPos=5?category=SWS_COMPONENT_RESULT?flatGroupStructure=false
 
 ### Example
 
@@ -91,14 +93,15 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
-    series_id = 56 # int | The ID of the series
-    category = ['category_example'] # List[str] |  (optional)
-    vpnr_pos = [56] # List[int] |  (optional)
-    flat_group_structure = False # bool |  (optional) (default to False)
+    series_id = 134235421 # int | Unique identifier of the Test Series (must be a numeric value)
+    category = ['SWS_COMPONENT_RESULT'] # List[str] | Category of test data (parameter, result, requirement)  (optional)
+    region = 'ENGLISH' # str | This is Region (optional)
+    vpnr_pos = [1] # List[int] | This is in another words TestStep position No. Has to be >0 (optional)
+    flat_group_structure = False # bool | Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. (optional) (default to False)
 
     try:
-        # Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
-        api_response = api_instance.get_additional_groups_for_series(series_id, category=category, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
+        # Retrieve test data by seriesId and vpnrPos (TestStep position No.)
+        api_response = api_instance.get_additional_groups_for_series(series_id, category=category, region=region, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
         print("The response of ReportDataSourcesApi->get_additional_groups_for_series:\n")
         pprint(api_response)
     except Exception as e:
@@ -112,10 +115,11 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **series_id** | **int**| The ID of the series | 
- **category** | [**List[str]**](str.md)|  | [optional] 
- **vpnr_pos** | [**List[int]**](int.md)|  | [optional] 
- **flat_group_structure** | **bool**|  | [optional] [default to False]
+ **series_id** | **int**| Unique identifier of the Test Series (must be a numeric value) | 
+ **category** | [**List[str]**](str.md)| Category of test data (parameter, result, requirement)  | [optional] 
+ **region** | **str**| This is Region | [optional] 
+ **vpnr_pos** | [**List[int]**](int.md)| This is in another words TestStep position No. Has to be &gt;0 | [optional] 
+ **flat_group_structure** | **bool**| Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. | [optional] [default to False]
 
 ### Return type
 
@@ -135,7 +139,7 @@ Name | Type | Description  | Notes
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 **200** | ... retrieved successfully |  -  |
-**400** | Bad request, Test series id number needs to be present! |  -  |
+**400** | Invalid request, Test series id number needs to be provided and numeric. |  -  |
 **500** | Internal server error |  -  |
 **404** | Series ID or ... not found |  -  |
 
@@ -368,7 +372,7 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_additional_groups_for_test**
-> TestSequenceDto get_additional_groups_for_test(test_id, category=category, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
+> TestSequenceDto get_additional_groups_for_test(test_id, category=category, region=region, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
 
 Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
 
@@ -432,12 +436,13 @@ with gbs3api.ApiClient(configuration) as api_client:
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
     test_id = 56 # int | The ID of the one TestStep
     category = ['category_example'] # List[str] |  (optional)
+    region = 'region_example' # str |  (optional)
     vpnr_pos = [56] # List[int] |  (optional)
     flat_group_structure = False # bool |  (optional) (default to False)
 
     try:
         # Retrieve a ... by its seriesId and vpnrPos (TestStep position No.)
-        api_response = api_instance.get_additional_groups_for_test(test_id, category=category, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
+        api_response = api_instance.get_additional_groups_for_test(test_id, category=category, region=region, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
         print("The response of ReportDataSourcesApi->get_additional_groups_for_test:\n")
         pprint(api_response)
     except Exception as e:
@@ -453,6 +458,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **test_id** | **int**| The ID of the one TestStep | 
  **category** | [**List[str]**](str.md)|  | [optional] 
+ **region** | **str**|  | [optional] 
  **vpnr_pos** | [**List[int]**](int.md)|  | [optional] 
  **flat_group_structure** | **bool**|  | [optional] [default to False]
 
@@ -480,9 +486,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_additional_groups_for_test1**
-> TestSequenceDto get_additional_groups_for_test1(category=category, vpnr_pos=vpnr_pos, test_ids=test_ids, flat_group_structure=flat_group_structure)
+> TestSequenceDto get_additional_groups_for_test1(test_ids, category=category, region=region, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
 
-Retrieve a ... by its test id and vpnrPos (TestStep position No.)
+Retrieve a test data by test ids and vpnrPos (TestStep position No.)
+
+Returns test data organized as a list of test sequences associated with specified test ids. Each returned test sequence contains its metadata and hierarchical component structure (from testStep to additionals ). Particular endpoint: http://localhost:8083/GBS/webservice/additional-groups/tests?testIds=86215369&testIds=86214852&testIds=86213995?vpnrPos=1?category=SWS_COMPONENT_RESULT?flatGroupStructure=false
 
 ### Example
 
@@ -542,14 +550,15 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
-    category = ['category_example'] # List[str] |  (optional)
-    vpnr_pos = [56] # List[int] |  (optional)
-    test_ids = [56] # List[int] |  (optional)
-    flat_group_structure = False # bool |  (optional) (default to False)
+    test_ids = [86213995] # List[int] | Ids of tests
+    category = ['SWS_COMPONENT_RESULT'] # List[str] | Category of test data (parameter, result, requirement)  (optional)
+    region = 'ENGLISH' # str | This is Region (optional)
+    vpnr_pos = [1] # List[int] | This is in another words TestStep position No. Has to be >0 (optional)
+    flat_group_structure = False # bool | Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. (optional) (default to False)
 
     try:
-        # Retrieve a ... by its test id and vpnrPos (TestStep position No.)
-        api_response = api_instance.get_additional_groups_for_test1(category=category, vpnr_pos=vpnr_pos, test_ids=test_ids, flat_group_structure=flat_group_structure)
+        # Retrieve a test data by test ids and vpnrPos (TestStep position No.)
+        api_response = api_instance.get_additional_groups_for_test1(test_ids, category=category, region=region, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
         print("The response of ReportDataSourcesApi->get_additional_groups_for_test1:\n")
         pprint(api_response)
     except Exception as e:
@@ -563,10 +572,11 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **category** | [**List[str]**](str.md)|  | [optional] 
- **vpnr_pos** | [**List[int]**](int.md)|  | [optional] 
- **test_ids** | [**List[int]**](int.md)|  | [optional] 
- **flat_group_structure** | **bool**|  | [optional] [default to False]
+ **test_ids** | [**List[int]**](int.md)| Ids of tests | 
+ **category** | [**List[str]**](str.md)| Category of test data (parameter, result, requirement)  | [optional] 
+ **region** | **str**| This is Region | [optional] 
+ **vpnr_pos** | [**List[int]**](int.md)| This is in another words TestStep position No. Has to be &gt;0 | [optional] 
+ **flat_group_structure** | **bool**| Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. | [optional] [default to False]
 
 ### Return type
 
@@ -588,14 +598,16 @@ Name | Type | Description  | Notes
 **200** | ... retrieved successfully |  -  |
 **400** | Bad request, Test  id number needs to be present! |  -  |
 **500** | Internal server error |  -  |
-**404** | Series ID or ... not found |  -  |
+**404** | Test ID not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_additional_groups_for_test2**
-> TestSequenceDto get_additional_groups_for_test2(category=category, vpnr_pos=vpnr_pos, test_ids=test_ids, flat_group_structure=flat_group_structure)
+> TestSequenceDto get_additional_groups_for_test2(test_ids, category=category, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
 
-Retrieve a ... by its test id and vpnrPos (TestStep position No.)
+Retrieve a test data and test series metadata by test ids
+
+Returns testseries metadata and test data organized as a list of test sequences associated with specified test ids. Each returned test sequence contains its metadata and hierarchical component structure (from testStep to additionals ). Particular endpoint: http://localhost:8083/GBS/webservice/additional-groups-and-series/tests?testIds=86215369&testIds=86214852&testIds=86213995
 
 ### Example
 
@@ -655,14 +667,14 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
-    category = ['category_example'] # List[str] |  (optional)
-    vpnr_pos = [56] # List[int] |  (optional)
-    test_ids = [56] # List[int] |  (optional)
-    flat_group_structure = False # bool |  (optional) (default to False)
+    test_ids = [86213995] # List[int] | Ids of tests
+    category = ['SWS_COMPONENT_RESULT'] # List[str] | Category of test data (parameter, result, requirement)  (optional)
+    vpnr_pos = [1] # List[int] | This is in another words TestStep position No. Has to be >0 (optional)
+    flat_group_structure = False # bool | Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. (optional) (default to False)
 
     try:
-        # Retrieve a ... by its test id and vpnrPos (TestStep position No.)
-        api_response = api_instance.get_additional_groups_for_test2(category=category, vpnr_pos=vpnr_pos, test_ids=test_ids, flat_group_structure=flat_group_structure)
+        # Retrieve a test data and test series metadata by test ids
+        api_response = api_instance.get_additional_groups_for_test2(test_ids, category=category, vpnr_pos=vpnr_pos, flat_group_structure=flat_group_structure)
         print("The response of ReportDataSourcesApi->get_additional_groups_for_test2:\n")
         pprint(api_response)
     except Exception as e:
@@ -676,10 +688,10 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **category** | [**List[str]**](str.md)|  | [optional] 
- **vpnr_pos** | [**List[int]**](int.md)|  | [optional] 
- **test_ids** | [**List[int]**](int.md)|  | [optional] 
- **flat_group_structure** | **bool**|  | [optional] [default to False]
+ **test_ids** | [**List[int]**](int.md)| Ids of tests | 
+ **category** | [**List[str]**](str.md)| Category of test data (parameter, result, requirement)  | [optional] 
+ **vpnr_pos** | [**List[int]**](int.md)| This is in another words TestStep position No. Has to be &gt;0 | [optional] 
+ **flat_group_structure** | **bool**| Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. | [optional] [default to False]
 
 ### Return type
 
@@ -706,9 +718,12 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_additional_groups_for_test3**
-> TestSequenceDto get_additional_groups_for_test3(category=category, vpnr_pos=vpnr_pos, test_ids=test_ids, currently_logged_user=currently_logged_user, flat_group_structure=flat_group_structure)
+> TestSequenceDto get_additional_groups_for_test3(test_ids, category=category, vpnr_pos=vpnr_pos, currently_logged_user=currently_logged_user, flat_group_structure=flat_group_structure)
 
-Retrieve a ... by its test id and vpnrPos (TestStep position No.)
+Retrieve a test data by test ids and vpnrPos (TestStep position No.), testseries data, parts data, GBS system instance data
+
+Returns test data organized as a list of test sequences associated with specified test ids. Each returned test sequence contains its metadata and hierarchical"
+component structure (from testStep to additionals ). Beside of this it returns testseries data, parts data, GBS system instance data. Particular endpoint: http://localhost:8083/GBS/webservice/general-book-data/tests?testIds=86215369&testIds=86214852&testIds=86213995&currentlyLoggedUser=Tom%20Joad
 
 ### Example
 
@@ -768,15 +783,15 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
-    category = ['category_example'] # List[str] |  (optional)
-    vpnr_pos = [56] # List[int] |  (optional)
-    test_ids = [56] # List[int] |  (optional)
+    test_ids = [86213995] # List[int] | Ids of tests
+    category = ['SWS_COMPONENT_RESULT'] # List[str] | Category of test data (parameter, result, requirement)  (optional)
+    vpnr_pos = [1] # List[int] | This is in another words TestStep position No. Has to be >0 (optional)
     currently_logged_user = 'currently_logged_user_example' # str |  (optional)
-    flat_group_structure = False # bool |  (optional) (default to False)
+    flat_group_structure = False # bool | Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. (optional) (default to False)
 
     try:
-        # Retrieve a ... by its test id and vpnrPos (TestStep position No.)
-        api_response = api_instance.get_additional_groups_for_test3(category=category, vpnr_pos=vpnr_pos, test_ids=test_ids, currently_logged_user=currently_logged_user, flat_group_structure=flat_group_structure)
+        # Retrieve a test data by test ids and vpnrPos (TestStep position No.), testseries data, parts data, GBS system instance data
+        api_response = api_instance.get_additional_groups_for_test3(test_ids, category=category, vpnr_pos=vpnr_pos, currently_logged_user=currently_logged_user, flat_group_structure=flat_group_structure)
         print("The response of ReportDataSourcesApi->get_additional_groups_for_test3:\n")
         pprint(api_response)
     except Exception as e:
@@ -790,11 +805,11 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **category** | [**List[str]**](str.md)|  | [optional] 
- **vpnr_pos** | [**List[int]**](int.md)|  | [optional] 
- **test_ids** | [**List[int]**](int.md)|  | [optional] 
+ **test_ids** | [**List[int]**](int.md)| Ids of tests | 
+ **category** | [**List[str]**](str.md)| Category of test data (parameter, result, requirement)  | [optional] 
+ **vpnr_pos** | [**List[int]**](int.md)| This is in another words TestStep position No. Has to be &gt;0 | [optional] 
  **currently_logged_user** | **str**|  | [optional] 
- **flat_group_structure** | **bool**|  | [optional] [default to False]
+ **flat_group_structure** | **bool**| Determines if child (nested ) additional groups should be displayed in response on one level with theirs parent additional groups. In GBS reports we resigned from this, as we need to present additional groups in hierarchy. By default value is false. | [optional] [default to False]
 
 ### Return type
 
@@ -816,7 +831,7 @@ Name | Type | Description  | Notes
 **200** | ... retrieved successfully |  -  |
 **400** | Bad request, Test  id number needs to be present! |  -  |
 **500** | Internal server error |  -  |
-**404** | Series ID or ... not found |  -  |
+**404** | Data not found |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
@@ -1033,9 +1048,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_boms_for_test1**
-> BomDto get_boms_for_test1(test_ids=test_ids)
+> BomDto get_boms_for_test1(test_ids)
 
-Retrieve a Bom by its testId
+Retrieve a Bom by testIds
+
+Returns Boms for given testIds. Example of emdpoint: http://localhost:8083/GBS/webservice/parts/boms/tests?testIds=86246337&testIds=86246692&testIds=86247047
 
 ### Example
 
@@ -1095,11 +1112,11 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
-    test_ids = [56] # List[int] |  (optional)
+    test_ids = [86213995] # List[int] | Ids of tests
 
     try:
-        # Retrieve a Bom by its testId
-        api_response = api_instance.get_boms_for_test1(test_ids=test_ids)
+        # Retrieve a Bom by testIds
+        api_response = api_instance.get_boms_for_test1(test_ids)
         print("The response of ReportDataSourcesApi->get_boms_for_test1:\n")
         pprint(api_response)
     except Exception as e:
@@ -1113,7 +1130,7 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **test_ids** | [**List[int]**](int.md)|  | [optional] 
+ **test_ids** | [**List[int]**](int.md)| Ids of tests | 
 
 ### Return type
 
@@ -1886,9 +1903,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_parts_for_tests**
-> PartDto get_parts_for_tests(test_ids=test_ids)
+> PartDto get_parts_for_tests(test_ids)
 
-Retrieve parts by its test Ids
+Retrieve parts by test Ids
+
+Return parts for test Ids. Example of endpoint: http://localhost:8083/GBS/webservice/parts/tests?testIds=86215369&testIds=86214852&testIds=86213995 
 
 ### Example
 
@@ -1948,11 +1967,11 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
-    test_ids = [56] # List[int] |  (optional)
+    test_ids = [86213995] # List[int] | Ids of tests
 
     try:
-        # Retrieve parts by its test Ids
-        api_response = api_instance.get_parts_for_tests(test_ids=test_ids)
+        # Retrieve parts by test Ids
+        api_response = api_instance.get_parts_for_tests(test_ids)
         print("The response of ReportDataSourcesApi->get_parts_for_tests:\n")
         pprint(api_response)
     except Exception as e:
@@ -1966,7 +1985,7 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **test_ids** | [**List[int]**](int.md)|  | [optional] 
+ **test_ids** | [**List[int]**](int.md)| Ids of tests | 
 
 ### Return type
 
@@ -2101,9 +2120,11 @@ Name | Type | Description  | Notes
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_used_equipment_for_series**
-> get_used_equipment_for_series(series_id, vpnr_pos=vpnr_pos)
+> get_used_equipment_for_series(series_id, region=region, vpnr_pos=vpnr_pos)
 
-Retrieve used equipment by its seriesId and vpnrPos (TestStep position No.)
+Retrieve used equipment and devices by its seriesId and vpnrPos (TestStep position No.)
+
+Returns all equipment and devices used in test serie. Example of endpoint: http://localhost:8083/GBS/webservice/equipment-devices/series/85102759?vpnrPos=1
 
 ### Example
 
@@ -2162,12 +2183,13 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.ReportDataSourcesApi(api_client)
-    series_id = 56 # int | The ID of the series
-    vpnr_pos = [56] # List[int] |  (optional)
+    series_id = 134235421 # int | Unique identifier of the Test Series (must be a numeric value)
+    region = 'ENGLISH' # str | This is Region (optional)
+    vpnr_pos = [1] # List[int] | This is in another words TestStep position No. Has to be >0 (optional)
 
     try:
-        # Retrieve used equipment by its seriesId and vpnrPos (TestStep position No.)
-        api_instance.get_used_equipment_for_series(series_id, vpnr_pos=vpnr_pos)
+        # Retrieve used equipment and devices by its seriesId and vpnrPos (TestStep position No.)
+        api_instance.get_used_equipment_for_series(series_id, region=region, vpnr_pos=vpnr_pos)
     except Exception as e:
         print("Exception when calling ReportDataSourcesApi->get_used_equipment_for_series: %s\n" % e)
 ```
@@ -2179,8 +2201,9 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **series_id** | **int**| The ID of the series | 
- **vpnr_pos** | [**List[int]**](int.md)|  | [optional] 
+ **series_id** | **int**| Unique identifier of the Test Series (must be a numeric value) | 
+ **region** | **str**| This is Region | [optional] 
+ **vpnr_pos** | [**List[int]**](int.md)| This is in another words TestStep position No. Has to be &gt;0 | [optional] 
 
 ### Return type
 

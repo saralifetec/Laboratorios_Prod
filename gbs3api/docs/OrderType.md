@@ -20,9 +20,9 @@ Name | Type | Description | Notes
 **build_purpose** | **str** |  | [optional] 
 **sample** | [**List[SampleDataType]**](SampleDataType.md) |  | [optional] 
 **additional_group** | [**List[AdditionalGroup]**](AdditionalGroup.md) |  | [optional] 
-**element_name** | **str** |  | [optional] 
 **pspelement** | **str** |  | [optional] 
 **pbsid** | **str** |  | [optional] 
+**element_name** | **str** |  | [optional] 
 
 ## Example
 

@@ -2,32 +2,25 @@ from calendar import monthrange
 from decimal import ROUND_HALF_UP, Decimal
 import subprocess
 import os
-from warnings import filters
-from flask import app, current_app, flash, render_template, jsonify, request, url_for, redirect, session
+from flask import current_app, flash, render_template, jsonify, request, url_for, redirect, session, render_template_string, send_file
+from services.horasauto_services import verificar_alerta_horas_auto
 from ..models import Cliente, Codigosg, ConfEmailAuto, ConfHorasAuto, ConsultaLayout, ConsultaLayoutUser, Fase, Horas, Laboratorio, Localizacao, Localizacao_ae, Maquina, Motivosatraso, Normas, Normasdocumentos, Projeto, Solicitante, Templatenormas, Testes, Tipotestes, User, ReferenciaAE, DadosGerais
-from ..models import Tipopeca, ConfValidacaoManual, Ensaio, Funcao, Motivosfalhaensaios, Componente, Referencia, MovimentoStock, ConfHorasAuto, ConfHorasAutoCodg, ConfHorasAutoLab, Aviso, Report, ConfEmailAutoLab, PedidoHorasExtra, Componentesae, Tipovolumeae, Codificacaoae, MovimentoAE
+from ..models import Tipopeca, ConfValidacaoManual, Ensaio, Funcao, Motivosfalhaensaios, Componente, Referencia, MovimentoStock, ConfHorasAuto, ConfHorasAutoCodg, ConfHorasAutoLab, Report, ConfEmailAutoLab, PedidoHorasExtra, Componentesae, Tipovolumeae, Codificacaoae, MovimentoAE
 from .. import db
-from app.auth import ldap_authenticate
 from functools import wraps
-from sqlalchemy import Integer, case, extract, select, or_
-from datetime import date, datetime
-from werkzeug.security import check_password_hash
-from werkzeug.security import generate_password_hash
-from sqlalchemy import func, cast, Date
-from sqlalchemy.orm import aliased, joinedload
-from sqlalchemy import and_, or_, func 
+from sqlalchemy import Integer, case, extract, or_, func, cast, Date
+from datetime import date, datetime, timedelta
+from werkzeug.security import check_password_hash, generate_password_hash
 import re
 import json
-from collections import deque
-from docx import Document
-from docx.shared import Cm
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from docx.oxml import OxmlElement
+from collections import deque, defaultdict, Counter
 from pathlib import Path
-from flask import request, jsonify, send_file, current_app
-from copy import deepcopy
-import tempfile
-import unicodedata
+from io import BytesIO
+from openpyxl import Workbook
+from shutil import copy2
+from sqlalchemy.orm import joinedload, aliased
+
+
 
 
 
@@ -283,16 +276,35 @@ def init_routes(app):
     def index():
         ano_atual = datetime.now().year
         mes_atual = datetime.now().month
+
         user = User.query.get(session['user_id'])
-        return render_template('index.html', user=user, ano_atual=ano_atual, mes_atual=mes_atual)
+        alerta_horas_auto = verificar_alerta_horas_auto(user)
+
+        return render_template(
+            'index.html',
+            user=user,
+            ano_atual=ano_atual,
+            mes_atual=mes_atual,
+            alerta_horas_auto=alerta_horas_auto
+        )
 
     @app.route('/home')
     @login_required
     def home():
+
         ano_atual = datetime.now().year
         mes_atual = datetime.now().month
+
         user = User.query.get(session['user_id'])
-        return render_template('index.html', user=user, ano_atual=ano_atual, mes_atual=mes_atual)
+        alerta_horas_auto = verificar_alerta_horas_auto(user)
+
+        return render_template(
+            'index.html',
+            user=user,
+            ano_atual=ano_atual,
+            mes_atual=mes_atual,
+            alerta_horas_auto=alerta_horas_auto
+        )
     
     @app.route('/plme')
     @login_required
@@ -1270,7 +1282,6 @@ def init_routes(app):
     @app.route('/api/resumo_horas_ensaio/<ensaio_numero>')
     @login_required
     def api_resumo_horas_ensaio(ensaio_numero):
-        from collections import defaultdict
     
         ensaio = Ensaio.query.filter_by(ensaio=ensaio_numero).first()
         if not ensaio:
@@ -1366,7 +1377,6 @@ def init_routes(app):
         Retorna os ensaios disponíveis para um laboratório específico ou para todos,
         filtrando apenas os que têm horas disponíveis relevantes.
         """
-        from datetime import datetime, date
     
         # Aceita lab_id como int, string "todos" ou None
         lab_id_raw = request.args.get("lab_id")
@@ -1470,17 +1480,6 @@ def init_routes(app):
     
 
 
-
-
-    @app.route('/horasauto')
-    @login_required
-    def horasauto():
-        user = User.query.get(session['user_id'])
-        tecnicos = User.query.all()
-        import datetime
-        current_date = datetime.date.today().isoformat()
-        return render_template('horasauto.html', user=user, tecnicos=tecnicos, current_date=current_date)
-    
    
     @app.route('/api/ensaios_concluidos', methods=['GET'])
     @login_required
@@ -1600,7 +1599,7 @@ def init_routes(app):
     @app.route('/api/exportar_horas_maquina_por_data', methods=['GET'])
     @login_required
     def exportar_horas_maquina_por_data():
-        from datetime import datetime
+        
 
         data_param = request.args.get('data')
         if not data_param:
@@ -1721,8 +1720,7 @@ def init_routes(app):
     @app.route('/horas_mensal')
     def horas_mensal():
         try:
-            from sqlalchemy.orm import joinedload
-    
+        
             ano = int(request.args.get('ano'))
             mes = int(request.args.get('mes'))
             tecnico_id = int(request.args.get('tecnico_id'))
@@ -1865,7 +1863,6 @@ def init_routes(app):
         if not tecnico_id or not data_export:
             return jsonify({'success': False, 'error': 'Parâmetros obrigatórios não fornecidos.'}), 400
         try:
-            from datetime import datetime
             data_dt = datetime.strptime(data_export, '%Y-%m-%d').date()
             linhas = Horas.query.filter(
                 Horas.tecnico_id == int(tecnico_id),
@@ -1903,7 +1900,6 @@ def init_routes(app):
 
     @app.route('/horas_dia')
     def horas_dia():
-        from datetime import datetime
     
         id_param = request.args.get('id')
         if id_param:
@@ -2094,7 +2090,6 @@ def init_routes(app):
         if not tecnico_id or not data_export:
             return jsonify({'error': 'Parâmetros obrigatórios não fornecidos.'}), 400
 
-        from datetime import datetime
         data_dt = datetime.strptime(data_export, '%Y-%m-%d').date()
 
         # Buscar configuração para ver se é network ou pep
@@ -2412,7 +2407,6 @@ def init_routes(app):
     @app.route('/api/localizacoes_stock')
     def api_localizacoes_stock():
         referencia_id = request.args.get('referencia_id', type=int)
-        from sqlalchemy import func, case
 
         stock_por_localizacao = (
             db.session.query(
@@ -2455,7 +2449,7 @@ def init_routes(app):
         ensaio_id = request.args.get('ensaio_id', type=int)
         if not ensaio_id:
             return jsonify([])
-        from sqlalchemy import func
+        
         rows = (
             db.session.query(
                 Referencia.id,
@@ -4535,7 +4529,6 @@ def init_routes(app):
     
     @app.route('/normas/com_documentos')
     def normas_com_documentos():
-        from .models import Normas, Normasdocumentos
         normas_ids = db.session.query(Normasdocumentos.norma_id).distinct().all()
         ids = [nid[0] for nid in normas_ids]
         normas = Normas.query.filter(Normas.id.in_(ids)).all()
@@ -4611,8 +4604,6 @@ def init_routes(app):
         ensaio_numero = data.get('ensaio')
         ensaio_id = data.get('ensaio_id')
         if not ensaio_id:
-            # Buscar o id do ensaio pelo número, se não veio
-            from .models import Ensaio
             ensaio_obj = Ensaio.query.filter_by(ensaio=ensaio_numero).first()
             if not ensaio_obj:
                 return jsonify({'error': 'Ensaio não encontrado'}), 400
@@ -4635,7 +4626,6 @@ def init_routes(app):
             bemprimeira=data.get('bemprimeira'),
             motivofalhaensaio_id=data.get('motivofalhaensaio_id')
         )
-        from . import db
         db.session.add(novo_teste)
         db.session.commit()
         return jsonify({'success': True, 'message': 'Teste criado com sucesso', 'id': novo_teste.id})
@@ -4674,7 +4664,6 @@ def init_routes(app):
     
     @app.route('/testes/tipo/<int:teste_id>')
     def get_nome_teste_by_teste_id(teste_id):
-        from .models import Tipotestes
         tipo = Tipotestes.query.get(teste_id)
         if not tipo:
             return jsonify({'error': 'Tipo de teste não encontrado'}), 404
@@ -4931,8 +4920,6 @@ def init_routes(app):
             # -----------------------------------------------------------
             #   COPIAR DOCUMENTOS DA NORMA 
             # -----------------------------------------------------------
-            from pathlib import Path
-            from shutil import copy2
 
             NORMAS_DOCS_BASE = r"W:\DEPARTMENTS\LAB\PROCESS\01 QUALITY\01.01 DOCUMENTATION\01.01.05 TEMPLATES\ALL\REPORTS"
 
@@ -5444,7 +5431,6 @@ def init_routes(app):
         if laboratorio_id:
             query = query.filter(Ensaio.laboratorio_id == laboratorio_id)
         ensaios = query.all()
-        from collections import defaultdict, Counter
         labs = {l.id: l.laboratorio for l in Laboratorio.query.all()}
         motivos_dict = {m.id: m.motivo for m in Motivosatraso.query.all()}
         total_por_lab = defaultdict(int)
@@ -5484,9 +5470,6 @@ def init_routes(app):
     @app.route('/consultas/bemaprimeira')
     def consulta_bem_a_primeira():
 
-        from sqlalchemy import cast, Integer, func
-        from collections import defaultdict
-
         ano = request.args.get('ano', type=int)
         mes = request.args.get('mes', type=int)
         laboratorio_id = request.args.get('laboratorio', type=int)
@@ -5497,13 +5480,13 @@ def init_routes(app):
         query = (
             db.session.query(Testes, Ensaio)
             .join(Ensaio, cast(Testes.ensaio_id, Integer) == Ensaio.id)
-            .join(Tipotestes, Tipotestes.id == Testes.teste_id)  # <---- NOVO
+            .join(Tipotestes, Tipotestes.id == Testes.teste_id)  
             .filter(
                 Testes.datafim != None,
                 db.extract('year', Testes.datafim) == ano,
                 db.extract('month', Testes.datafim) == mes,
                 Ensaio.anulado == False,
-                Tipotestes.mediveis == 1             # <---- NOVO
+                Tipotestes.mediveis == 1           
             )
         )
 
@@ -5563,9 +5546,6 @@ def init_routes(app):
         Retorna ensaios terminados entre duas datas, com todos os campos detalhados.
         Parâmetros: dataDe, dataAte, laboratorio (id ou vazio para todos)
         """
-        from datetime import datetime
-        from sqlalchemy import func
-        from .models import Testes, Ensaio, Templatenormas, Horas
         data_de = request.args.get('dataDe')
         data_ate = request.args.get('dataAte')
         laboratorio_id = request.args.get('laboratorio', type=int)
@@ -5620,9 +5600,6 @@ def init_routes(app):
 
     @app.route('/consultas/horasensaios')
     def consulta_horas_ensaios():
-        from datetime import datetime
-        from sqlalchemy import func
-        from .models import Horas, Ensaio, Testes, Tipotestes, User
     
         data_de = request.args.get('dataDe')
         data_ate = request.args.get('dataAte')
@@ -6147,7 +6124,6 @@ def init_routes(app):
         exportado = request.args.get('exportado')
         if not exportado:
             return jsonify([])
-        from datetime import datetime
         try:
             if 'GMT' in exportado:
                 dt = datetime.strptime(exportado, '%a, %d %b %Y %H:%M:%S GMT')
@@ -6222,15 +6198,7 @@ def init_routes(app):
         peps_gerais = data.get('peps_gerais', [])
         horasgerais = data.get('horasgerais')
 
-        limitar_raw = data.get('limitar', 0)
-        try:
-            limitar_int = 1 if int(limitar_raw) == 1 else 0
-        except (TypeError, ValueError):
-            limitar_int = 0
-        
-        if (pepnet or '').strip().lower() != 'network':
-            limitar_int = 0
-
+       
         if not tecnico_id:
             return jsonify({'success': False, 'error': 'Técnico não fornecido.'}), 400
         try:
@@ -6244,7 +6212,6 @@ def init_routes(app):
                 conf.tipo = tipo
                 conf.pepnet = pepnet
                 conf.horasgerais = horasgerais
-                conf.limitar = limitar_int
             else:
                 conf = ConfHorasAuto(
                     tecnico_id=tecnico_id,
@@ -6252,8 +6219,7 @@ def init_routes(app):
                     auto=bool(int(auto)) if auto is not None else False,
                     tipo=tipo,
                     pepnet=pepnet,
-                    horasgerais=horasgerais,
-                    limitar=limitar_int
+                    horasgerais=horasgerais
                 )
                 db.session.add(conf)
                 db.session.flush()  # Para obter conf.id
@@ -6292,7 +6258,6 @@ def init_routes(app):
                     'auto': int(conf.auto),
                     'tipo': conf.tipo,
                     'pepnet': conf.pepnet,
-                    'limitar': conf.limitar,
                     'laboratorios': [lab.laboratorio_id for lab in conf.laboratorios],
                     'peps_gerais': [cod.codigog_id for cod in conf.codigosg]
                 }
@@ -6314,8 +6279,7 @@ def init_routes(app):
             'pepnet': conf.pepnet,
             'horasgerais': conf.horasgerais,
             'laboratorios': [lab.laboratorio_id for lab in conf.laboratorios],
-            'peps_gerais': [codg.codigog_id for codg in conf.codigosg],
-            'limitar': conf.limitar
+            'peps_gerais': [codg.codigog_id for codg in conf.codigosg]
         })
     
     @app.route('/api/gerar_horas_auto', methods=['POST'])
@@ -6805,15 +6769,13 @@ def init_routes(app):
 
         return jsonify(avisos)
 
-    from datetime import date, timedelta
+    
 
     @app.route('/home/avisos_horas')
     def home_avisos_horas():
         tecnico_id = session.get('user_id')
         if not tecnico_id:
             return jsonify({"has_old_unexported": False})
-
-        from datetime import date, timedelta
 
         hoje = date.today()
         inicio_semana = hoje - timedelta(days=hoje.weekday())  # segunda-feira desta semana
@@ -6837,7 +6799,6 @@ def init_routes(app):
         if not tecnico_id:
             return jsonify({"excedeu": False})
 
-        from datetime import date
 
         hoje = date.today()
 
@@ -6896,7 +6857,6 @@ def init_routes(app):
     # Endpoint para listar relatórios pendentes
     @app.route('/home/relatorios_pendentes')
     def home_relatorios_pendentes():
-        from flask import request, session
         user = User.query.get(session['user_id'])
         funcao_id = user.funcao_id
         laboratorio_id = request.args.get('laboratorio_id', type=int)
@@ -6947,7 +6907,6 @@ def init_routes(app):
     
     @app.route('/reports/<int:teste_id>/concluido', methods=['POST'])
     def update_report_concluido(teste_id):
-        from flask import request
         data = request.get_json()
         checked = bool(data.get('concluido', False))
         report = Report.query.filter_by(teste_id=teste_id).first()
@@ -6967,7 +6926,6 @@ def init_routes(app):
     
     @app.route('/home/resumo_horas')
     def home_resumo_horas():
-        from flask import request, session
         user = User.query.get(session['user_id'])
         funcao_id = user.funcao_id
     
@@ -7222,7 +7180,6 @@ def init_routes(app):
         renderiza o template com as variáveis do ensaio e retorna o email pronto.
         """
         try:
-            from flask import render_template_string
             data = request.get_json()
             ensaio_id = data.get('ensaio_id')
             
@@ -7840,12 +7797,6 @@ def init_routes(app):
     
         ref.tipo = data.get('tipo', ref.tipo)
         ref.laboratorio_id = data.get('laboratorio_id') or ref.laboratorio_id
-        #ref.projeto_id = data.get('projeto_id') or None
-        #ref.codificacaoae_id = data.get('codificacaoae_id') or None
-        #ref.tipopeca_id = data.get('tipopeca_id') or None
-        #ref.componente_id = data.get('componente_id') or ref.componente_id
-        #ref.estado_codigo = data.get('estado_codigo') or data.get('estado_id') or ref.estado_codigo
-        #ref.localizacao_atual_id = data.get('localizacao_atual_id') or data.get('localizacao_id') or ref.localizacao_atual_id
         ref.solicitante_id = data.get('solicitante_id') or None
         ref.tipovolumeae_id = data.get('tipovolume_id') or None
         ref.peso = data.get('peso') or None
@@ -8013,6 +7964,7 @@ def init_routes(app):
                 MovimentoAE.localizacao_origem_id,
                 Localizacao_ae.nome.label('origem_nome'),
                 MovimentoAE.observacoes,
+                MovimentoAE.pep,
                 Componentesae.nome.label('componente_nome'),
                 Solicitante.nome.label('responsavel_nome'),
                 Tipovolumeae.nome.label('tipovolume_nome'),
@@ -8046,12 +7998,33 @@ def init_routes(app):
             'localizacao_origem_id': r.localizacao_origem_id,
             'origem_nome': r.origem_nome,
             'observacoes': r.observacoes or '',
+            'pep':r.pep or '',
             'componente_nome': r.componente_nome or '',
             'estado_nome': r.estado_nome or '',
             'responsavel_nome': r.responsavel_nome or '',
             'tipovolume_nome': r.tipovolume_nome or ''
         } for r in rows])
     
+    @app.route('/api/movimentosae/<int:id>', methods=['POST'])
+    @login_required
+    def api_movimentosae_update(id):
+
+        movimento = MovimentoAE.query.get_or_404(id)
+
+        data = request.json
+
+        movimento.localizacao_destino_id = (
+            int(data['localizacao_destino_id'])
+            if data.get('localizacao_destino_id')
+            else None
+        )
+
+        movimento.pep = data.get('pep')
+        movimento.observacoes = data.get('observacoes')
+
+        db.session.commit()
+
+        return jsonify(success=True)
     
     @app.route('/api/movimentosae/<int:mov_id>/planear', methods=['POST'])
     @login_required
@@ -8083,9 +8056,6 @@ def init_routes(app):
     
         return jsonify({'success': True, 'message': 'Envio planeado com sucesso.'})
     
-    
-    from sqlalchemy.orm import joinedload, aliased
-  
     
     @app.route('/api/movimentosae/lotes_planeados', methods=['GET'])
     @login_required
@@ -8393,7 +8363,6 @@ def init_routes(app):
     def api_movimentosae_render_email_envio():
         """Renderiza templates de email para envio externo ou recolha interna."""
         try:
-            from flask import render_template_string
     
             payload = request.get_json(silent=True) or {}
             datahora_str = (payload.get('datahora') or '').strip()
@@ -8674,7 +8643,8 @@ def init_routes(app):
                 'tipovolume_nome': ref.tipovolumeae.nome if ref and ref.tipovolumeae else '',
                 'peso': f'{float(ref.peso):.2f}' if ref and ref.peso is not None else '',
                 'dimensoes': ref.dimensoes if ref and ref.dimensoes else '',
-                'observacoes': mov.observacoes or ''
+                'observacoes': mov.observacoes or '',
+                'pep': mov.pep or ''
             })
     
         rows = sorted(rows_by_slot.values(), key=lambda x: x['datahora'])
@@ -8816,9 +8786,7 @@ def init_routes(app):
     @app.route('/api/ensaios/<string:ensaio_numero>/exportar_custo_pessoa', methods=['GET'])  # compatibilidade
     @login_required
     def exportar_orcamento(ensaio_numero):
-        from io import BytesIO
-        from flask import send_file, jsonify
-        from openpyxl import Workbook
+        
     
         ensaio = Ensaio.query.filter_by(ensaio=ensaio_numero).first()
         if not ensaio:
@@ -8861,7 +8829,7 @@ def init_routes(app):
             tempo_pessoa_peca = float(template.tempopp or 0) if template else 0.0
             custo_pessoa = (tempo_montagem + (tempo_pessoa_peca * qtd)) * custo_hora_pessoa
     
-            duracao_maquina = float(template.duracao or 0) if template else 0.0
+            duracao_maquina = float(t.duracao or 0)
             tempo_maquina_peca = float(template.tempomp or 0) if template else 0.0
             custo_hora_maquina = float(t.maquina.custo) if t.maquina and t.maquina.custo is not None else 0.0
             custo_maquina = (duracao_maquina + (tempo_maquina_peca * qtd)) * custo_hora_maquina

@@ -473,7 +473,7 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.TestdataDeprecatedUseRequestInsteadApi(api_client)
-    body = None # bytes |  (optional)
+    body = None # bytearray |  (optional)
 
     try:
         # DEPRECATED! Use PUT instead of POST; Upload test data using TestDataXML format.
@@ -489,7 +489,7 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **bytes**|  | [optional] 
+ **body** | **bytearray**|  | [optional] 
 
 ### Return type
 
@@ -536,7 +536,7 @@ configuration = gbs3api.Configuration(
 with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.TestdataDeprecatedUseRequestInsteadApi(api_client)
-    body = None # bytes |  (optional)
+    body = None # bytearray |  (optional)
 
     try:
         # Upload test data using TestDataXML format.
@@ -552,7 +552,7 @@ with gbs3api.ApiClient(configuration) as api_client:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **bytes**|  | [optional] 
+ **body** | **bytearray**|  | [optional] 
 
 ### Return type
 

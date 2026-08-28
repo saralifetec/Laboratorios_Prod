@@ -1,4 +1,24 @@
-urllib3 >= 2.1.0, < 3.0.0
-python_dateutil >= 2.8.2
-pydantic >= 2.11
-typing-extensions >= 4.7.1
+Flask==3.1.2
+Flask-SQLAlchemy==3.1.1
+SQLAlchemy==2.0.46
+Werkzeug==3.1.5
+
+ldap3==2.9.1
+
+PyMySQL==1.1.2
+
+openpyxl==3.1.5
+xlsxwriter==3.2.9
+
+python-docx==1.2.0
+python-pptx==1.0.2
+Pillow==12.1.0
+
+requests==2.33.1
+
+lxml==6.0.2
+
+pywin32==312
+
+-e ./gbs3api
+-e ./gbs4api

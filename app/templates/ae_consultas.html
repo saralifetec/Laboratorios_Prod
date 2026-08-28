@@ -497,7 +497,8 @@ function exportarexcel() {
     i18n.t('field.peso'),
     i18n.t('field.dimensoes'),
     i18n.t('field.observacoes'),
-    i18n.t('field.horas')
+    i18n.t('field.pep'),
+    i18n.t('field.data')
     ].map(csvCell).join(';'));
 
     rows.forEach(r => {
@@ -538,6 +539,7 @@ function exportarexcel() {
                 m.peso || '',
                 m.dimensoes || '',
                 m.observacoes || '',
+                m.pep || '',
                 m.data_confirmacao || ''
             ].map(csvCell).join(';'));
         });
@@ -775,6 +777,7 @@ function renderHistorico(rows) {
                         <td>${m.dimensoes || ''}</td>
                         <td>${m.observacoes || ''}</td>
                         <td>${m.data_confirmacao || ''}</td>
+                        <td>${m.pep || ''}</td>
                     </tr>
                 `;
             });
@@ -796,7 +799,8 @@ function renderHistorico(rows) {
                             <th><span data-i18n="field.peso">Peso</span></th>
                             <th><span data-i18n="field.dimensoes">Dimensões</span></th>
                             <th><span data-i18n="field.observacoes">Observações</span></th>
-                            <th><span data-i18n="field.horas">Horas</span></th>
+                            <th><span data-i18n="field.data">Data</span></th>
+                            <th><span data-i18n="field.pep">PEP</span></th>
                         </tr>
                     </thead>
                     <tbody>${detalheHtml}</tbody>

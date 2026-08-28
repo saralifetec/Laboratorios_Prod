@@ -104,7 +104,63 @@
   font-size: 14px;
 }
 
+.alert-horas-auto {
+    background: linear-gradient(90deg, #fff3cd, #ffeeba);
+    border: 1px solid #ffeeba;
+    border-left: 5px solid #ffc107;
 
+    border-radius: 10px;
+    padding: 12px 16px;
+
+    animation: pulseAlert 2s infinite;
+}
+
+@keyframes pulseAlert {
+    0% { box-shadow: 0 0 0 0 rgba(255,193,7,0.4); }
+    70% { box-shadow: 0 0 0 8px rgba(255,193,7,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,193,7,0); }
+}
+
+.table-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+#resumoHorasAuto td,
+#resumoHorasAuto th {
+    padding: 3px 4px;
+    min-width: 50px;
+    font-size: 11px;
+}
+
+#resumoHorasAutoDetalhe td,
+#resumoHorasAutoDetalhe th {
+    padding: 3px 4px;
+    min-width: 50px;
+    font-size: 11px;
+}
+
+#resumoHorasAutoNetwork td,
+#resumoHorasAutoNetwork th {
+    padding: 3px 4px;
+    min-width: 50px;
+    font-size: 11px;
+}
+
+#resumoHorasAuto td:first-child {
+    white-space: nowrap;
+}
+
+#modalHorasAuto .modal-body {
+    min-height: 560px;   /* ajusta ao teu gosto */
+    max-height: 560px;
+    overflow-y: auto;
+}
+
+#selectUserHorasAuto {
+    text-align: center;
+    text-align-last: center;
+}
 
 
 </style>
@@ -117,21 +173,56 @@
 			<div class="card-header">
 				<div class="card-title">
 					<div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio"><b>Laboratório</b></label>
+            <div class="col-md-6">
+                <div class="d-flex align-items-center gap-2">
+                    <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio"><b>Laboratório</b></label>
 
-                                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;" {% if user.funcao_id == 1 %} disabled {% endif %}>
-                                     
-                                </select>
-                            </div>
-                        </div>
+                    <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;" {% if user.funcao_id == 1 %} disabled {% endif %}>
+                          
+                    </select>
+                </div>
+            </div>
 						
 					</div>
 
 				</div>			
 			</div>        
-			<div class="card-body">            
+			<div class="card-body">   
+
+        {% if alerta_horas_auto %}
+          <div class="alert-horas-auto shadow-sm mb-3">
+
+            <div class="d-flex align-items-center justify-content-between">
+
+                <div class="d-flex align-items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation text-warning fs-4"></i>
+
+                    <div>
+                        <strong data-i18n="field.exp_horas_pendente">
+                            Exportação de horas pendente
+                        </strong><br>
+
+                        <small data-i18n="field.nao_geradas">
+                            As horas automáticas ainda não foram geradas esta semana
+                        </small>
+                    </div>
+                </div>
+
+                <button
+                    class="btn btn-sm btn-warning"
+                    onclick="window.location.href='{{ url_for('horas_horasauto.horas_horasauto') }}'">
+
+                    Gerar
+
+                </button>
+
+            </div>
+
+        </div>
+
+        {% endif %}
+        
+
 				<div class="row">
 						<h6 class="fw-bold" data-i18n="index.pending_tests">Ensaios Pendentes</h6>
 						<table id="homeEnsaiosTable" class="table table-striped table-sm" style="width:100%">
@@ -335,6 +426,123 @@
   </div>
 </div>
 
+<div class="modal fade" id="modalHorasAuto">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+      <div class="modal-header">
+        <h5 data-i18n="field.gerar_horas_auto">
+            Gerar Horas Automaticamente
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <!--  VIEW PREVIEW -->
+      <div id="viewPreview">
+
+        <div class="modal-body">
+
+          <div class="alert alert-warning">
+            <span data-i18n="field.horasauto_confirmacao"></span>
+          </div>
+
+          <div class="d-flex justify-content-between mb-2">
+
+            <button id="btnPrev" class="btn btn-sm btn-light" onclick="periodoAnterior()">←</button>
+
+            <div id="periodoLabel"></div>
+
+            <button id="btnNext" class="btn btn-sm btn-light" onclick="proximoPeriodo()">→</button>
+
+          </div>
+
+          <div id="resumoHorasAuto"></div>
+
+        </div>
+
+        <div class="modal-footer">
+
+          <button class="btn btn-light btn-sm" data-bs-dismiss="modal">Cancelar</button>
+
+          <button class="btn btn-success btn-sm" onclick="irParaDetalhe()">
+              Seguinte
+          </button>
+
+        </div>
+
+      </div>
+
+      <!--  VIEW DETALHE -->
+      <div id="viewDetalhe" style="display:none;">
+
+        <div class="modal-body">
+
+          <h6 id="tituloDetalhe" class="fw-bold mb-2">
+              Resumo por Pessoa
+          </h6>
+          <div class="row">
+            <div class="col-4"></div>
+            <div class="col-4">
+              <select id="selectUserHorasAuto" class="form-control mb-2"></select>
+            </div>
+            <div class="col-4"></div>
+          </div>
+
+          <div id="resumoHorasAutoDetalhe"></div>
+
+        </div>
+
+        <div class="modal-footer d-flex justify-content-between">
+
+          <button class="btn btn-light btn-sm" onclick="voltarPreview()">Voltar</button>
+
+          <button class="btn btn-success btn-sm" onclick="irParaNetwork()">Seguinte</button>
+
+        </div>
+
+      </div>
+
+      <!--  VIEW NETWORKS -->
+      <div id="viewNetwork" style="display:none;">
+
+        <div class="modal-body">
+
+          <h6 id="tituloNetwork" class="fw-bold mb-2">
+              Horas a descontar em Networks
+          </h6>
+
+          <div id="resumoHorasAutoNetwork"></div>
+
+        </div>
+
+        <div class="progress mt-3" style="height: 20px;">
+          <div id="progressBarHorasAuto" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">
+          </div>
+        </div>
+
+        <div id="progressLabelHorasAuto" class="small text-muted mt-2 text-center"></div>
+
+
+        <div class="modal-footer d-flex justify-content-between">
+
+          <button class="btn btn-light btn-sm" onclick="voltarDetalhe()">
+              Voltar
+          </button>
+
+          <button id="btnGerarHorasAuto" class="btn btn-success btn-sm" onclick="gerarHorasAuto()">
+              Gerar
+          </button>
+
+        </div>
+
+        
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
 
 {% endblock %}
 
@@ -347,6 +555,566 @@
 <script type="text/javascript" src="https://cdn.datatables.net/datetime/1.1.1/js/dataTables.dateTime.min.js"></script>
 
 <script>
+///////////////////////////////////////////////////
+//GERAR HORAS AUTO
+let periodoAtualLabel = "";
+
+//abrir modal
+function abrirModalHorasAuto() {
+
+    document.getElementById("viewPreview").style.display = "block";
+    document.getElementById("viewDetalhe").style.display = "none";
+
+
+    fetch('/horasauto/preview')
+        .then(res => res.json())
+        .then(res => {
+
+            if (!res.ok) return;
+
+            periodosHorasAuto = res.periodos;
+
+            periodoAtualIndex = Math.max(
+                0,
+                periodosHorasAuto.length - 1
+            );
+
+            mostrarPeriodoAtual();
+
+            new bootstrap.Modal(
+                document.getElementById('modalHorasAuto')
+            ).show();
+        });
+}
+
+function atualizarProgress(percentagem, texto) {
+
+    const bar = document.getElementById("progressBarHorasAuto");
+    const label = document.getElementById("progressLabelHorasAuto");
+
+    bar.style.width = percentagem + "%";
+    bar.setAttribute("aria-valuenow", percentagem);
+
+    bar.innerText = percentagem + "%";
+
+    label.innerText = texto;
+}
+
+function gerarHorasAuto() {
+
+    if (!temHorasParaGerar()) {
+        alert("Não existem horas para gerar.");
+        return;
+    }
+
+    atualizarProgress(10, "A preparar dados...");
+
+    fetch('/horasauto/gerar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            periodos: [{
+                start: periodosHorasAuto[periodoAtualIndex].start,
+                end: periodosHorasAuto[periodoAtualIndex].end,
+                resumo: dadosHorasAuto
+            }]
+        })
+    })
+    .then(res => res.json())
+    .then(res => {
+
+        atualizarProgress(100, "Concluído!");
+
+        console.log(res);
+
+        if (!res.ok) {
+            alert("Sem horas suficientes!");
+            return;
+        }
+
+        alert("Horas geradas com sucesso!");
+
+        //  desativar botão
+        document.getElementById("btnGerarHorasAuto").disabled = true;
+
+    });
+}
+
+function calcularTotalHorasGerar() {
+
+    let total = 0;
+
+    Object.values(dadosHorasAuto).forEach(user => {
+
+        if (user.pepnet !== "network") return;
+
+        diasPeriodo.forEach(d => {
+            total += (user.dias[d]?.n_gerar || 0);
+        });
+    });
+
+    return total;
+}
+
+
+function irParaNetwork() {
+
+    document.getElementById("viewDetalhe").style.display = "none";
+    document.getElementById("viewNetwork").style.display = "block";
+
+    preencherTabelaNetwork();
+
+    const btn = document.getElementById("btnGerarHorasAuto");
+
+    btn.disabled = !temHorasParaGerar();
+}
+
+function voltarDetalhe() {
+
+    document.getElementById("viewNetwork").style.display = "none";
+    document.getElementById("viewDetalhe").style.display = "block";
+}
+
+function preencherTabelaNetwork() {
+
+    const container = document.getElementById("resumoHorasAutoNetwork");
+    container.innerHTML = "";
+
+    const dias = diasPeriodo;
+
+    const table = document.createElement("table");
+    table.className = "table table-sm table-bordered text-center small";
+
+    let thead = "<thead><tr><th>Nome</th>";
+
+    dias.forEach(d => {
+        const data = new Date(d);
+        const diaSemana = data.toLocaleDateString(undefined, { weekday: 'short' });
+        thead += `<th>${diaSemana}</th>`;
+    });
+
+    thead += "</tr></thead>";
+
+    let tbody = "<tbody>";
+
+    Object.values(dadosHorasAuto).forEach(user => {
+
+        //  FILTRO NETWORK
+        if (user.pepnet !== "network") return;
+
+        tbody += `<tr><td class="text-start">${user.nome}</td>`;
+
+        dias.forEach(d => {
+
+            const info = user.dias[d];
+            const v = info?.n_gerar || 0;
+
+            tbody += `
+                <td>
+                    ${v ? v + "h" : "-"}
+                </td>
+            `;
+        });
+
+        tbody += "</tr>";
+    });
+
+    tbody += "</tbody>";
+
+    table.innerHTML = thead + tbody;
+    container.appendChild(table);
+
+    //  calcular total gerar
+    const totalGerar = calcularTotalHorasGerar();
+
+    //  ir buscar horas disponíveis
+    fetch('/horasauto/disponivel')   
+        .then(res => res.json())
+        .then(res => {
+
+            const totalDisponivel = res.total || 0;
+
+            mostrarResumoNetwork(totalGerar, totalDisponivel);
+
+        });
+    }
+
+function temHorasParaGerar() {
+
+    let total = 0;
+
+    Object.values(dadosHorasAuto).forEach(user => {
+
+        diasPeriodo.forEach(d => {
+            const info = user.dias[d];
+            if (!info) return;
+
+            total += (info.n_gerar || 0);
+            total += (info.g_gerar || 0);
+        });
+
+    });
+
+    return total > 0;
+}    
+
+function mostrarResumoNetwork(totalGerar, totalDisponivel) {
+
+    const container = document.getElementById("resumoHorasAutoNetwork");
+
+    const { totalCodigosG, totalPepEnsaios } = calcularTotaisExtra();
+
+    const resumo = document.createElement("div");
+    resumo.className = "mt-3 p-2 border-top";
+
+    resumo.innerHTML = `
+        <div class="d-flex flex-column gap-1">
+
+            <div>
+                <strong>Total a gerar:</strong> ${totalGerar.toFixed(2)}h
+            </div>
+
+            <div>
+                <strong>Total disponível:</strong> ${totalDisponivel.toFixed(2)}h
+            </div>
+
+            <div class="mt-2">
+                <strong>Códigos G:</strong> ${totalCodigosG.toFixed(2)}h
+            </div>
+
+            <div>
+                <strong>PEP (Ensaios):</strong> ${totalPepEnsaios.toFixed(2)}h
+            </div>
+
+        </div>
+    `;
+
+    container.appendChild(resumo);
+}
+
+
+function calcularTotaisExtra() {
+
+    let totalCodigosG = 0;
+    let totalPepEnsaios = 0;
+
+    Object.values(dadosHorasAuto).forEach(user => {
+
+        diasPeriodo.forEach(d => {
+
+            const info = user.dias[d];
+
+            if (!info) return;
+
+            // códigos G (todos)
+            totalCodigosG += (info.g_gerar || 0);
+
+            // PEP (ensaios)
+            if (user.pepnet === "pep") {
+                totalPepEnsaios += (info.n_gerar || 0);
+            }
+
+        });
+
+    });
+
+    return {
+        totalCodigosG,
+        totalPepEnsaios
+    };
+}
+
+
+function preencherTabelaUtilizador(user) {
+
+    const container = document.getElementById("resumoHorasAutoDetalhe");
+    container.innerHTML = "";
+
+    const table = document.createElement("table");
+    table.className = "table table-sm table-bordered text-center small";
+
+    let thead = "<thead><tr><th></th>";
+
+    diasPeriodo.forEach(d => {
+        const data = new Date(d);
+        const diaSemana = data.toLocaleDateString(undefined, { weekday: 'short' });
+        thead += `<th>${diaSemana}</th>`;
+    });
+
+    thead += "</tr></thead>";
+
+    let tbody = "<tbody>";
+
+    // TOTAL
+    tbody += `<tr><td class='text-start fw-bold'>Total</td>`;
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.total || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+
+    // 🔹 ENSAIOS BLOCO
+    tbody += `<tr>
+        <td colspan="${diasPeriodo.length + 1}" class="text-start fw-bold bg-light">
+            Ensaios
+        </td>
+    </tr>`;
+
+    // Necessárias
+    tbody += "<tr><td class='text-start'>Necessárias</td>";
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.n_necessario || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+    // Colocadas
+    tbody += "<tr><td class='text-start'>Colocadas</td>";
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.n_existente || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+
+    // 🔹 GERAIS BLOCO
+    tbody += `<tr>
+        <td colspan="${diasPeriodo.length + 1}" class="text-start fw-bold bg-light">
+            Gerais
+        </td>
+    </tr>`;
+
+    // Necessárias
+    tbody += "<tr><td class='text-start'>Necessárias</td>";
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.g_necessario || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+    // Colocadas
+    tbody += "<tr><td class='text-start'>Colocadas</td>";
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.g_existente || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+
+    // 🔹 A GERAR BLOCO
+    tbody += `<tr>
+        <td colspan="${diasPeriodo.length + 1}" class="text-start fw-bold bg-light">
+            A Gerar
+        </td>
+    </tr>`;
+
+    // Ensaios
+    tbody += "<tr><td class='text-start'>Ensaios</td>";
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.n_gerar || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+    // Gerais
+    tbody += "<tr><td class='text-start'>Gerais</td>";
+    diasPeriodo.forEach(d => {
+        const v = user.dias[d]?.g_gerar || 0;
+        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
+    });
+    tbody += "</tr>";
+
+    tbody += "</tbody>";
+
+
+    table.innerHTML = thead + tbody;
+    container.appendChild(table);
+}
+
+function preencherTabelaPreview(resumo) {
+
+    if (!resumo || Object.keys(resumo).length === 0) return;
+
+    const container = document.getElementById("resumoHorasAuto");
+    container.innerHTML = "";
+
+    const dias = Object.keys(Object.values(resumo)[0].dias).sort();
+
+    const table = document.createElement("table");
+    table.className = "table table-sm table-bordered text-center small";
+
+    let thead = "<thead><tr><th>Nome</th>";
+
+    dias.forEach(d => {
+        const data = new Date(d);
+        const diaSemana = data.toLocaleDateString(undefined, { weekday: 'short' });
+        thead += `<th>${diaSemana}</th>`;
+    });
+
+    thead += "</tr></thead>";
+
+    let tbody = "<tbody>";
+
+    Object.values(resumo).forEach(user => {
+
+        tbody += `<tr><td class="text-start">${user.nome}</td>`;
+
+        dias.forEach(d => {
+            const info = user.dias[d];
+            const total = info?.total || 0;
+
+            tbody += `
+                <td>
+                    ${total > 0 ? total + "h" : "-"}
+                </td>
+            `;
+        });
+
+        tbody += "</tr>";
+    });
+
+    tbody += "</tbody>";
+
+    table.innerHTML = thead + tbody;
+    container.appendChild(table);
+}
+
+function irParaDetalhe() {
+
+    document.getElementById("viewPreview").style.display = "none";
+    document.getElementById("viewDetalhe").style.display = "block";
+
+    // inicializar detalhe
+    preencherSelectUtilizadores();
+    mostrarUtilizadorSelecionado();
+    document.getElementById("tituloDetalhe").innerText =`Resumo por Pessoa (${periodoAtualLabel})`;
+
+}
+
+function voltarPreview() {
+
+    document.getElementById("viewDetalhe").style.display = "none";
+    document.getElementById("viewPreview").style.display = "block";
+    document.getElementById("resumoHorasAutoDetalhe").innerHTML = "";
+}
+
+
+function mostrarPeriodoAtual() {
+
+    if (!periodosHorasAuto.length) return;
+
+    const p = periodosHorasAuto[periodoAtualIndex];
+
+    document.getElementById("periodoLabel").innerText =
+        `${p.start} → ${p.end} (${periodoAtualIndex + 1}/${periodosHorasAuto.length})`;
+
+    dadosHorasAuto = p.resumo;
+
+    diasPeriodo = Object.keys(
+        Object.values(p.resumo)[0].dias
+    ).sort();
+
+    periodoAtualLabel = `${p.start} → ${p.end}`;
+
+    preencherTabelaPreview(p.resumo);
+
+    atualizarBotoes();
+}
+
+function preencherSelectUtilizadores() {
+
+    const select = document.getElementById("selectUserHorasAuto");
+    select.innerHTML = "";
+
+    Object.entries(dadosHorasAuto).forEach(([userId, user]) => {
+
+        const opt = document.createElement("option");
+        opt.value = userId;
+        opt.textContent = user.nome;
+
+        select.appendChild(opt);
+    });
+
+    if (select.options.length > 0) {
+        select.value = select.options[0].value;
+    }
+}
+
+
+function mostrarUtilizadorSelecionado() {
+
+    const userId = document.getElementById("selectUserHorasAuto").value;
+
+    const user = dadosHorasAuto[userId];
+
+    preencherTabelaUtilizador(user);
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const select = document.getElementById("selectUserHorasAuto");
+
+    if (select) {
+        select.addEventListener("change", mostrarUtilizadorSelecionado);
+    }
+
+});
+
+
+function periodoAnterior() {
+    if (periodoAtualIndex > 0) {
+        periodoAtualIndex--;
+        mostrarPeriodoAtual();
+    }
+}
+
+function proximoPeriodo() {
+    if (periodoAtualIndex < periodosHorasAuto.length - 1) {
+        periodoAtualIndex++;
+        mostrarPeriodoAtual();
+    }
+}
+
+function atualizarBotoes() {
+
+    document.getElementById("btnPrev").disabled =
+        periodoAtualIndex === 0;
+
+    document.getElementById("btnNext").disabled =
+        periodoAtualIndex === periodosHorasAuto.length - 1;
+}
+
+
+
+function transformarParaMatriz(resumo) {
+
+    const pessoas = new Set();
+
+    // recolher todos os nomes
+    Object.values(resumo).forEach(lista => {
+        lista.forEach(nome => pessoas.add(nome));
+    });
+
+    const matriz = [];
+
+    pessoas.forEach(nome => {
+
+        const linha = {
+            nome: nome,
+            dias: {}
+        };
+
+        Object.keys(resumo).forEach(dia => {
+            linha.dias[dia] = resumo[dia].includes(nome);
+        });
+
+        matriz.push(linha);
+    });
+
+    return matriz;
+}
+
 /////////////////////////////////////////////////////
 
 document.querySelectorAll('select option').forEach(opt => {
@@ -538,13 +1306,21 @@ document.addEventListener('DOMContentLoaded', async function () {
       { data: 'tipopeca' },
       { data: 'solicitante' },
       // 6: datasolicitada
-      { data: 'datasolicitada',
-        render: function (val, type) {
-          // Para ordenar, devolver como 'YYYY-MM-DD' (natural). Para display, podes formatar.
-          if (!val) return type === 'sort' ? '' : '';
-          return val;
+      {
+    data: 'datasolicitada',
+    render: function (val, type) {
+
+        if (!val ||
+            val.startsWith('0000-00-00')) {
+
+            return type === 'sort'
+                ? '9999-12-31'
+                : '';
         }
-      },
+
+        return val;
+    }
+}
     ],
     order: [[5, 'asc']], // ordenar por datasolicitada asc
     language: { url: i18n.getDataTablesLanguageUrl() },
@@ -554,16 +1330,23 @@ document.addEventListener('DOMContentLoaded', async function () {
     createdRow: function (row, data) {
       // Pintar a laranja se datasolicitada < hoje
       const ds = data.datasolicitada;
-      if (ds) {
-        const hoje = new Date();
-        hoje.setHours(0, 0, 0, 0);
-      
-        const [dia, mes, ano] = ds.split('-').map(Number);
-        const d = new Date(ano, mes - 1, dia);
-      
-        if (!Number.isNaN(d.getTime()) && d < hoje) {
-          $('td', row).eq(5).css({ 'background': '#fff4d6' });
-        }
+
+      if (ds && ds !== '0000-00-00') {
+
+          const hoje = new Date();
+          hoje.setHours(0, 0, 0, 0);
+
+          const [ano, mes, dia] = ds.split('-').map(Number);
+
+          const d = new Date(ano, mes - 1, dia);
+
+          if (!Number.isNaN(d.getTime()) && d < hoje) {
+
+              $('td', row).eq(5).css({
+                  'background': '#fff4d6'
+              });
+
+          }
       }
     }
   });
@@ -769,7 +1552,7 @@ function atualizarVisibilidadeAvisosHorasCard() {
     const apenasEu = Number(me.funcao_id) === 1 ? 'true' : 'false';
     
     try {
-      const res = await fetch(`/home/resumo_horas?laboratorio_id=${encodeURIComponent(labId)}&ano=${encodeURIComponent(ano)}&mes=${encodeURIComponent(mes)}&apenas_eu=${apenasEu}`);
+      const res = await fetch(`index/home/resumo_horas?laboratorio_id=${encodeURIComponent(labId)}&ano=${encodeURIComponent(ano)}&mes=${encodeURIComponent(mes)}&apenas_eu=${apenasEu}`);
       const data = await res.json();
       resumoHorasTable.clear();
       resumoHorasTable.rows.add(data);

@@ -9,8 +9,8 @@ Name | Type | Description | Notes
 **platform_code** | **str** |  | 
 **market_code** | **str** |  | 
 **producer** | **str** |  | 
-**element_name** | **str** |  | [optional] 
 **kbacategory** | **str** |  | [optional] 
+**element_name** | **str** |  | [optional] 
 
 ## Example
 

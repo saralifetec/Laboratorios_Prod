@@ -10,8 +10,8 @@ Name | Type | Description | Notes
 **description** | **str** |  | [optional] 
 **type** | **str** |  | [optional] 
 **additional_group** | [**AdditionalGroup**](AdditionalGroup.md) |  | [optional] 
-**element_name** | **str** |  | [optional] 
 **pbsbom_id** | **str** |  | [optional] 
+**element_name** | **str** |  | [optional] 
 
 ## Example
 

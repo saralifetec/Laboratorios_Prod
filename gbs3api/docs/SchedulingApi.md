@@ -14,6 +14,7 @@ Method | HTTP request | Description
 [**get_event_colors**](SchedulingApi.md#get_event_colors) | **GET** /webservice/scheduling/event-colors | DEPRECATED; Should be included in openapi definition; Get all possible event colors
 [**get_event_type**](SchedulingApi.md#get_event_type) | **GET** /webservice/scheduling/test-types/{id} | Find a test type for an event by its id
 [**get_event_types**](SchedulingApi.md#get_event_types) | **GET** /webservice/scheduling/test-types | Get test types for events
+[**get_event_version_by_id**](SchedulingApi.md#get_event_version_by_id) | **GET** /webservice/scheduling/events/{id}/version | Get the current version of an event by its ID
 [**get_events**](SchedulingApi.md#get_events) | **GET** /webservice/scheduling/events | Get events through several different query parameters
 [**get_project_filter**](SchedulingApi.md#get_project_filter) | **GET** /webservice/scheduling/project-filters/{id} | Find a project filter by its id
 [**get_project_filters**](SchedulingApi.md#get_project_filters) | **GET** /webservice/scheduling/project-filters | Get all project filters for the authenticated user
@@ -22,6 +23,8 @@ Method | HTTP request | Description
 [**get_resource_type**](SchedulingApi.md#get_resource_type) | **GET** /webservice/scheduling/resource-types/{id} | Find a resource type by its id
 [**get_resources**](SchedulingApi.md#get_resources) | **GET** /webservice/scheduling/resources | Get resources through query parameters
 [**get_statuses**](SchedulingApi.md#get_statuses) | **GET** /webservice/scheduling/statuses | Get all possible test statuses
+[**get_test_series**](SchedulingApi.md#get_test_series) | **GET** /webservice/scheduling/events/series | Get series events by locations and time range
+[**split_event**](SchedulingApi.md#split_event) | **POST** /webservice/scheduling/events/{id}/split | Split events
 [**update_events**](SchedulingApi.md#update_events) | **PUT** /webservice/scheduling/events | Save one or more existing events
 [**update_project_filter**](SchedulingApi.md#update_project_filter) | **PUT** /webservice/scheduling/project-filters/{id} | Update an already existing filter
 [**update_resource_filter**](SchedulingApi.md#update_resource_filter) | **PUT** /webservice/scheduling/resource-filters/{id} | Update an already existing filter
@@ -1064,6 +1067,110 @@ Name | Type | Description  | Notes
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **get_event_version_by_id**
+> int get_event_version_by_id(id)
+
+Get the current version of an event by its ID
+
+### Example
+
+* Api Key Authentication (APIKeyV1):
+* Api Key Authentication (CredentialsParameter):
+* Basic Authentication (BasicAuth):
+* Api Key Authentication (JWTCookie):
+* Bearer (JWT) Authentication (JWT):
+
+```python
+import gbs3api
+from gbs3api.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /GBS
+# See configuration.py for a list of all supported configuration parameters.
+configuration = gbs3api.Configuration(
+    host = "/GBS"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure API key authorization: APIKeyV1
+configuration.api_key['APIKeyV1'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['APIKeyV1'] = 'Bearer'
+
+# Configure API key authorization: CredentialsParameter
+configuration.api_key['CredentialsParameter'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['CredentialsParameter'] = 'Bearer'
+
+# Configure HTTP basic authorization: BasicAuth
+configuration = gbs3api.Configuration(
+    username = os.environ["USERNAME"],
+    password = os.environ["PASSWORD"]
+)
+
+# Configure API key authorization: JWTCookie
+configuration.api_key['JWTCookie'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['JWTCookie'] = 'Bearer'
+
+# Configure Bearer authorization (JWT): JWT
+configuration = gbs3api.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+with gbs3api.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = gbs3api.SchedulingApi(api_client)
+    id = 56 # int | The ID of the event
+
+    try:
+        # Get the current version of an event by its ID
+        api_response = api_instance.get_event_version_by_id(id)
+        print("The response of SchedulingApi->get_event_version_by_id:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling SchedulingApi->get_event_version_by_id: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **int**| The ID of the event | 
+
+### Return type
+
+**int**
+
+### Authorization
+
+[APIKeyV1](../README.md#APIKeyV1), [CredentialsParameter](../README.md#CredentialsParameter), [BasicAuth](../README.md#BasicAuth), [JWTCookie](../README.md#JWTCookie), [JWT](../README.md#JWT)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Event found |  -  |
+**404** | Event not found |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **get_events**
 > List[ScheduleDto] get_events(var_from=var_from, to=to, resource_id=resource_id, location_id=location_id, resource_type_id=resource_type_id, event_type=event_type, event_id=event_id, fetch_strategy=fetch_strategy, unscheduled=unscheduled, location_fetch_strategy=location_fetch_strategy, status=status)
 
@@ -1915,6 +2022,222 @@ This endpoint does not need any parameter.
 | Status code | Description | Response headers |
 |-------------|-------------|------------------|
 **200** | All event colors |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_test_series**
+> List[ScheduleDto] get_test_series(var_from=var_from, to=to, location_id=location_id, status=status)
+
+Get series events by locations and time range
+
+### Example
+
+* Api Key Authentication (APIKeyV1):
+* Api Key Authentication (CredentialsParameter):
+* Basic Authentication (BasicAuth):
+* Api Key Authentication (JWTCookie):
+* Bearer (JWT) Authentication (JWT):
+
+```python
+import gbs3api
+from gbs3api.models.schedule_dto import ScheduleDto
+from gbs3api.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /GBS
+# See configuration.py for a list of all supported configuration parameters.
+configuration = gbs3api.Configuration(
+    host = "/GBS"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure API key authorization: APIKeyV1
+configuration.api_key['APIKeyV1'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['APIKeyV1'] = 'Bearer'
+
+# Configure API key authorization: CredentialsParameter
+configuration.api_key['CredentialsParameter'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['CredentialsParameter'] = 'Bearer'
+
+# Configure HTTP basic authorization: BasicAuth
+configuration = gbs3api.Configuration(
+    username = os.environ["USERNAME"],
+    password = os.environ["PASSWORD"]
+)
+
+# Configure API key authorization: JWTCookie
+configuration.api_key['JWTCookie'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['JWTCookie'] = 'Bearer'
+
+# Configure Bearer authorization (JWT): JWT
+configuration = gbs3api.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+with gbs3api.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = gbs3api.SchedulingApi(api_client)
+    var_from = 'var_from_example' # str | The from date to query; Events starting before but ending after this date are included. Formatted as yyyy-MM-ddTHH:mm:ss.SSSZ (optional)
+    to = 'to_example' # str | The to date to query; Events starting before but ending after this date are included. Formatted as yyyy-MM-ddTHH:mm:ss.SSSZ (optional)
+    location_id = [56] # List[int] | Only series with at least one direct child in one of the passed locations will be returned. Multiple ids are queried like \"locationId=1234&locationId=5678&locationId=9012\" (optional)
+    status = ['status_example'] # List[str] | Optional statuses to filter by (optional)
+
+    try:
+        # Get series events by locations and time range
+        api_response = api_instance.get_test_series(var_from=var_from, to=to, location_id=location_id, status=status)
+        print("The response of SchedulingApi->get_test_series:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling SchedulingApi->get_test_series: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **var_from** | **str**| The from date to query; Events starting before but ending after this date are included. Formatted as yyyy-MM-ddTHH:mm:ss.SSSZ | [optional] 
+ **to** | **str**| The to date to query; Events starting before but ending after this date are included. Formatted as yyyy-MM-ddTHH:mm:ss.SSSZ | [optional] 
+ **location_id** | [**List[int]**](int.md)| Only series with at least one direct child in one of the passed locations will be returned. Multiple ids are queried like \&quot;locationId&#x3D;1234&amp;locationId&#x3D;5678&amp;locationId&#x3D;9012\&quot; | [optional] 
+ **status** | [**List[str]**](str.md)| Optional statuses to filter by | [optional] 
+
+### Return type
+
+[**List[ScheduleDto]**](ScheduleDto.md)
+
+### Authorization
+
+[APIKeyV1](../README.md#APIKeyV1), [CredentialsParameter](../README.md#CredentialsParameter), [BasicAuth](../README.md#BasicAuth), [JWTCookie](../README.md#JWTCookie), [JWT](../README.md#JWT)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | All found series events |  -  |
+**400** | Malformed request; Further information in response body |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **split_event**
+> List[ScheduleDto] split_event(id)
+
+Split events
+
+### Example
+
+* Api Key Authentication (APIKeyV1):
+* Api Key Authentication (CredentialsParameter):
+* Basic Authentication (BasicAuth):
+* Api Key Authentication (JWTCookie):
+* Bearer (JWT) Authentication (JWT):
+
+```python
+import gbs3api
+from gbs3api.models.schedule_dto import ScheduleDto
+from gbs3api.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to /GBS
+# See configuration.py for a list of all supported configuration parameters.
+configuration = gbs3api.Configuration(
+    host = "/GBS"
+)
+
+# The client must configure the authentication and authorization parameters
+# in accordance with the API server security policy.
+# Examples for each auth method are provided below, use the example that
+# satisfies your auth use case.
+
+# Configure API key authorization: APIKeyV1
+configuration.api_key['APIKeyV1'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['APIKeyV1'] = 'Bearer'
+
+# Configure API key authorization: CredentialsParameter
+configuration.api_key['CredentialsParameter'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['CredentialsParameter'] = 'Bearer'
+
+# Configure HTTP basic authorization: BasicAuth
+configuration = gbs3api.Configuration(
+    username = os.environ["USERNAME"],
+    password = os.environ["PASSWORD"]
+)
+
+# Configure API key authorization: JWTCookie
+configuration.api_key['JWTCookie'] = os.environ["API_KEY"]
+
+# Uncomment below to setup prefix (e.g. Bearer) for API key, if needed
+# configuration.api_key_prefix['JWTCookie'] = 'Bearer'
+
+# Configure Bearer authorization (JWT): JWT
+configuration = gbs3api.Configuration(
+    access_token = os.environ["BEARER_TOKEN"]
+)
+
+# Enter a context with an instance of the API client
+with gbs3api.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = gbs3api.SchedulingApi(api_client)
+    id = 56 # int | 
+
+    try:
+        # Split events
+        api_response = api_instance.split_event(id)
+        print("The response of SchedulingApi->split_event:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling SchedulingApi->split_event: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **id** | **int**|  | 
+
+### Return type
+
+[**List[ScheduleDto]**](ScheduleDto.md)
+
+### Authorization
+
+[APIKeyV1](../README.md#APIKeyV1), [CredentialsParameter](../README.md#CredentialsParameter), [BasicAuth](../README.md#BasicAuth), [JWTCookie](../README.md#JWTCookie), [JWT](../README.md#JWT)
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json, text/plain
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Events persisted; Returns all created events including their ids |  -  |
+**400** | Malformed query; Further information in body |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

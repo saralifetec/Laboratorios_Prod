@@ -203,6 +203,7 @@ class MovimentoAE(db.Model):
     criado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     confirmado_por = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
     observacoes = db.Column(db.Text, nullable=True)
+    pep = db.Column(db.Text, nullable=True)
     criado_em = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
 
     referenciaae = db.relationship('ReferenciaAE', backref='movimentos')
@@ -403,12 +404,15 @@ class Horas(db.Model):
     manual = db.Column(db.String(50), nullable=True)
     timestamp = db.Column(db.DateTime, nullable=False, server_default=db.func.current_timestamp())
     exportado = db.Column(db.Date, nullable=True)
+    execucao_id = db.Column(db.Integer, db.ForeignKey('horas_auto_execucoes.id'), nullable=True)
+
 
     # Relacionamentos
     tecnico = db.relationship('User', backref='horas')
     ensaio = db.relationship('Ensaio', backref='horas', foreign_keys=[ensaio_id])
     codigog = db.relationship('Codigosg', backref='horas', foreign_keys=[codigog_id])
     teste = db.relationship('Testes', backref='horas', foreign_keys=[teste_id])
+    execucao = db.relationship('HorasAutoExecucao', backref='horas')
 
     def __repr__(self):
         return f"Horas(id={self.id}, tecnico_id={self.tecnico_id}, data={self.data}, horas={self.horas})"
@@ -481,6 +485,8 @@ class Testes(db.Model):
     fator = db.Column(db.Integer, nullable=False, default=1)
     bemprimeira = db.Column(db.Integer, nullable=True)
     motivofalhaensaio_id = db.Column(db.Integer, db.ForeignKey('motivosfalhaensaios.id'), nullable=False)
+    horasesgotadas = db.Column(db.Integer, default=0)
+    esgotadomanualmente = db.Column(db.Integer, nullable=False, default=0)
 
     # Relacionamentos
     ensaio = db.relationship('Ensaio', backref='testes')  
@@ -613,6 +619,43 @@ class ConfValidacaoManual(db.Model):
     chave_i18n = db.Column(db.String(100), nullable=True)
     obsoleto = db.Column(db.SmallInteger, nullable=False, default=0)
 
+class UserCalendar(db.Model):
+    __tablename__ = 'user_calendar'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    data = db.Column(db.Date, nullable=False)
+
+    tipo = db.Column(db.String(20), nullable=False)
+    # valores:
+    # normal, ferias, falta, parcial, trabalhou
+
+    horas = db.Column(db.Float, nullable=True)
+
+    descricao = db.Column(db.String(255))
+
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(
+        db.DateTime,
+        default=db.func.current_timestamp(),
+        onupdate=db.func.current_timestamp()
+    )
+
+    # impedir duplicados
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'data', name='unique_user_day'),
+    )
+
+class Feriado(db.Model):
+    __tablename__ = 'feriados'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    data = db.Column(db.Date, nullable=False, unique=True)
+    descricao = db.Column(db.String(100))
+
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
 class ConsultaLayout(db.Model):
     __tablename__ = 'consultas_layout'
@@ -671,4 +714,46 @@ class ConsultaLayoutUser(db.Model):
 
     def __repr__(self):
         return f"ConsultaLayoutUser(consulta_id={self.consulta_id}, user_id={self.user_id})"
+    
+class HorasAuto(db.Model):
+    __tablename__ = 'horas_auto'
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    ativo = db.Column(db.Boolean, default=False)
+
+    frequencia = db.Column(db.String(20), default="semanal")
+    repeticao = db.Column(db.Integer)  # dia da semana (2=segunda...)
+
+    dia_inicio = db.Column(db.Date)
+
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(
+        db.DateTime,
+        default=db.func.current_timestamp(),
+        onupdate=db.func.current_timestamp()
+    )
+
+class HorasAutoExecucao(db.Model):
+    __tablename__ = 'horas_auto_execucoes'
+
+    id = db.Column(db.Integer, primary_key=True)
+    data_execucao = db.Column(db.Date, nullable=False)
+    data_inicio = db.Column(db.Date, nullable=True)
+    data_fim = db.Column(db.Date, nullable=True)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+
+    user = db.relationship('User', backref='horasautoexecucoes')
+
+class ConfGeral(db.Model):
+    __tablename__ = 'conf_geral'
+
+    id = db.Column(db.Integer, primary_key=True)
+    pais = db.Column(db.String(50), nullable=False)
+    localizacao = db.Column(db.String(50), nullable=False)
+
+    @staticmethod
+    def get_conf_geral():
+        return ConfGeral.query.first()
 

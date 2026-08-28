@@ -1,10 +1,11 @@
-<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
     <title>Login Manual</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+     <link rel="stylesheet" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" />
+     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         body {
             background: url("{{ url_for('static', filename='../assets/img/fundo.jpg') }}") no-repeat center center fixed;
@@ -32,11 +33,53 @@
             background: #d65c1a;
         }
         .small-label { font-size: 0.8em; }
+
+        .login-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .login-title {
+            flex: 1;
+            margin: 0;
+            text-align: center;
+            color: #f36f21;
+            font-weight: 600;
+        }
+
+        .settings-icon {
+            width: 30px;
+            color: #6c757d;
+            text-decoration: none;
+            font-size: 18px;
+        }
+
+        .settings-icon:hover {
+            color: #0d6efd;
+        }
+
+        .login-header select {
+            width: 65px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body><br><br><br>
     <div class="login-container">
-        <h2 class="login-title">Laboratório</h2>
+        <div class="login-header">      
+            <a href="#" class="settings-icon" onclick="abrirConfiguracao(); return false;">
+                <i class="fas fa-cog"></i>
+            </a>
+            <h2 class="login-title" data-i18n="field.laboratorio">
+                Laboratório
+            </h2>
+                <select class="form-select form-select-sm" onchange="i18n.switchLanguage(this.value)">
+                    <option value="pt">PT</option>
+                    <option value="es">ES</option>
+                    <option value="en">EN</option>
+                </select>
+        </div>
         {% if error %}
             <div class="alert alert-danger">{{ error }}</div>
         {% endif %}
@@ -51,10 +94,285 @@
             </div>
                 <div class="mb-3 form-check">
                 <input type="checkbox" class="form-check-input" id="remember" name="remember">
-                <label class="form-check-label small-label" for="remember">Lembrar-se de mim</label>
+                <label class="form-check-label small-label" for="remember" data-i18n="auth.remember_me">
+                    Lembrar-se de mim
+                </label>
             </div>
-            <button type="submit" class="btn btn-login w-100">Entrar</button>
+            <button type="submit" class="btn btn-login w-100" data-i18n="auth.login">
+                Entrar
+            </button>
         </form>
     </div>
 </body>
 </html>
+
+
+<!-- Modal Configuração -->
+<div class="modal fade" id="modalConfiguracao" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="field.configuracao_geral">
+                    Configuração Geral
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label" data-i18n="field.pais">
+                        País
+                    </label>
+
+                    <select id="cfgPais" class="form-select">
+                        <option value="Portugal" data-i18n="country.portugal">
+                            Portugal
+                        </option>
+                        <option value="Espanha" data-i18n="country.spain">
+                            Espanha
+                        </option>
+                        <option value="China" data-i18n="country.china">
+                            China
+                        </option>
+                    </select>
+
+                </div>
+
+                <div class="mb-3">
+
+                    <label class="form-label" data-i18n="field.localizacao">
+                        Localização
+                    </label>
+
+
+                    <select id="cfgLocalizacao" class="form-select">
+                    </select>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-sm btn-success" onclick="gravarConfiguracao()" data-i18n="action.save">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{{ url_for('static', filename='js/core/popper.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/core/bootstrap.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/kaiadmin.min.js') }}"></script>
+    <!-- DataTables e plugins -->
+<script src="https://cdn.datatables.net/2.3.4/js/dataTables.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/dataTables.buttons.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.dataTables.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/3.2.5/js/buttons.print.min.js"></script>
+
+<!-- WebFont Loader -->
+<script src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+<!-- Sistema de Traduções -->
+<script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
+
+
+<script>
+
+const localizacoes = {
+
+    Portugal: [
+        "Ponte de Lima"
+    ],
+
+    Espanha: [
+        "Vigo"
+    ],
+
+    China: []
+
+};
+
+function atualizarLocalizacoes(
+    localizacaoSelecionada = null
+) {
+
+    const pais =
+        document.getElementById(
+            'cfgPais'
+        ).value;
+
+    const select =
+        document.getElementById(
+            'cfgLocalizacao'
+        );
+
+    select.innerHTML = '';
+
+    (localizacoes[pais] || [])
+        .forEach(localizacao => {
+
+            const selected =
+                localizacao === localizacaoSelecionada
+                    ? 'selected'
+                    : '';
+
+            select.innerHTML += `
+                <option
+                    value="${localizacao}"
+                    ${selected}>
+                    ${localizacao}
+                </option>
+            `;
+        });
+
+}
+
+document
+    .getElementById('cfgPais')
+    .addEventListener(
+        'change',
+        () => atualizarLocalizacoes()
+    );
+
+
+
+async function abrirConfiguracao() {
+
+    const username =
+        document.getElementById('username').value;
+
+    const password =
+        document.getElementById('password').value;
+
+    if (!username || !password) {
+
+        alert(
+            i18n.t('auth.enter_username_password')
+        );
+
+        return;
+    }
+
+    const res = await fetch(
+        '/validar_acesso_configuracao',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username,
+                password
+            })
+        }
+    );
+
+    const resultado = await res.json();
+
+    if (!resultado.success) {
+
+        alert(resultado.message);
+        return;
+
+    }
+
+    carregarConfiguracao();
+
+    new bootstrap.Modal(
+        document.getElementById(
+            'modalConfiguracao'
+        )
+    ).show();
+
+}
+
+async function carregarConfiguracao() {
+
+    const res =
+        await fetch(
+            '/obter_configuracao'
+        );
+
+    const conf =
+        await res.json();
+
+    document.getElementById(
+        'cfgPais'
+    ).value = conf.pais;
+
+    atualizarLocalizacoes(
+        conf.localizacao
+    );
+
+}
+
+async function gravarConfiguracao() {
+
+    const pais =
+        document.getElementById(
+            'cfgPais'
+        ).value;
+
+    const localizacao =
+        document.getElementById(
+            'cfgLocalizacao'
+        ).value;
+
+    const res =
+        await fetch(
+            '/guardar_configuracao',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type':
+                        'application/json'
+                },
+                body: JSON.stringify({
+                    pais,
+                    localizacao
+                })
+            }
+        );
+
+    const resultado =
+        await res.json();
+
+    if (resultado.success) {
+
+        alert(
+            i18n.t('msg.configuracao_guardada_sucesso')
+        );
+
+        bootstrap.Modal
+            .getInstance(
+                document.getElementById(
+                    'modalConfiguracao'
+                )
+            )
+            .hide();
+
+    } else {
+
+        alert(
+            'Erro ao gravar configuração.'
+        );
+
+    }
+
+}
+
+</script>    

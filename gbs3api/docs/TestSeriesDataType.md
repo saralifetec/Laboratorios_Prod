@@ -28,8 +28,8 @@ Name | Type | Description | Notes
 **order** | [**OrderType**](OrderType.md) |  | [optional] 
 **vpn_r_pos** | [**List[VPnRPos]**](VPnRPos.md) |  | [optional] 
 **element_name** | **str** |  | [optional] 
-**gdpimmilestone** | **str** |  | [optional] 
 **sapnetplan** | **str** |  | [optional] 
+**gdpimmilestone** | **str** |  | [optional] 
 
 ## Example
 
