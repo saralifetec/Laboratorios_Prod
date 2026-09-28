@@ -921,7 +921,7 @@ with gbs3api.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = gbs3api.EquipmentApi(api_client)
     location_id = [56] # List[int] | Only events matching one of the passed locations will be returned. Multiple ids are queried like \"locationId=1234&locationId=5678&locationId=9012\" (optional)
-    location_fetch_strategy = DEFAULT # str | The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! (optional) (default to DEFAULT)
+    location_fetch_strategy = 'DEFAULT' # str | The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! (optional) (default to 'DEFAULT')
 
     try:
         # Find channel groups based on search parameters
@@ -940,7 +940,7 @@ with gbs3api.ApiClient(configuration) as api_client:
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **location_id** | [**List[int]**](int.md)| Only events matching one of the passed locations will be returned. Multiple ids are queried like \&quot;locationId&#x3D;1234&amp;locationId&#x3D;5678&amp;locationId&#x3D;9012\&quot; | [optional] 
- **location_fetch_strategy** | **str**| The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! | [optional] [default to DEFAULT]
+ **location_fetch_strategy** | **str**| The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! | [optional] [default to &#39;DEFAULT&#39;]
 
 ### Return type
 

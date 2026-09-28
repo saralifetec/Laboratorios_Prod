@@ -4,9 +4,9 @@ from .relatorios import relatorios_bp
 from .ensaios import ensaios_bp
 from .calendario import calendario_bp
 from .horasauto import horasauto_bp
-from .index import index_bp
 from .testes import testes_bp
 from .horas import horas_bp
+from .hours import hours_bp
 from .dashboard import dashboard_bp
 from .horas_horasauto import horas_horasauto_bp
 from .login import login_bp

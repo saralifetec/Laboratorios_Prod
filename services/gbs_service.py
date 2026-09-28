@@ -1,10 +1,15 @@
 import os
-
 from flask import json
 import gbs3api
+from gbs3api.api_client import ApiClient
 from gbs3api.configuration import Configuration
-from gbs3api.models.test_series_details_dto import TestSeriesDetailsDTO
-from gbs3api.models.test_step_details_dto import TestStepDetailsDTO
+from gbs3api.api.request_api import RequestApi
+from gbs3api.models.test_series_details_dto import (
+    TestSeriesDetailsDTO
+)
+from gbs3api.models.test_step_details_dto import (
+    TestStepDetailsDTO
+)
 from gbs3api.rest import ApiException
 from pprint import pprint
 
@@ -28,6 +33,9 @@ def find_test_series_details(full_series_number):
             response.data.decode("utf-8")
         )
 
+        print("GBS RESPONSE:")
+        pprint(data)
+
         if not data:
             return None
 
@@ -48,39 +56,11 @@ def find_test_step_details(test_series_id):
             test_series_id
         )
 
-        return response
-
-    
-#teste - apagar
-def find_project(function_number):
-
-    with gbs3api.ApiClient(configuration) as api_client:
-
-        api = gbs3api.RequestApi(api_client)
-
-        print(
-            "FUNCTION NUMBER:",
-            function_number
+        data = json.loads(
+            response.data.decode("utf-8")
         )
+        
+        if not data:
+            return None
 
-        try:
-
-            response = api.find_project(
-                function_number,
-                include_definition=False
-            )
-
-
-
-            print("TIPO:")
-            print(type(response))
-
-            return response
-
-        except Exception as e:
-
-            print("ERRO:")
-            print(type(e))
-            print(e)
-
-            raise
+        return data[0]

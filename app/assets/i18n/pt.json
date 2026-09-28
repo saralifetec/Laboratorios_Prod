@@ -644,5 +644,9 @@
 "country.spain": "Espanha",
 "country.china": "China",
 "auth.enter_username_password": "Introduza utilizador e password.",
-"msg.configuracao_guardada_sucesso": "Configuração gravada com sucesso."
+"msg.configuracao_guardada_sucesso": "Configuração gravada com sucesso.",
+"index.missing_information": "Informação em Falta",
+"modal.selecionar_tipo_peca": "Selecionar Tipo de Peça",
+"action.novo_tipo_peca": "Novo Tipo de Peça",
+"msg.a_importar_dados_gbs": "A importar dados do GBS..."
 }

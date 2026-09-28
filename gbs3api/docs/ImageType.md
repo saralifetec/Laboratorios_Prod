@@ -20,7 +20,7 @@ Name | Type | Description | Notes
 **aspect_ratio** | **str** |  | [optional] 
 **color** | **str** |  | [optional] 
 **file_name** | **str** |  | 
-**file_data** | **bytearray** |  | 
+**file_data** | **bytes** |  | 
 **format** | **str** |  | [optional] 
 **compression** | **str** |  | [optional] 
 **additional_group** | [**List[AdditionalGroup]**](AdditionalGroup.md) |  | [optional] 

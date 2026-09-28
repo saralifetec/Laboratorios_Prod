@@ -1,5 +1,3 @@
-# coding: utf-8
-
 """
     GBS API
 
@@ -11,6 +9,7 @@
 
     Do not edit the class manually.
 """  # noqa: E501
+
 
 import warnings
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
@@ -1991,7 +1990,7 @@ class TestdataDeprecatedUseRequestInsteadApi:
 
 
         :param body:
-        :type body: bytearray
+        :type body: bytes
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2057,7 +2056,7 @@ class TestdataDeprecatedUseRequestInsteadApi:
 
 
         :param body:
-        :type body: bytearray
+        :type body: bytes
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2123,7 +2122,7 @@ class TestdataDeprecatedUseRequestInsteadApi:
 
 
         :param body:
-        :type body: bytearray
+        :type body: bytes
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2261,7 +2260,7 @@ class TestdataDeprecatedUseRequestInsteadApi:
 
 
         :param body:
-        :type body: bytearray
+        :type body: bytes
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2327,7 +2326,7 @@ class TestdataDeprecatedUseRequestInsteadApi:
 
 
         :param body:
-        :type body: bytearray
+        :type body: bytes
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2393,7 +2392,7 @@ class TestdataDeprecatedUseRequestInsteadApi:
 
 
         :param body:
-        :type body: bytearray
+        :type body: bytes
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of

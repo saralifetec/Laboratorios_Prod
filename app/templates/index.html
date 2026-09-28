@@ -21,16 +21,18 @@
 }
 
 /* Tornar a DataTable da home mais compacta */
-#homeEnsaiosTable.dataTable, #homeRelatoriosTable.dataTable, #resumoHorasTablee.dataTable, #pedidosHorasExtraTable.dataTable {
+#horasBloqueadasContainer.dataTable, #homeEnsaiosTable.dataTable, #homeRelatoriosTable.dataTable, #resumoHorasTablee.dataTable, #pedidosHorasExtraTable.dataTable {
     font-size: 10px !important;
 }
 
 /* Células (td + th) mais compactas */
 #homeEnsaiosTable.dataTable th,
+#horasBloqueadasContainer th,
 #homeRelatoriosTable.dataTable th,
 #resumoHorasTable.dataTable th,
 #pedidosHorasExtraTable.dataTable th,
 #homeEnsaiosTable.dataTable td,
+#horasBloqueadasContainer td,
 #homeRelatoriosTable.dataTable td,
 #resumoHorasTable.dataTable td,
 #pedidosHorasExtraTable.dataTable td {
@@ -57,7 +59,7 @@
 }
 
 /* Cabeçalho */
-#homeEnsaiosTable.dataTable thead th, #homeRelatoriosTable.dataTable thead th, #resumoHorasTable.dataTable thead th, #pedidosHorasExtraTable.dataTable thead th {
+#horasBloqueadasContainer.dataTable thead th, #homeEnsaiosTable.dataTable thead th, #homeRelatoriosTable.dataTable thead th, #resumoHorasTable.dataTable thead th, #pedidosHorasExtraTable.dataTable thead th {
     font-size: 9.5px !important;
     font-weight: 600;
 }
@@ -87,6 +89,23 @@
     white-space: normal !important;
     word-break: normal !important;
     overflow-wrap: normal !important;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.1em 0.5em !important;
+    font-size: 0.85em !important;
+    min-width: 1.5em !important;
+    height: 1.8em !important;
+    border-radius: 0.2em !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #e9ecef !important;
+    color: #333 !important;
+    border: 1px solid #bdbdbd !important;
+}
+.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #f1f1f1 !important;
+    color: #222 !important;
 }
 
 #home_avisos_container .list-group-item-warning {
@@ -305,6 +324,27 @@
             <tbody></tbody>
           </table>
         </div>
+
+        <div class="card-body">         
+          <div id="horasBloqueadasContainer" style="display:none;">
+          <h6 class="fw-bold" data-i18n="index.missing_information">Informação em Falta</h6>
+          
+          <table id="horasBloqueadasTable" class="table table-striped table-sm" style="width:100%">
+            <thead>
+              <tr>
+              <th data-i18n="field.ensaio">Ensaio</th>
+              <th class="text-center" data-i18n="field.motivo">Motivo</th>
+              <th class="text-center" data-i18n="field.horas">Horas</th>
+              <th class="text-center" data-i18n="field.eliminar">
+              Eliminar
+              </th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          
+          </div>
+        </div>   
 
         <div class="card-body" id="avisosEnsaiosCard" style="display:none;">            
           <h6 class="fw-bold" data-i18n="index.test_alerts">Avisos Ensaios</h6>
@@ -558,6 +598,180 @@
 ///////////////////////////////////////////////////
 //GERAR HORAS AUTO
 let periodoAtualLabel = "";
+
+let horasBloqueadasTable = null;
+
+if (document.getElementById('horasBloqueadasTable')) {
+
+    horasBloqueadasTable = $('#horasBloqueadasTable').DataTable({
+
+        columns: [
+        {
+            data: 'link',
+            render: function(link, type, row) {
+
+                if (type === 'display' && link) {
+                    return `<a href="${link}" class="text-decoration-none">${row.ensaio}</a>`;
+                 }
+                  return row.ensaio || '';
+            }
+        },
+            {
+        data: 'motivo',
+        className: 'text-center'
+    },
+    {
+        data: 'horas',
+        className: 'text-center'
+    },
+    {
+        data: null,
+        className: 'text-center',
+        orderable: false,
+        render: function(data, type, row) {
+
+            return `
+                <i
+                    class="fas fa-trash text-danger btn-eliminar-horas"
+                    style="cursor:pointer"
+                    data-ensaio-id="${row.ensaio_id}"
+                    data-tipo="${row.tipo}"
+                    title="Eliminar Horas">
+                </i>
+            `;
+        }
+    }
+],
+
+        pageLength: 5,
+        paging: true,
+        lengthChange: false,
+        searching: false,
+        info: false,
+
+        language: {
+            url: i18n.getDataTablesLanguageUrl()
+        }
+    });
+
+    carregarHorasBloqueadas();
+
+    document.getElementById('laboratorio')
+        .addEventListener('change', carregarHorasBloqueadas);
+}
+
+async function carregarHorasBloqueadas() {
+
+    try {
+
+        const me = await fetch('/api/me')
+            .then(r => r.json());
+
+        // Apenas coordenadores, responsáveis, admins, etc.
+        if (Number(me.funcao_id) === 1) {
+            document.getElementById('horasBloqueadasContainer').style.display = 'none';
+            return;
+        }
+
+        const labId = document.getElementById('laboratorio').value;
+
+        const res = await fetch(
+            `/index/home/horas_bloqueadas_exportacao?laboratorio_id=${encodeURIComponent(labId)}`
+        );
+
+        const data = await res.json();
+
+        if (data.length === 0) {
+            document.getElementById('horasBloqueadasContainer').style.display = 'none';
+            return;
+        }
+
+
+        document.getElementById('horasBloqueadasContainer').style.display = '';
+
+        horasBloqueadasTable.clear();
+        horasBloqueadasTable.rows.add(data);
+        horasBloqueadasTable.draw();
+
+    } catch (err) {
+
+        console.error(
+            'Erro ao carregar horas bloqueadas:',
+            err
+        );
+
+        document.getElementById(
+            'horasBloqueadasContainer'
+        ).style.display = 'none';
+    }
+}
+
+carregarHorasBloqueadas();
+
+document.getElementById('laboratorio').addEventListener('change', carregarHorasBloqueadas);
+
+$('#horasBloqueadasTable').on(
+    'click',
+    '.btn-eliminar-horas',
+    async function () {
+
+        const ensaioId = $(this).data('ensaio-id');
+        const tipo = $(this).data('tipo');
+
+        const confirmar = confirm(
+            `Vai apagar os registos de horas não exportados deste ensaio.\n\n` +
+            `Os utilizadores afetados serão notificados por email.\n\n` +
+            `Pretende continuar?`
+        );
+
+        if (!confirmar) {
+            return;
+        }
+
+        try {
+
+            const res = await fetch(
+                `/hours/delete_ensaio_hours/${ensaioId}/${tipo}`,
+                {
+                    method: 'POST'
+                }
+            );
+
+            const data = await res.json();
+
+            if (data.success) {
+
+                alert(
+                    `${data.total_apagadas} horas eliminadas com sucesso.`
+                );
+
+                carregarHorasBloqueadas();
+
+            } else {
+
+                alert(
+                    data.message || 'Erro ao eliminar horas.'
+                );
+            }
+
+        } catch (err) {
+
+            console.error(err);
+
+            alert(
+                'Erro ao eliminar horas.'
+            );
+        }
+    }
+);
+
+
+
+
+
+
+
+
 
 //abrir modal
 function abrirModalHorasAuto() {
@@ -1429,7 +1643,7 @@ document.addEventListener('DOMContentLoaded', () => {
       atualizarVisibilidadeAvisosEnsaiosCard();
   }
 
-	// controlador principal: decide se mostra e carrega avisos
+  // controlador principal: decide se mostra e carrega avisos
 	async function atualizarAvisosParaLabAtual() {
 		try {
 			const me = await whoAmI();
@@ -1449,6 +1663,7 @@ document.addEventListener('DOMContentLoaded', () => {
 		}
 	}
 
+
 	// On load
 	atualizarAvisosParaLabAtual();
 
@@ -1461,6 +1676,8 @@ document.addEventListener('DOMContentLoaded', () => {
 	// …e sempre que o laboratório mudar (para quem puder mudar)
 	selectLab.addEventListener('change', atualizarAvisosParaLabAtual);
 });
+
+
 
 async function carregarAvisosHoras() {
     const cont = document.getElementById('home_avisos_horas_container');
@@ -1541,7 +1758,7 @@ function atualizarVisibilidadeAvisosHorasCard() {
    async function carregarResumoHoras() {
     const me = await fetch('/api/me').then(r => r.json());
     
-    // Sempre mostra o container
+    // mostra o container sempre
     document.getElementById('resumoHorasContainer').style.display = '';
   
     const labId = document.getElementById('laboratorio').value;

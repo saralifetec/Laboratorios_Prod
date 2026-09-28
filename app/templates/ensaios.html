@@ -11,6 +11,22 @@
 {% block content %}
 
 <style>
+
+#loadingGBS {
+    position: fixed;
+    inset: 0;
+    background: rgba(255,255,255,0.7);
+    z-index: 9999;
+}
+
+#loadingGBS .loading-backdrop {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+}
+
 #resumoStockContainer th,
 #resumoStockContainer td {
     font-size: 0.8em !important;
@@ -197,8 +213,6 @@ table.dataTable tbody td .form-control-sm {
                                 </span>
                             </div>
                     </div>
-
-
 
 					<div class="col-md-1" style="text-align:right;">
                         <button type="button" id="abrirPastaBtn" title="Abrir pasta do ensaio" style="background: #fff; border: none; padding: 0;">
@@ -968,6 +982,57 @@ table.dataTable tbody td .form-control-sm {
   </div>
 </div>
 
+<!-- Tipo de Peça na importação GBS-->
+ <div class="modal fade" id="modalTipoPeca" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" data-i18n="modal.selecionar_tipo_peca">
+                    Selecionar Tipo de Peça
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="modal-body">
+                    <div class="row align-items-center">
+                        <div class="col-8">
+                            <select id="tipopeca_gbs"
+                                    class="form-control" style="font-size: 0.875rem; width:100%">
+                            </select>
+                        </div>
+                        <div class="col-4 text-end">
+                            <button id="btnNovoTipoPeca"
+                                    class="btn btn-sm btn-primary"
+                                    data-i18n="action.novo_tipo_peca">
+                                Novo Tipo de Peça
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer d-flex">
+                <button type="button" class="btn btn-sm btn-warning ms-2" data-bs-dismiss="modal" data-i18n="action.cancel">
+                    Cancelar
+                </button>
+                <button type="button" id="btnConfirmarTipoPeca" class="btn btn-sm btn-success ms-2" data-i18n="action.save">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div id="loadingGBS" style="display:none;">
+    <div class="loading-backdrop">
+        <div class="spinner-border text-primary"></div>
+        <div class="mt-2" data-i18n="msg.a_importar_dados_gbs">
+            A importar dados do GBS...
+        </div>
+    </div>
+</div>
+
+
 
 {% endblock %}
 
@@ -985,19 +1050,78 @@ table.dataTable tbody td .form-control-sm {
 
 <script>
 
+//SE VEM DO GBS OU NÃO
+let importacaoGBS = false;
+
 /////////////////////////////////////////////////////////////
-//GBS
+//BOTÃO GBS
 document.addEventListener("DOMContentLoaded", function () {
 
     const btn = document.getElementById("gbs");
-    const ensaioInput = document.getElementById("ensaio");
+    btn.addEventListener("click", importarDadosGBS);
 
-    btn.addEventListener("click", function () {
+});
 
-        const ensaio = ensaioInput.value;
+//OBTER DADOS
+let laboratorioIdGBS = null;
+let normaIdGBS = null;
+let clienteIdGBS = null;
+let tipopecaId = null;
+let projetoIdGBS = null;
+let solicitanteIdGBS = null;
 
-        fetch("/gbs/test-series", {
 
+async function importarDadosGBS() {
+
+    importacaoGBS = true;
+    showLoadingGBS();
+
+    try {
+
+        const dadosGBS = await obterDadosGBS();
+        const laboratorioId = await garantirLaboratorio(dadosGBS);
+        const normaId = await garantirNorma(laboratorioId);
+        const clienteId = await garantirCliente(dadosGBS);
+        const {projetoId, tipopecaId} = await garantirProjeto(dadosGBS, clienteId);
+        const faseId = await garantirFase(dadosGBS);
+        const solicitanteId = await garantirSolicitante(dadosGBS);
+
+        preencherFormulario({
+            laboratorioId,
+            normaId,
+            clienteId,
+            projetoId,
+            tipopecaId,
+            faseId,
+            solicitanteId,
+            dadosGBS
+        });
+
+    } catch (err) {
+
+        console.error(
+            "Erro na importação GBS:",
+            err
+        );
+    } finally {
+        hideLoadingGBS();
+    }
+}
+
+function showLoadingGBS() {
+    $("#loadingGBS").show();
+}
+
+function hideLoadingGBS() {
+    $("#loadingGBS").hide();
+}
+
+async function obterDadosGBS() {
+
+    const ensaio = document.getElementById("ensaio").value;
+
+    const response = await fetch("/gbs/test-series",
+        {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -1005,233 +1129,634 @@ document.addEventListener("DOMContentLoaded", function () {
             body: JSON.stringify({
                 full_series_number: ensaio
             })
-        })
-        .then(async response => {
+        }
+    );
 
-            const data = await response.json();
+    const data = await response.json();
 
-            if (!response.ok) {
+    if (!response.ok) {
+        console.error("ERRO BACKEND:", data);
+        throw data;
+    }
 
-                console.error(
-                    "ERRO BACKEND:",
-                    data
-                );
-                throw data;
-            }
-            return data;
-        })
-        .then(data => {
+    console.log("Resposta GBS:",data);
 
-            console.log("Resposta GBS:", data);
+    return data;
+}
 
-            // observações
+async function garantirLaboratorio(dadosGBS) {
 
-            const observacoes = [];
+    if (!dadosGBS.label) {
+        return null;
+    }
 
-            if (data.task) {
-                observacoes.push(data.task);
-            }
+    const partes = dadosGBS.label.split("|");
 
-            if (data.remark) {
-                observacoes.push(data.remark);
-            }
+    const nomeLaboratorio =partes[partes.length - 1].trim();
 
-            document.getElementById("observacoes").value = observacoes.join(" | ");
+    const resultado = await fetch(
+        "/gbs/verificar_laboratorio",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                laboratorio: nomeLaboratorio
+            })
+        }
+    ).then(r => r.json());
 
-            // laboratório
+    if (resultado.existe) {
+        return resultado.id;
+    }
 
-            if (data.label) {
+    const criar = confirm(`O laboratório ${nomeLaboratorio} não existe.\n\nPretende criá-lo?`);
 
-                const partes = data.label.split("|");
+    if (!criar) {
+        throw new Error(`Laboratório ${nomeLaboratorio} não existe.`);
+    }
 
-                const nomeLaboratorio = partes[partes.length - 1].trim();
+    const novoLaboratorio = await fetch(
+        "/laboratorios/criar_gbs",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                laboratorio: nomeLaboratorio
+            })
+        }
+    ).then(r => r.json());
 
-                console.log("Laboratório GBS:", nomeLaboratorio);
+    if (!novoLaboratorio.success) {
+        throw new Error("Erro ao criar laboratório.");
+    }
 
-                const combo = document.getElementById("laboratorio_id");
+    return novoLaboratorio.id;
+}
 
-                if (combo) {
+async function garantirNorma(laboratorioId) {
 
-                    for (const option of combo.options) {
+    const resultado = await fetch(
+        "/gbs/verificar_norma",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                norma: "GBS_IMPORT",
+                laboratorio_id: laboratorioId
+            })
+        }
+    ).then(r => r.json());
 
-                        if (option.text.trim().toUpperCase() === nomeLaboratorio.toUpperCase()) {
+    if (resultado.existe) {
+        return resultado.id;
+    }
 
-                            $("#laboratorio_id").val(option.value).trigger("change");
+    const criar = confirm("A norma GBS_IMPORT não existe para este laboratório.\n\nPretende criá-la?");
 
-                            break;
+    if (!criar) {
+        throw new Error("Norma GBS_IMPORT não criada.");
+    }
 
-                        }
-                    }
-                }
-            }
+    const novaNorma = await fetch(
+        "/normas/criar_gbs",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                norma: "GBS_IMPORT",
+                laboratorio_id: laboratorioId
+            })
+        }
+    ).then(r => r.json());
 
-            if (data.deadlineLab) {
-                document.getElementById("data_solicitada").value = dataGbsParaInput(data.deadlineLab);
-            }
+    if (!novaNorma.success) {
+        throw new Error("Erro ao criar norma.");
+    }
 
-            if (data.estimatedStart) {
-                document.getElementById("data_acordada").value = dataGbsParaInput(data.estimatedStart);
-            }
+    return novaNorma.id;
+}
 
-            if (data.creationDate) {
-                document.getElementById("datapedido").value = dataGbsParaInput(data.creationDate);
-            }
+async function garantirCliente(dadosGBS) {
 
-            if (data.labNetplan) {
-                document.getElementById("network").value = data.labNetplan;
-            }
+    if (!dadosGBS.customerName) {
+        return null;
+    }
 
-            if (data.wbsElement) {
-                document.getElementById("pep").value = data.wbsElement;
-            }
+    const resultado = await fetch(
+        "/gbs/verificar_cliente",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                cliente: dadosGBS.customerName
+            })
+        }
+    ).then(r => r.json());
 
-            if (data.partNumber) {
-                document.getElementById("part_number").value = data.partNumber;
-            }
+    if (resultado.existe) {
 
-            if (data.customerPartNumber) {
-                document.getElementById("partnumbercli").value = data.customerPartNumber;
-            }
+        return resultado.id;
 
-            if (data.customerName) {
+    }
 
-                const combo = document.getElementById("cliente_id");
+    const criar = confirm(
+        `O cliente ${dadosGBS.customerName} não existe.\n\nPretende criá-lo?`
+    );
 
-                for (const option of combo.options) {
+    if (!criar) {
 
-                    if (option.text.trim().toUpperCase() === data.customerName.trim().toUpperCase()) {
+        throw new Error(
+            `Cliente ${dadosGBS.customerName} não existe.`
+        );
 
-                        $("#cliente_id").val(option.value).trigger("change");
+    }
 
-                        break;
+    const novoCliente = await fetch(
+        "/clientes/criar_gbs",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                cliente: dadosGBS.customerName
+            })
+        }
+    ).then(r => r.json());
 
-                    }
-                }
-            }
+    if (!novoCliente.success) {
 
-            if (data.fullName && data.email) {
+        throw new Error(
+            "Erro ao criar cliente."
+        );
 
-                const textoGBS = `${data.fullName} - ${data.email}`.toUpperCase();
+    }
 
-                const combo = document.getElementById("solicitante_id");
+    return novoCliente.id;
+}
 
-                for (const option of combo.options) {
+async function garantirProjeto(dadosGBS, clienteId) {
 
-                    if (option.text.trim().toUpperCase() === textoGBS) {
+    if (!dadosGBS.functionNumber || !dadosGBS.platformCode) {
+        return {
+            projetoId: null,
+            tipopecaId: null
+        };
+    }
 
-                        $("#solicitante_id").val(option.value).trigger("change");
+    const codigo = normalizarTextoProjeto(dadosGBS.functionNumber);
 
-                        break;
+    const descricao = normalizarTextoProjeto(dadosGBS.platformCode);
 
-                    }
-                }
-            }
+    const resultado = await fetch(
+        "/gbs/verificar_projeto",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                codigo,
+                descricao,
+                cliente_id: clienteId
+            })
+        }
+    ).then(r => r.json());
 
-            if (data.platformCode) {
+    // Projeto já existe
+    if (resultado.existe) {
+        return {
+            projetoId: resultado.id,
+            tipopecaId: resultado.tipopeca_id
+        };
+    }
 
-                const combo = document.getElementById("projecto_select");
+    // Projeto não existe
+    alert(`O projeto ${codigo} - ${descricao} não existe.`);
 
-                for (const option of combo.options) {
+    const tipopecaId = await selecionarTipoPeca();
 
-                    if (option.text.trim().toUpperCase() === data.platformCode.trim().toUpperCase()) {
+    if (!tipopecaId) {
+        throw new Error(
+            "Tipo de peça não selecionado."
+        );
+    }
 
-                        $("#projecto_select").val(option.value).trigger("change");
+    const novoProjeto = await fetch(
+        "/projetos/criar_gbs",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                codigo,
+                descricao,
+                cliente_id: clienteId,
+                tipopeca_id: tipopecaId
+            })
+        }
+    ).then(r => r.json());
 
-                        break;
-                    }
-                }
-            }
+    if (!novoProjeto.success) {
+        throw new Error(
+            "Erro ao criar projeto."
+        );
+    }
 
-            if (data.developmentPhase) {
+    return {
+        projetoId: novoProjeto.id,
+        tipopecaId: tipopecaId
+    };
+}
 
-                const combo = document.getElementById("fase_id");
+async function selecionarTipoPeca() {
 
-                for (const option of combo.options) {
+    return new Promise(async (resolve, reject) => {
 
-                    if (option.text.trim().toUpperCase() === data.developmentPhase.trim().toUpperCase()) {
+        const tipos = await fetch(
+            "/gbs/tipospeca"
+        ).then(r => r.json());
 
-                        $("#fase_id").val(option.value).trigger("change");
+        const combo = $("#tipopeca_gbs");
 
-                        break;
-                    }
-                }
-            }
+        combo.empty();
 
-            // test steps
+        tipos.forEach(t => {
 
-            if (data.testSeriesId) {
-
-                fetch("/gbs/test-step-details",{
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                        "application/json"
-                    },
-
-                    body: JSON.stringify({
-                        test_series_id:
-                        data.testSeriesId
-                    })
-                }
+            combo.append(
+                new Option(
+                    t.text,
+                    t.id
                 )
-                .then(async response => {
-
-                    const detalhes = await response.json();
-
-                    if (!response.ok) {
-                        throw detalhes;
-                    }
-
-                    return detalhes;
-
-                })
-                .then(detalhes => {
-
-                    console.log(
-                        "TEST STEP DETAILS:",
-                        detalhes
-                    );
-
-                })
-                .catch(error => {
-
-                    console.error(
-                        "ERRO TEST STEP DETAILS:",
-                        error
-                    );
-
-                });
-
-            }
-
-
-
-
-
-
-
-
-
-        })
-        .catch(error => {
-
-            console.error(
-                "ERRO COMPLETO:",
-                error
             );
 
-            if (error?.error) {
-                alert(error.error);
-            }else if (error?.detail) {
-                alert(error.detail);
-            }else {
-                alert("Erro desconhecido");
-            }
         });
-    });
-});
 
+        combo.select2({
+            dropdownParent: $("#modalTipoPeca")
+        });
+
+        const modal = new bootstrap.Modal(
+            document.getElementById(
+                "modalTipoPeca"
+            )
+        );
+
+        modal.show();
+
+        $("#btnConfirmarTipoPeca")
+            .off("click")
+            .on("click", function () {
+
+                const id = $("#tipopeca_gbs").val();
+
+                if (!id) {
+                    alert(
+                        "Selecione um tipo de peça."
+                    );
+                    return;
+                }
+
+                modal.hide();
+
+                resolve(id);
+
+            });
+
+        $("#btnNovoTipoPeca")
+            .off("click")
+            .on("click", async function () {
+
+                const nome = prompt( "Novo tipo de peça:");
+
+                if (!nome) {
+                    return;
+                }
+
+                const novo = await fetch(
+                    "/tipopeca/criar_gbs",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+                        body: JSON.stringify({
+                            tipopeca: nome
+                        })
+                    }
+                ).then(r => r.json());
+
+                if (novo.success) {
+                    const option = new Option(
+                        novo.texto,
+                        novo.id,
+                        true,
+                        true
+                    );
+
+                    combo.append(option).trigger("change");
+                }
+            });
+    });
+}
+
+async function garantirFase(dadosGBS) {
+
+    if (!dadosGBS.developmentPhase) {
+        return null;
+    }
+
+    const fase = dadosGBS.developmentPhase.trim();
+
+    const resultado = await fetch(
+        "/gbs/verificar_fase",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                fase: fase
+            })
+        }
+    ).then(r => r.json());
+
+    if (resultado.existe) {
+        return resultado.id;
+    }
+
+    const criar = confirm( `A fase "${fase}" não existe.\n\nPretende criá-la?`);
+
+    if (!criar) {
+        throw new Error(
+            `Fase "${fase}" não existe.`
+        );
+    }
+
+    const novaFase = await fetch(
+        "/fases/criar_gbs",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                fase: fase
+            })
+        }
+    ).then(r => r.json());
+
+    if (!novaFase.success) {
+        throw new Error(
+            "Erro ao criar fase."
+        );
+    }
+    return novaFase.id;
+}
+
+async function garantirSolicitante(dadosGBS) {
+
+    if (!dadosGBS.fullName || !dadosGBS.email) {
+        return null;
+    }
+
+    const resultado = await fetch(
+        "/gbs/verificar_solicitante",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                email: dadosGBS.email
+            })
+        }
+    ).then(r => r.json());
+
+    if (resultado.existe) {
+
+        return resultado.id;
+
+    }
+
+    const criar = confirm(
+        `O solicitante ${dadosGBS.fullName} não existe.\n\nPretende criá-lo?`
+    );
+
+    if (!criar) {
+
+        throw new Error(
+            `Solicitante ${dadosGBS.fullName} não existe.`
+        );
+
+    }
+
+    const nomeSemVirgula =
+        dadosGBS.fullName
+            .replace(",", "")
+            .trim();
+
+    const novoSolicitante = await fetch(
+        "/solicitantes/criar_gbs",
+        {
+            method: "POST",
+            headers: {
+                "Content-Type":
+                    "application/json"
+            },
+            body: JSON.stringify({
+                nome: nomeSemVirgula,
+                email: dadosGBS.email
+            })
+        }
+    ).then(r => r.json());
+
+    if (!novoSolicitante.success) {
+
+        throw new Error(
+            "Erro ao criar solicitante."
+        );
+
+    }
+
+    return novoSolicitante.id;
+}
+
+async function preencherFormulario({laboratorioId, normaId, clienteId, projetoId, tipopecaId, faseId, solicitanteId, dadosGBS}) {
+
+    await refreshLaboratorios();
+    await refreshNormas();
+    await refreshClientes();
+    await refreshProjetos();
+    await refreshTipoPeca();
+    await refreshFases();
+    await refreshSolicitantes();
+        
+    $("#laboratorio_id")
+        .val(String(laboratorioId))
+        .trigger("change");
+
+    $("#norma_id")
+        .val(String(normaId))
+        .trigger("change");
+
+    $("#cliente_id")
+        .val(String(clienteId))
+        .trigger("change");
+
+    await new Promise(r => setTimeout(r, 100));
+
+    $("#tipopeca_id")
+        .val(String(tipopecaId))
+        .trigger("change");
+
+    await new Promise(r => setTimeout(r, 100));
+
+    $("#projecto_select")
+        .val(String(projetoId))
+        .trigger("change");
+
+    const optionProjeto = $("#projecto_select option:selected");
+    const descricao = optionProjeto.data("descricao");
+
+    if (descricao) {
+        $("#denominacao").val(descricao);
+    }
+
+    $("#fase_id")
+        .val(String(faseId))
+        .trigger("change");
+
+    $("#solicitante_id")
+        .val(String(solicitanteId))
+        .trigger("change");
+
+    // Datas
+
+    if (dadosGBS.deadlineLab) {
+        $("#data_solicitada").val(
+            dataGbsParaInput(dadosGBS.deadlineLab)
+        );
+    }
+
+    if (dadosGBS.estimatedStart) {
+        $("#data_acordada").val(
+            dataGbsParaInput(dadosGBS.estimatedStart)
+        );
+    }
+
+    if (dadosGBS.creationDate) {
+        $("#datapedido").val(
+            dataGbsParaInput(dadosGBS.creationDate)
+        );
+    }
+
+    // Observações
+    const observacoes = [];
+
+    if (dadosGBS.task) {
+        observacoes.push(dadosGBS.task);
+    }
+
+    if (dadosGBS.remark) {
+        observacoes.push(dadosGBS.remark);
+    }
+
+    $("#observacoes").val(
+        observacoes.join(" | ")
+    );
+
+    // Outros campos
+
+    if (dadosGBS.labNetplan) {
+        $("#network").val(
+            dadosGBS.labNetplan
+        );
+    }
+
+    if (dadosGBS.wbsElement) {
+        $("#pep").val(
+            dadosGBS.wbsElement
+        );
+    }
+
+    if (dadosGBS.partNumber) {
+        $("#part_number").val(
+            dadosGBS.partNumber
+        );
+    }
+
+    if (dadosGBS.customerPartNumber) {
+        $("#partnumbercli").val(
+            dadosGBS.customerPartNumber
+        );
+    }
+
+
+
+}
+
+async function refreshLaboratorios() {
+    await atualizarComboLaboratorios();
+}
+
+async function refreshNormas() {
+    await atualizarComboNormas();
+}
+
+async function refreshClientes() {
+    await atualizarComboClientes();
+}
+
+async function refreshProjetos() {
+    await carregarTodosProjetos();
+}
+
+async function refreshTipoPeca() {
+    await atualizarComboTipoPecas();
+}
+
+async function refreshFases() {
+    await atualizarComboFases();
+}
+
+async function refreshSolicitantes() {
+    await carregarSolicitantes();
+}
+
+function normalizarTextoProjeto(texto) {
+
+    if (!texto) {
+        return "";
+    }
+
+    return texto
+        .trim()
+        .replace(/[\/\s]+/g, "_");
+}
 
 
 function dataGbsParaInput(dataGbs) {
@@ -1833,7 +2358,7 @@ document.getElementById('atualizarTecnicosBtn').onclick = atualizarComboTecnicos
 document.getElementById('atualizarTipoPecasBtn').onclick = atualizarComboTipoPecas;
 
 //carregar clientes
-function atualizarComboClientes() {
+async function atualizarComboClientes() {
     fetch('/clientes/ativos')
         .then(res => res.json())
         .then(data => {
@@ -1857,7 +2382,7 @@ function atualizarComboClientes() {
 }
 
 //carregar laboratorios
-function atualizarComboLaboratorios() {
+async function atualizarComboLaboratorios() {
     fetch('/laboratorios/ativos') // ajuste a rota conforme sua API
         .then(res => res.json())
         .then(data => {
@@ -1881,7 +2406,7 @@ function atualizarComboLaboratorios() {
 }
 
 //carregar normas
-function atualizarComboNormas() {
+async function atualizarComboNormas() {
     fetch('/normas/ativas')
         .then(res => res.json())
         .then(data => {
@@ -1904,7 +2429,7 @@ function atualizarComboNormas() {
             );
 }
 
-function atualizarComboTipoPecas() {
+async function atualizarComboTipoPecas() {
     fetch("/tipo_pecas/ativas")
     .then(res => res.json())
     .then(data => {
@@ -1931,7 +2456,7 @@ function atualizarComboTipoPecas() {
 }
 
 //carregar fases
-function atualizarComboFases() {
+async function atualizarComboFases() {
     fetch("/fases/ativas")
         .then(res => res.json())
         .then(data => {
@@ -3304,6 +3829,7 @@ function carregarTodosProjetos() {
 
 // Atualizar combo de projetos
 function atualizarComboProjectos(projetos) {
+
     const select = $('#projecto_select');
     const valorAtual = select.val();
 
@@ -3311,23 +3837,38 @@ function atualizarComboProjectos(projetos) {
     select.append('<option value="" selected disabled></option>');
 
     projetos.forEach(p => {
-        const textoExibicao = p.descricao ? `${p.projeto} - ${p.descricao}` : p.projeto;
-        select.append(`<option value="${p.id}"
-            data-cliente-id="${p.cliente_id}"
-            data-tipopeca-id="${p.tipopeca_id}"
-            data-codigo="${p.projeto}"
-            data-descricao="${p.descricao || ''}">${textoExibicao}</option>`);
+
+        const textoExibicao = p.descricao
+            ? `${p.projeto} - ${p.descricao}`
+            : p.projeto;
+
+        select.append(`
+            <option value="${p.id}"
+                    data-cliente-id="${p.cliente_id}"
+                    data-tipopeca-id="${p.tipopeca_id}"
+                    data-codigo="${p.projeto}"
+                    data-descricao="${p.descricao || ''}">
+                ${textoExibicao}
+            </option>
+        `);
     });
 
     if (valorAtual) {
         select.val(valorAtual);
     }
 
+   
+
     refreshProjectoSelectUI();
 }
 
 // Quando seleciona CLIENTE → filtrar projetos desse cliente
 $('#cliente_id').on('change', function() {
+
+    if (importacaoGBS) {
+        return;
+    }
+
     const clienteId = $(this).val();
     const tipopecaId = $('#tipopeca_id').val();
     
@@ -3362,6 +3903,10 @@ $('#cliente_id').on('change', function() {
 
 // Quando seleciona PROJETO → preencher cliente, tipo de peça e denominação
 $('#projecto_select').on('change', function() {
+
+    if (importacaoGBS) {
+        return;
+    }
     const projetoId = $(this).val();
     
     if (!projetoId) return;
@@ -4250,6 +4795,10 @@ $('#destino_pecas').on('change', function() {
 
 
 $('#laboratorio_id').on('change', function() {
+    if (importacaoGBS) {
+        return;
+    }
+
     const laboratorioId = $(this).val();
     const $normaSelect = $('#norma_id');
     $normaSelect.prop('disabled', true);

@@ -1715,10 +1715,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-            let url = 'horas/horas/inserir';
+            let url = '/horas/inserir';
             let method = 'POST';
             if (window.editHoraId) {
-                url = `horas/horas/inserir/${window.editHoraId}`;
+                url = `/horas/inserir/${window.editHoraId}`;
                 method = 'PUT';
             }
             try {

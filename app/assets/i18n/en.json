@@ -641,7 +641,10 @@
 "country.portugal": "Portugal",
 "country.spain": "Spain",
 "country.china": "China",
-"auth.enter_username_password": "Enter username and password."
-
+"auth.enter_username_password": "Enter username and password.",
+"index.missing_information": "Missing Information",
+"modal.selecionar_tipo_peca": "Select Part Type",
+"action.novo_tipo_peca": "New Part Type",
+"msg.a_importar_dados_gbs": "Importing data from GBS..."
 }
 

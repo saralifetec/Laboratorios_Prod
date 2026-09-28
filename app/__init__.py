@@ -12,9 +12,9 @@ from .routes import (
     calendario_bp,
     horasauto_bp,
     horas_horasauto_bp,
-    index_bp,
     testes_bp,
     horas_bp,
+    hours_bp,
     dashboard_bp,
     login_bp
 )
@@ -37,9 +37,9 @@ def create_app():
         app.register_blueprint(ensaios_bp)
         app.register_blueprint(horasauto_bp, url_prefix='/horasauto')
         app.register_blueprint(horas_horasauto_bp, url_prefix='/horas_horasauto')
-        app.register_blueprint(index_bp, url_prefix='/index')
         app.register_blueprint(testes_bp, url_prefix='/testes')
         app.register_blueprint(horas_bp, url_prefix='/horas')
+        app.register_blueprint(hours_bp)
         app.register_blueprint(dashboard_bp)
         app.register_blueprint(login_bp)
 

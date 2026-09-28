@@ -1241,9 +1241,9 @@ with gbs3api.ApiClient(configuration) as api_client:
     resource_type_id = [56] # List[int] | Can only be used with queryUnscheduled! The resource-types to query unscheduled events with (optional)
     event_type = ['event_type_example'] # List[str] | The type of event to filter for. Multiple types are queried like \"eventType=STANDALONE&eventType=SERIES&eventType=TEST_STEP\" (optional)
     event_id = [56] # List[int] | One or multiple ids of events to base the query on. Cannot be combined with any parameters other than fetch strategy (optional)
-    fetch_strategy = DEFAULT # str | The strategy used for fetching events after they have been initially filtered. By default only returns the events themselves, but can also get only the root parent of each event or the entire event family (parents, children, sibling, etc.). (optional) (default to DEFAULT)
+    fetch_strategy = 'DEFAULT' # str | The strategy used for fetching events after they have been initially filtered. By default only returns the events themselves, but can also get only the root parent of each event or the entire event family (parents, children, sibling, etc.). (optional) (default to 'DEFAULT')
     unscheduled = True # bool | Only query those events whose status is ORD and which have no resources (optional)
-    location_fetch_strategy = DEFAULT # str | The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! (optional) (default to DEFAULT)
+    location_fetch_strategy = 'DEFAULT' # str | The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! (optional) (default to 'DEFAULT')
     status = ['status_example'] # List[str] | Cannot be combined with resource-id! The statuses to filter by (optional)
 
     try:
@@ -1269,9 +1269,9 @@ Name | Type | Description  | Notes
  **resource_type_id** | [**List[int]**](int.md)| Can only be used with queryUnscheduled! The resource-types to query unscheduled events with | [optional] 
  **event_type** | [**List[str]**](str.md)| The type of event to filter for. Multiple types are queried like \&quot;eventType&#x3D;STANDALONE&amp;eventType&#x3D;SERIES&amp;eventType&#x3D;TEST_STEP\&quot; | [optional] 
  **event_id** | [**List[int]**](int.md)| One or multiple ids of events to base the query on. Cannot be combined with any parameters other than fetch strategy | [optional] 
- **fetch_strategy** | **str**| The strategy used for fetching events after they have been initially filtered. By default only returns the events themselves, but can also get only the root parent of each event or the entire event family (parents, children, sibling, etc.). | [optional] [default to DEFAULT]
+ **fetch_strategy** | **str**| The strategy used for fetching events after they have been initially filtered. By default only returns the events themselves, but can also get only the root parent of each event or the entire event family (parents, children, sibling, etc.). | [optional] [default to &#39;DEFAULT&#39;]
  **unscheduled** | **bool**| Only query those events whose status is ORD and which have no resources | [optional] 
- **location_fetch_strategy** | **str**| The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! | [optional] [default to DEFAULT]
+ **location_fetch_strategy** | **str**| The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants; Can only be used in combination with list of location ids! | [optional] [default to &#39;DEFAULT&#39;]
  **status** | [**List[str]**](str.md)| Cannot be combined with resource-id! The statuses to filter by | [optional] 
 
 ### Return type
@@ -1881,7 +1881,7 @@ with gbs3api.ApiClient(configuration) as api_client:
     location_id = [56] # List[int] | The ids of the locations to filter by (optional)
     resource_type_id = [56] # List[int] | The ids of the resource types to filter by (optional)
     resource_id = [56] # List[int] | The ids of the resources to filter by; Cannot be combined with any other parameters! (optional)
-    location_fetch_strategy = DEFAULT # str | The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants (optional) (default to DEFAULT)
+    location_fetch_strategy = 'DEFAULT' # str | The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants (optional) (default to 'DEFAULT')
 
     try:
         # Get resources through query parameters
@@ -1902,7 +1902,7 @@ Name | Type | Description  | Notes
  **location_id** | [**List[int]**](int.md)| The ids of the locations to filter by | [optional] 
  **resource_type_id** | [**List[int]**](int.md)| The ids of the resource types to filter by | [optional] 
  **resource_id** | [**List[int]**](int.md)| The ids of the resources to filter by; Cannot be combined with any other parameters! | [optional] 
- **location_fetch_strategy** | **str**| The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants | [optional] [default to DEFAULT]
+ **location_fetch_strategy** | **str**| The query strategy for locations. DEFAULT: Only query the specified locations; DESCDENDANTS: Query the specified locations and any descendants | [optional] [default to &#39;DEFAULT&#39;]
 
 ### Return type
 
