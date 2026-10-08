@@ -378,7 +378,6 @@ def delete_horas_ensaio_nao_exportadas(ensaio_id, tipo):
         Horas.ensaio_id == ensaio_id
     ).all()
 
-
     configs = {
         c.tecnico_id: c
         for c in ConfHorasAuto.query.all()
@@ -399,12 +398,53 @@ def delete_horas_ensaio_nao_exportadas(ensaio_id, tipo):
         if tipo_hora == tipo:
             horas_a_apagar.append(hora)
 
-
     print("APAGAR:", len(horas_a_apagar))
+
+    notificacoes = {}
+
+    for hora in horas_a_apagar:
+
+        if (
+            hora.tecnico and
+            hora.tecnico.email
+        ):
+
+            user_id = hora.tecnico.id
+
+            if user_id not in notificacoes:
+
+                notificacoes[user_id] = {
+                    "nome": hora.tecnico.full_name,
+                    "email": hora.tecnico.email,
+                    "horas": []
+                }
+
+            notificacoes[user_id]["horas"].append({
+                "ensaio": (
+                    hora.ensaio.ensaio
+                    if hora.ensaio
+                    else str(ensaio_id)
+                ),
+                "data": (
+                    hora.data.strftime("%d/%m/%Y")
+                    if getattr(hora, "data", None)
+                    else ""
+                ),
+                "horas": (
+                    hora.horas
+                    if getattr(hora, "horas", None) is not None
+                    else 0
+                )
+            })
 
     for hora in horas_a_apagar:
         db.session.delete(hora)
 
     db.session.commit()
 
-    return len(horas_a_apagar)
+    return {
+        "total_apagadas": len(horas_a_apagar),
+        "notificacoes": list(
+            notificacoes.values()
+        )
+    }

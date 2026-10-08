@@ -432,3 +432,23 @@ def criar_fase_gbs():
         "id": fase.id,
         "texto": fase.fase
     })
+
+"""
+TEST SERIES
+"""
+@gbs_bp.route("/gbs/test-steps/<int:test_series_id>")
+def get_test_steps(test_series_id):
+
+    try:
+
+        data = find_test_step_details(
+            test_series_id
+        )
+
+        return jsonify(data)
+
+    except Exception as e:
+
+        return jsonify({
+            "error": str(e)
+        }), 500

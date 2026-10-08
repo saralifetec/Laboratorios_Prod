@@ -645,6 +645,27 @@
 "index.missing_information": "Missing Information",
 "modal.selecionar_tipo_peca": "Select Part Type",
 "action.novo_tipo_peca": "New Part Type",
-"msg.a_importar_dados_gbs": "Importing data from GBS..."
+"msg.a_importar_dados_gbs": "Importing data from GBS...",
+"field.linguagem": "Language",
+"field.modulos_disponiveis": "Available Modules",
+"msg.erro_gravar_configuracao": "Error saving configuration.",
+"msg.configuracao_guardada_sucesso": "Configuration saved successfully.",
+"msg.laboratorio_nao_existe_criar": "The laboratory \"{laboratorio}\" does not exist.\n\nDo you want to create it?",
+"msg.norma_gbs_import_nao_existe_criar": "The GBS_IMPORT specification does not exist for this laboratory.\n\nDo you want to create it?",
+"msg.norma_gbs_import_nao_criada": "GBS_IMPORT specification was not created.",
+"msg.cliente_nao_existe_criar": "The customer \"{cliente}\" does not exist.\n\nDo you want to create it?",
+"msg.cliente_nao_existe": "The customer \"{cliente}\" does not exist.",
+"msg.nao_selecionado": "not selected",
+"msg.novo_tipo_peca": "New part type:",
+"msg.fase_nao_existe_criar": "The phase \"{fase}\" does not exist.\n\nDo you want to create it?",
+"msg.fase_nao_existe": "The phase \"{fase}\" does not exist.",
+"msg.solicitante_nao_existe_criar": "The requester \"{solicitante}\" does not exist.\n\nDo you want to create it?",
+"msg.solicitante_nao_existe_msg": "The requester \"{solicitante}\" does not exist.",
+"msg.confirmar_apagar_horas_ensaio": "You are about to delete the non-exported hour records for this test.\n\nAffected users will be notified by email.\n\nDo you want to continue?",
+"email.horas_removidas_inicio": "Hello,\n\nDue to missing information in the test, the following hour records have been removed:\n\n",
+"email.horas_removidas_fim": "Please regularize these values manually.\n\nKind regards,\n{nome}",
+"email.assunto_eliminacao_horas": "Deletion of hour records",
+"msg.horas_eliminadas_sucesso": "Hours deleted successfully.",
+"msg.erro_eliminar_horas": "Error deleting hours."
 }
 

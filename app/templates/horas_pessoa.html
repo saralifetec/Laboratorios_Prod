@@ -1594,21 +1594,34 @@ document.addEventListener('DOMContentLoaded', function() {
             renderCalendario(ano, mes, tecnicoSelect.value);
         });
     }
-    document.getElementById('prevDay').addEventListener('click', function() {
-        if (!dataInput.value) return;
-        var d = new Date(dataInput.value);
-        d.setDate(d.getDate() - 1);
-        dataInput.value = d.toISOString().slice(0,10);
-        dataInput.dispatchEvent(new Event('change'));
-    });
 
-    document.getElementById('nextDay').addEventListener('click', function() {
-        if (!dataInput.value) return;
-        var d = new Date(dataInput.value);
-        d.setDate(d.getDate() + 1);
-        dataInput.value = d.toISOString().slice(0,10);
-        dataInput.dispatchEvent(new Event('change'));
-    });
+    document.getElementById('prevDay').addEventListener('click', function() {
+
+    if (!dataInput.value) return;
+
+    const d = new Date(dataInput.value);
+
+    d.setDate(1);
+    d.setMonth(d.getMonth() - 1);
+
+    dataInput.value = d.toISOString().slice(0, 10);
+
+    dataInput.dispatchEvent(new Event('change'));
+});
+
+document.getElementById('nextDay').addEventListener('click', function() {
+
+    if (!dataInput.value) return;
+
+    const d = new Date(dataInput.value);
+
+    d.setDate(1);
+    d.setMonth(d.getMonth() + 1);
+
+    dataInput.value = d.toISOString().slice(0, 10);
+
+    dataInput.dispatchEvent(new Event('change'));
+});
 
 
     if (ensaioSelect && testesSelect) {
@@ -1715,10 +1728,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-            let url = '/horas/inserir';
+            let url = '/horas/horas/inserir';
             let method = 'POST';
             if (window.editHoraId) {
-                url = `/horas/inserir/${window.editHoraId}`;
+                url = `/horas/horas/inserir/${window.editHoraId}`;
                 method = 'PUT';
             }
             try {

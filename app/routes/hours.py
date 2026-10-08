@@ -31,10 +31,13 @@ def resumo_horas():
             monthrange(ano, mes)[1]
         )
 
-    utilizadores = get_scope_users(
-        laboratorio_id,
-        apenas_eu
-    )
+    utilizadores = [
+        u for u in get_scope_users(
+            laboratorio_id,
+            apenas_eu
+        )
+        if not u.obsoleto
+    ]
 
     resultado = []
 
@@ -117,15 +120,13 @@ def horas_bloqueadas_exportacao():
 @hours_bp.route('/hours/delete_ensaio_hours/<int:ensaio_id>/<tipo>', methods=['POST'])
 def delete_ensaio_hours(ensaio_id, tipo):
 
-    total = delete_horas_ensaio_nao_exportadas(
+    resultado = delete_horas_ensaio_nao_exportadas(
         ensaio_id,
         tipo
     )
 
-    print("ENSAIO:", ensaio_id)
-    print("TIPO:", tipo)
-
     return jsonify({
         "success": True,
-        "total_apagadas": total
+        "total_apagadas": resultado["total_apagadas"],
+        "emails": resultado["notificacoes"]
     })

@@ -648,5 +648,26 @@
 "index.missing_information": "Información Faltante",
 "modal.selecionar_tipo_peca": "Seleccionar Tipo de Pieza",
 "action.novo_tipo_peca": "Nuevo Tipo de Pieza",
-"msg.a_importar_dados_gbs": "Importando datos del GBS..."
+"msg.a_importar_dados_gbs": "Importando datos del GBS...",
+"field.linguagem": "Idioma",
+"field.modulos_disponiveis": "Módulos Disponibles",
+"msg.erro_gravar_configuracao": "Error al guardar la configuración.",
+"msg.laboratorio_nao_existe_criar": "El laboratorio \"{laboratorio}\" no existe.\n\n¿Desea crearlo?",
+"msg.norma_gbs_import_nao_existe_criar": "La especificación GBS_IMPORT no existe para este laboratorio.\n\n¿Desea crearla?",
+"msg.norma_gbs_import_nao_criada": "La especificación GBS_IMPORT no fue creada.",
+"msg.cliente_nao_existe_criar": "El cliente \"{cliente}\" no existe.\n\n¿Desea crearlo?",
+"msg.cliente_nao_existe": "El cliente \"{cliente}\" no existe.",
+"msg.nao_selecionado": "no seleccionado",
+"msg.novo_tipo_peca": "Nuevo tipo de pieza:",
+"msg.fase_nao_existe_criar": "La fase \"{fase}\" no existe.\n\n¿Desea crearla?",
+"msg.fase_nao_existe": "La fase \"{fase}\" no existe.",
+"msg.solicitante_nao_existe_criar": "El solicitante \"{solicitante}\" no existe.\n\n¿Desea crearlo?",
+"msg.solicitante_nao_existe_msg": "El solicitante \"{solicitante}\" no existe.",
+"msg.confirmar_apagar_horas_ensaio": "Va a eliminar los registros de horas no exportados de este ensayo.\n\nLos usuarios afectados serán notificados por correo electrónico.\n\n¿Desea continuar?",
+"email.horas_removidas_inicio": "Hola,\n\nDebido a la falta de información en el ensayo, se han eliminado los siguientes registros de horas:\n\n",
+"email.horas_removidas_fim": "Por favor, regularicen estos valores manualmente.\n\nSaludos cordiales,\n{nome}",
+"email.assunto_eliminacao_horas": "Eliminación de registros de horas",
+"msg.horas_eliminadas_sucesso": "Horas eliminadas correctamente.",
+"msg.erro_eliminar_horas": "Error al eliminar horas."
+
 }

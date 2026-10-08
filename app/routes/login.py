@@ -48,14 +48,21 @@ def obter_configuracao():
 
         return jsonify({
             'pais': 'Portugal',
-            'localizacao': 'Ponte de Lima'
+            'localizacao': 'Ponte de Lima',
+            'linguagem': 'pt',
+            'horas': '1',
+            'armazem_plme': '1',
+            'armazem_ext': '1'
         })
 
     return jsonify(
         conf.to_dict()
     )
 
-@login_bp.route('/guardar_configuracao', methods=['POST'])
+@login_bp.route(
+    '/guardar_configuracao',
+    methods=['POST']
+)
 def guardar_configuracao():
 
     dados = request.get_json()
@@ -64,12 +71,16 @@ def guardar_configuracao():
 
     if not conf:
 
-        conf = ConfGeral()
+        conf = ConfGeral(id=1)
 
         db.session.add(conf)
 
     conf.pais = dados['pais']
     conf.localizacao = dados['localizacao']
+    conf.linguagem = dados['linguagem']
+    conf.horas = dados['horas']
+    conf.armazem_plme = dados['armazem_plme']
+    conf.armazem_ext = dados['armazem_ext']
 
     db.session.commit()
 

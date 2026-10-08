@@ -4,6 +4,7 @@ import gbs3api
 from gbs3api.api_client import ApiClient
 from gbs3api.configuration import Configuration
 from gbs3api.api.request_api import RequestApi
+from gbs3api.models.test_step_details_dto import TestStepDetailsDTO
 from gbs3api.models.test_series_details_dto import (
     TestSeriesDetailsDTO
 )

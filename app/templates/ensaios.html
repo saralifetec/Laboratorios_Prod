@@ -690,7 +690,7 @@ table.dataTable tbody td .form-control-sm {
                 </button>
             </div>
             <div class="card-body">
-                <div style="overflow-x:auto;"></div>
+                <div style="overflow-x:auto;">
                 <table id="testesTable">
                     <thead>
                         <tr>
@@ -1172,10 +1172,10 @@ async function garantirLaboratorio(dadosGBS) {
         return resultado.id;
     }
 
-    const criar = confirm(`O laboratório ${nomeLaboratorio} não existe.\n\nPretende criá-lo?`);
+    const criar = confirm(i18n.t('msg.laboratorio_nao_existe_criar', '', { laboratorio: nomeLaboratorio }));
 
     if (!criar) {
-        throw new Error(`Laboratório ${nomeLaboratorio} não existe.`);
+        throw new Error( i18n.t( 'msg.laboratorio_nao_existe', '', { laboratorio: nomeLaboratorio } ) );
     }
 
     const novoLaboratorio = await fetch(
@@ -1193,7 +1193,7 @@ async function garantirLaboratorio(dadosGBS) {
     ).then(r => r.json());
 
     if (!novoLaboratorio.success) {
-        throw new Error("Erro ao criar laboratório.");
+        throw new Error( `${i18n.t('msg.erro_criar')} ${i18n.t('field.laboratorio')}.` );
     }
 
     return novoLaboratorio.id;
@@ -1220,10 +1220,10 @@ async function garantirNorma(laboratorioId) {
         return resultado.id;
     }
 
-    const criar = confirm("A norma GBS_IMPORT não existe para este laboratório.\n\nPretende criá-la?");
+    const criar = confirm( i18n.t('msg.norma_gbs_import_nao_existe_criar') );
 
     if (!criar) {
-        throw new Error("Norma GBS_IMPORT não criada.");
+        throw new Error( i18n.t('msg.norma_gbs_import_nao_criada') );
     }
 
     const novaNorma = await fetch(
@@ -1242,7 +1242,7 @@ async function garantirNorma(laboratorioId) {
     ).then(r => r.json());
 
     if (!novaNorma.success) {
-        throw new Error("Erro ao criar norma.");
+        throw new Error( `${i18n.t('msg.erro_criar')} ${i18n.t('field.norma')}.` );
     }
 
     return novaNorma.id;
@@ -1274,16 +1274,10 @@ async function garantirCliente(dadosGBS) {
 
     }
 
-    const criar = confirm(
-        `O cliente ${dadosGBS.customerName} não existe.\n\nPretende criá-lo?`
-    );
+    const criar = confirm( i18n.t( 'msg.cliente_nao_existe_criar', '', { cliente: dadosGBS.customerName } ) );
 
     if (!criar) {
-
-        throw new Error(
-            `Cliente ${dadosGBS.customerName} não existe.`
-        );
-
+        throw new Error( i18n.t( 'msg.cliente_nao_existe', '', { cliente: dadosGBS.customerName } ) );
     }
 
     const novoCliente = await fetch(
@@ -1301,11 +1295,7 @@ async function garantirCliente(dadosGBS) {
     ).then(r => r.json());
 
     if (!novoCliente.success) {
-
-        throw new Error(
-            "Erro ao criar cliente."
-        );
-
+        throw new Error( `${i18n.t('msg.erro_criar')} ${i18n.t('field.cliente')}.` );
     }
 
     return novoCliente.id;
@@ -1348,15 +1338,13 @@ async function garantirProjeto(dadosGBS, clienteId) {
         };
     }
 
-    // Projeto não existe
-    alert(`O projeto ${codigo} - ${descricao} não existe.`);
 
+    hideLoadingGBS();
     const tipopecaId = await selecionarTipoPeca();
+    showLoadingGBS();
 
     if (!tipopecaId) {
-        throw new Error(
-            "Tipo de peça não selecionado."
-        );
+        throw new Error( `${i18n.t('field.tipo_peca')} ${i18n.t('msg.nao_selecionado')}.` );
     }
 
     const novoProjeto = await fetch(
@@ -1377,9 +1365,7 @@ async function garantirProjeto(dadosGBS, clienteId) {
     ).then(r => r.json());
 
     if (!novoProjeto.success) {
-        throw new Error(
-            "Erro ao criar projeto."
-        );
+        throw new Error( `${i18n.t('msg.erro_criar')} ${i18n.t('field.projeto')}.` );
     }
 
     return {
@@ -1392,34 +1378,21 @@ async function selecionarTipoPeca() {
 
     return new Promise(async (resolve, reject) => {
 
-        const tipos = await fetch(
-            "/gbs/tipospeca"
-        ).then(r => r.json());
+        const tipos = await fetch( "/gbs/tipospeca" ).then(r => r.json());
 
         const combo = $("#tipopeca_gbs");
 
         combo.empty();
 
         tipos.forEach(t => {
-
-            combo.append(
-                new Option(
-                    t.text,
-                    t.id
-                )
-            );
-
+            combo.append( new Option( t.text, t.id ) );
         });
 
         combo.select2({
             dropdownParent: $("#modalTipoPeca")
         });
 
-        const modal = new bootstrap.Modal(
-            document.getElementById(
-                "modalTipoPeca"
-            )
-        );
+        const modal = new bootstrap.Modal( document.getElementById( "modalTipoPeca" ) );
 
         modal.show();
 
@@ -1430,9 +1403,7 @@ async function selecionarTipoPeca() {
                 const id = $("#tipopeca_gbs").val();
 
                 if (!id) {
-                    alert(
-                        "Selecione um tipo de peça."
-                    );
+                    alert( `${i18n.t('msg.selecione')} ${i18n.t('field.tipo_peca')}.` );
                     return;
                 }
 
@@ -1446,7 +1417,7 @@ async function selecionarTipoPeca() {
             .off("click")
             .on("click", async function () {
 
-                const nome = prompt( "Novo tipo de peça:");
+                const nome = prompt( i18n.t('msg.novo_tipo_peca') );
 
                 if (!nome) {
                     return;
@@ -1458,7 +1429,7 @@ async function selecionarTipoPeca() {
                         method: "POST",
                         headers: {
                             "Content-Type":
-                                "application/json"
+                            "application/json"
                         },
                         body: JSON.stringify({
                             tipopeca: nome
@@ -1494,7 +1465,7 @@ async function garantirFase(dadosGBS) {
             method: "POST",
             headers: {
                 "Content-Type":
-                    "application/json"
+                "application/json"
             },
             body: JSON.stringify({
                 fase: fase
@@ -1506,12 +1477,10 @@ async function garantirFase(dadosGBS) {
         return resultado.id;
     }
 
-    const criar = confirm( `A fase "${fase}" não existe.\n\nPretende criá-la?`);
+    const criar = confirm( i18n.t( 'msg.fase_nao_existe_criar', '', { fase: fase } ) );
 
     if (!criar) {
-        throw new Error(
-            `Fase "${fase}" não existe.`
-        );
+        throw new Error( i18n.t( 'msg.fase_nao_existe', '', { fase: fase } ) );
     }
 
     const novaFase = await fetch(
@@ -1520,7 +1489,7 @@ async function garantirFase(dadosGBS) {
             method: "POST",
             headers: {
                 "Content-Type":
-                    "application/json"
+                "application/json"
             },
             body: JSON.stringify({
                 fase: fase
@@ -1529,9 +1498,7 @@ async function garantirFase(dadosGBS) {
     ).then(r => r.json());
 
     if (!novaFase.success) {
-        throw new Error(
-            "Erro ao criar fase."
-        );
+        throw new Error( `${i18n.t('msg.erro_criar')} ${i18n.t('field.fase')}.` );
     }
     return novaFase.id;
 }
@@ -1548,7 +1515,7 @@ async function garantirSolicitante(dadosGBS) {
             method: "POST",
             headers: {
                 "Content-Type":
-                    "application/json"
+                "application/json"
             },
             body: JSON.stringify({
                 email: dadosGBS.email
@@ -1557,27 +1524,16 @@ async function garantirSolicitante(dadosGBS) {
     ).then(r => r.json());
 
     if (resultado.existe) {
-
         return resultado.id;
-
     }
 
-    const criar = confirm(
-        `O solicitante ${dadosGBS.fullName} não existe.\n\nPretende criá-lo?`
-    );
+    const criar = confirm( i18n.t( 'msg.solicitante_nao_existe_criar', '', { solicitante: dadosGBS.fullName } ) );
 
     if (!criar) {
-
-        throw new Error(
-            `Solicitante ${dadosGBS.fullName} não existe.`
-        );
-
+        throw new Error( i18n.t( 'msg.solicitante_nao_existe_msg', '', { solicitante: dadosGBS.fullName } ) );
     }
 
-    const nomeSemVirgula =
-        dadosGBS.fullName
-            .replace(",", "")
-            .trim();
+    const nomeSemVirgula = dadosGBS.fullName .replace(",", "") .trim();
 
     const novoSolicitante = await fetch(
         "/solicitantes/criar_gbs",
@@ -1585,7 +1541,7 @@ async function garantirSolicitante(dadosGBS) {
             method: "POST",
             headers: {
                 "Content-Type":
-                    "application/json"
+                "application/json"
             },
             body: JSON.stringify({
                 nome: nomeSemVirgula,
@@ -1595,11 +1551,7 @@ async function garantirSolicitante(dadosGBS) {
     ).then(r => r.json());
 
     if (!novoSolicitante.success) {
-
-        throw new Error(
-            "Erro ao criar solicitante."
-        );
-
+        throw new Error( `${i18n.t('msg.erro_criar')} ${i18n.t('field.solicitante')}.` );
     }
 
     return novoSolicitante.id;
@@ -1615,29 +1567,19 @@ async function preencherFormulario({laboratorioId, normaId, clienteId, projetoId
     await refreshFases();
     await refreshSolicitantes();
         
-    $("#laboratorio_id")
-        .val(String(laboratorioId))
-        .trigger("change");
+    $("#laboratorio_id") .val(String(laboratorioId)) .trigger("change");
 
-    $("#norma_id")
-        .val(String(normaId))
-        .trigger("change");
+    $("#norma_id") .val(String(normaId)) .trigger("change");
 
-    $("#cliente_id")
-        .val(String(clienteId))
-        .trigger("change");
+    $("#cliente_id") .val(String(clienteId)) .trigger("change");
 
     await new Promise(r => setTimeout(r, 100));
 
-    $("#tipopeca_id")
-        .val(String(tipopecaId))
-        .trigger("change");
+    $("#tipopeca_id") .val(String(tipopecaId)) .trigger("change");
 
     await new Promise(r => setTimeout(r, 100));
 
-    $("#projecto_select")
-        .val(String(projetoId))
-        .trigger("change");
+    $("#projecto_select") .val(String(projetoId)) .trigger("change");
 
     const optionProjeto = $("#projecto_select option:selected");
     const descricao = optionProjeto.data("descricao");
@@ -1646,32 +1588,21 @@ async function preencherFormulario({laboratorioId, normaId, clienteId, projetoId
         $("#denominacao").val(descricao);
     }
 
-    $("#fase_id")
-        .val(String(faseId))
-        .trigger("change");
+    $("#fase_id") .val(String(faseId)) .trigger("change");
 
-    $("#solicitante_id")
-        .val(String(solicitanteId))
-        .trigger("change");
+    $("#solicitante_id") .val(String(solicitanteId)) .trigger("change");
 
     // Datas
-
     if (dadosGBS.deadlineLab) {
-        $("#data_solicitada").val(
-            dataGbsParaInput(dadosGBS.deadlineLab)
-        );
+        $("#data_solicitada").val( dataGbsParaInput(dadosGBS.deadlineLab) );
     }
 
     if (dadosGBS.estimatedStart) {
-        $("#data_acordada").val(
-            dataGbsParaInput(dadosGBS.estimatedStart)
-        );
+        $("#data_acordada").val( dataGbsParaInput(dadosGBS.estimatedStart) );
     }
 
     if (dadosGBS.creationDate) {
-        $("#datapedido").val(
-            dataGbsParaInput(dadosGBS.creationDate)
-        );
+        $("#datapedido").val( dataGbsParaInput(dadosGBS.creationDate) );
     }
 
     // Observações
@@ -1692,31 +1623,38 @@ async function preencherFormulario({laboratorioId, normaId, clienteId, projetoId
     // Outros campos
 
     if (dadosGBS.labNetplan) {
-        $("#network").val(
-            dadosGBS.labNetplan
-        );
+        $("#network").val( dadosGBS.labNetplan );
     }
 
     if (dadosGBS.wbsElement) {
-        $("#pep").val(
-            dadosGBS.wbsElement
-        );
+        $("#pep").val( dadosGBS.wbsElement );
     }
 
     if (dadosGBS.partNumber) {
-        $("#part_number").val(
-            dadosGBS.partNumber
-        );
+        $("#part_number").val( dadosGBS.partNumber );
     }
 
     if (dadosGBS.customerPartNumber) {
-        $("#partnumbercli").val(
-            dadosGBS.customerPartNumber
-        );
+        $("#partnumbercli").val( dadosGBS.customerPartNumber );
     }
 
+    await carregarTestesGBS( dadosGBS.testSeriesId );
 
+}
 
+async function carregarTestesGBS(testSeriesId) {
+
+    console.log("TEST ID:", testSeriesId);
+
+    if (!testSeriesId) {
+        return;
+    }
+
+    const response = await fetch( `/gbs/test-steps/${testSeriesId}` );
+
+    const data = await response.json();
+
+    console.log( "TEST STEPS GBS:", data );
 }
 
 async function refreshLaboratorios() {
@@ -1753,9 +1691,7 @@ function normalizarTextoProjeto(texto) {
         return "";
     }
 
-    return texto
-        .trim()
-        .replace(/[\/\s]+/g, "_");
+    return texto .trim() .replace(/[\/\s]+/g, "_");
 }
 
 
@@ -3353,7 +3289,8 @@ mostrarNotificacao(
 $('#testesTable').DataTable({
     searching: false,   
     ordering: false,    
-    paging: false,     
+    paging: false,
+    scrollX: true, 
     info: false,        
     language: { url: i18n.getDataTablesLanguageUrl() }
 });

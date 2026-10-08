@@ -752,8 +752,22 @@ class ConfGeral(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pais = db.Column(db.String(50), nullable=False)
     localizacao = db.Column(db.String(50), nullable=False)
+    linguagem = db.Column(db.String(5), nullable=False)
+    horas = db.Column(db.String(1), nullable=False, default='1')
+    armazem_plme = db.Column(db.String(1), nullable=False, default='1')
+    armazem_ext = db.Column(db.String(1), nullable=False, default='1')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'pais': self.pais,
+            'localizacao': self.localizacao,
+            'linguagem': self.linguagem,
+            'horas': self.horas,
+            'armazem_plme': self.armazem_plme,
+            'armazem_ext': self.armazem_ext
+        }
 
     @staticmethod
     def get_conf_geral():
         return ConfGeral.query.first()
-

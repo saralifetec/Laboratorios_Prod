@@ -192,15 +192,15 @@
 			<div class="card-header">
 				<div class="card-title">
 					<div class="row align-items-center">
-            <div class="col-md-6">
-                <div class="d-flex align-items-center gap-2">
-                    <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio"><b>Laboratório</b></label>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center gap-2">
+                                <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio"><b>Laboratório</b></label>
 
-                    <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;" {% if user.funcao_id == 1 %} disabled {% endif %}>
-                          
-                    </select>
-                </div>
-            </div>
+                                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;" {% if user.funcao_id == 1 %} disabled {% endif %}>
+                                    
+                                </select>
+                            </div>
+                        </div>
 						
 					</div>
 
@@ -335,7 +335,7 @@
               <th data-i18n="field.ensaio">Ensaio</th>
               <th class="text-center" data-i18n="field.motivo">Motivo</th>
               <th class="text-center" data-i18n="field.horas">Horas</th>
-              <th class="text-center" data-i18n="field.eliminar">
+              <th class="text-center" data-i18n="action.delete">
               Eliminar
               </th>
               </tr>
@@ -600,6 +600,7 @@
 let periodoAtualLabel = "";
 
 let horasBloqueadasTable = null;
+const userFuncaoId = {{ user.funcao_id if user else 0 }};
 
 if (document.getElementById('horasBloqueadasTable')) {
 
@@ -609,7 +610,6 @@ if (document.getElementById('horasBloqueadasTable')) {
         {
             data: 'link',
             render: function(link, type, row) {
-
                 if (type === 'display' && link) {
                     return `<a href="${link}" class="text-decoration-none">${row.ensaio}</a>`;
                  }
@@ -628,36 +628,30 @@ if (document.getElementById('horasBloqueadasTable')) {
         data: null,
         className: 'text-center',
         orderable: false,
+        visible: userFuncaoId === 3,
         render: function(data, type, row) {
-
             return `
                 <i
                     class="fas fa-trash text-danger btn-eliminar-horas"
                     style="cursor:pointer"
                     data-ensaio-id="${row.ensaio_id}"
                     data-tipo="${row.tipo}"
-                    title="Eliminar Horas">
+                    title="${i18n.t('action.delete')} ${i18n.t('field.horas')}">
                 </i>
             `;
-        }
-    }
-],
-
+        }}],
         pageLength: 5,
         paging: true,
         lengthChange: false,
         searching: false,
         info: false,
-
         language: {
             url: i18n.getDataTablesLanguageUrl()
         }
     });
 
-    carregarHorasBloqueadas();
-
-    document.getElementById('laboratorio')
-        .addEventListener('change', carregarHorasBloqueadas);
+    //carregarHorasBloqueadas();
+    document.getElementById('laboratorio').addEventListener('change', carregarHorasBloqueadas);
 }
 
 async function carregarHorasBloqueadas() {
@@ -686,7 +680,6 @@ async function carregarHorasBloqueadas() {
             return;
         }
 
-
         document.getElementById('horasBloqueadasContainer').style.display = '';
 
         horasBloqueadasTable.clear();
@@ -694,39 +687,27 @@ async function carregarHorasBloqueadas() {
         horasBloqueadasTable.draw();
 
     } catch (err) {
-
-        console.error(
-            'Erro ao carregar horas bloqueadas:',
-            err
-        );
-
-        document.getElementById(
-            'horasBloqueadasContainer'
-        ).style.display = 'none';
+        console.error( 'Erro ao carregar horas bloqueadas:', err );
+        document.getElementById( 'horasBloqueadasContainer' ).style.display = 'none';
     }
 }
 
-carregarHorasBloqueadas();
+//carregarHorasBloqueadas();
 
 document.getElementById('laboratorio').addEventListener('change', carregarHorasBloqueadas);
 
-$('#horasBloqueadasTable').on(
-    'click',
-    '.btn-eliminar-horas',
-    async function () {
+$('#horasBloqueadasTable').on( 'click', '.btn-eliminar-horas', async function () {
 
         const ensaioId = $(this).data('ensaio-id');
         const tipo = $(this).data('tipo');
 
-        const confirmar = confirm(
-            `Vai apagar os registos de horas não exportados deste ensaio.\n\n` +
-            `Os utilizadores afetados serão notificados por email.\n\n` +
-            `Pretende continuar?`
-        );
+        const confirmar = confirm( i18n.t('msg.confirmar_apagar_horas_ensaio') );
 
         if (!confirmar) {
             return;
         }
+
+        const me = await fetch('/api/me').then(r => r.json());
 
         try {
 
@@ -741,34 +722,84 @@ $('#horasBloqueadasTable').on(
 
             if (data.success) {
 
-                alert(
-                    `${data.total_apagadas} horas eliminadas com sucesso.`
-                );
+              const destinatarios = data.emails
+                .map(t => t.email)
+                .filter(Boolean)
+                .join(';');
+
+    let texto = i18n.t('email.horas_removidas_inicio');
+
+for (const tecnico of data.emails) {
+
+    texto += `\n${tecnico.nome}\n`;
+
+    tecnico.horas.forEach(h => {
+
+        texto += `   • ${h.ensaio} | ${h.data} | ${h.horas} h\n`;
+
+    });
+
+}
+
+texto += i18n.t( 'email.horas_removidas_fim', '', { nome: me.full_name } );
+
+abrirEmailOutlook({
+    to_email: destinatarios,
+    cc_email: '',
+    assunto: i18n.t('email.assunto_eliminacao_horas'),
+    texto: texto
+});
+
+
+                alert( i18n.t('msg.horas_eliminadas_sucesso') );
 
                 carregarHorasBloqueadas();
 
             } else {
-
-                alert(
-                    data.message || 'Erro ao eliminar horas.'
-                );
+                alert( data.message || 'Erro ao eliminar horas.' );
             }
 
         } catch (err) {
 
             console.error(err);
 
-            alert(
-                'Erro ao eliminar horas.'
-            );
+            alert( i18n.t('msg.erro_eliminar_horas') );
         }
     }
 );
 
 
+function abrirEmailOutlook(cfg) {
 
+    const to = (cfg.to_email || '')
+        .split(';')
+        .map(e => e.trim())
+        .filter(Boolean)
+        .join(';');
 
+    const cc = (cfg.cc_email || '')
+        .split(';')
+        .map(e => e.trim())
+        .filter(Boolean)
+        .join(';');
 
+    const subject = encodeURIComponent(
+        cfg.assunto || ''
+    );
+
+    const body = encodeURIComponent(
+        cfg.texto || ''
+    );
+
+    let mailto =
+        `mailto:${encodeURIComponent(to)}?subject=${subject}&body=${body}`;
+
+    if (cc) {
+        mailto += `&cc=${encodeURIComponent(cc)}`;
+    }
+
+    window.location.href = mailto;
+}
 
 
 
@@ -814,520 +845,6 @@ function atualizarProgress(percentagem, texto) {
     label.innerText = texto;
 }
 
-function gerarHorasAuto() {
-
-    if (!temHorasParaGerar()) {
-        alert("Não existem horas para gerar.");
-        return;
-    }
-
-    atualizarProgress(10, "A preparar dados...");
-
-    fetch('/horasauto/gerar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            periodos: [{
-                start: periodosHorasAuto[periodoAtualIndex].start,
-                end: periodosHorasAuto[periodoAtualIndex].end,
-                resumo: dadosHorasAuto
-            }]
-        })
-    })
-    .then(res => res.json())
-    .then(res => {
-
-        atualizarProgress(100, "Concluído!");
-
-        console.log(res);
-
-        if (!res.ok) {
-            alert("Sem horas suficientes!");
-            return;
-        }
-
-        alert("Horas geradas com sucesso!");
-
-        //  desativar botão
-        document.getElementById("btnGerarHorasAuto").disabled = true;
-
-    });
-}
-
-function calcularTotalHorasGerar() {
-
-    let total = 0;
-
-    Object.values(dadosHorasAuto).forEach(user => {
-
-        if (user.pepnet !== "network") return;
-
-        diasPeriodo.forEach(d => {
-            total += (user.dias[d]?.n_gerar || 0);
-        });
-    });
-
-    return total;
-}
-
-
-function irParaNetwork() {
-
-    document.getElementById("viewDetalhe").style.display = "none";
-    document.getElementById("viewNetwork").style.display = "block";
-
-    preencherTabelaNetwork();
-
-    const btn = document.getElementById("btnGerarHorasAuto");
-
-    btn.disabled = !temHorasParaGerar();
-}
-
-function voltarDetalhe() {
-
-    document.getElementById("viewNetwork").style.display = "none";
-    document.getElementById("viewDetalhe").style.display = "block";
-}
-
-function preencherTabelaNetwork() {
-
-    const container = document.getElementById("resumoHorasAutoNetwork");
-    container.innerHTML = "";
-
-    const dias = diasPeriodo;
-
-    const table = document.createElement("table");
-    table.className = "table table-sm table-bordered text-center small";
-
-    let thead = "<thead><tr><th>Nome</th>";
-
-    dias.forEach(d => {
-        const data = new Date(d);
-        const diaSemana = data.toLocaleDateString(undefined, { weekday: 'short' });
-        thead += `<th>${diaSemana}</th>`;
-    });
-
-    thead += "</tr></thead>";
-
-    let tbody = "<tbody>";
-
-    Object.values(dadosHorasAuto).forEach(user => {
-
-        //  FILTRO NETWORK
-        if (user.pepnet !== "network") return;
-
-        tbody += `<tr><td class="text-start">${user.nome}</td>`;
-
-        dias.forEach(d => {
-
-            const info = user.dias[d];
-            const v = info?.n_gerar || 0;
-
-            tbody += `
-                <td>
-                    ${v ? v + "h" : "-"}
-                </td>
-            `;
-        });
-
-        tbody += "</tr>";
-    });
-
-    tbody += "</tbody>";
-
-    table.innerHTML = thead + tbody;
-    container.appendChild(table);
-
-    //  calcular total gerar
-    const totalGerar = calcularTotalHorasGerar();
-
-    //  ir buscar horas disponíveis
-    fetch('/horasauto/disponivel')   
-        .then(res => res.json())
-        .then(res => {
-
-            const totalDisponivel = res.total || 0;
-
-            mostrarResumoNetwork(totalGerar, totalDisponivel);
-
-        });
-    }
-
-function temHorasParaGerar() {
-
-    let total = 0;
-
-    Object.values(dadosHorasAuto).forEach(user => {
-
-        diasPeriodo.forEach(d => {
-            const info = user.dias[d];
-            if (!info) return;
-
-            total += (info.n_gerar || 0);
-            total += (info.g_gerar || 0);
-        });
-
-    });
-
-    return total > 0;
-}    
-
-function mostrarResumoNetwork(totalGerar, totalDisponivel) {
-
-    const container = document.getElementById("resumoHorasAutoNetwork");
-
-    const { totalCodigosG, totalPepEnsaios } = calcularTotaisExtra();
-
-    const resumo = document.createElement("div");
-    resumo.className = "mt-3 p-2 border-top";
-
-    resumo.innerHTML = `
-        <div class="d-flex flex-column gap-1">
-
-            <div>
-                <strong>Total a gerar:</strong> ${totalGerar.toFixed(2)}h
-            </div>
-
-            <div>
-                <strong>Total disponível:</strong> ${totalDisponivel.toFixed(2)}h
-            </div>
-
-            <div class="mt-2">
-                <strong>Códigos G:</strong> ${totalCodigosG.toFixed(2)}h
-            </div>
-
-            <div>
-                <strong>PEP (Ensaios):</strong> ${totalPepEnsaios.toFixed(2)}h
-            </div>
-
-        </div>
-    `;
-
-    container.appendChild(resumo);
-}
-
-
-function calcularTotaisExtra() {
-
-    let totalCodigosG = 0;
-    let totalPepEnsaios = 0;
-
-    Object.values(dadosHorasAuto).forEach(user => {
-
-        diasPeriodo.forEach(d => {
-
-            const info = user.dias[d];
-
-            if (!info) return;
-
-            // códigos G (todos)
-            totalCodigosG += (info.g_gerar || 0);
-
-            // PEP (ensaios)
-            if (user.pepnet === "pep") {
-                totalPepEnsaios += (info.n_gerar || 0);
-            }
-
-        });
-
-    });
-
-    return {
-        totalCodigosG,
-        totalPepEnsaios
-    };
-}
-
-
-function preencherTabelaUtilizador(user) {
-
-    const container = document.getElementById("resumoHorasAutoDetalhe");
-    container.innerHTML = "";
-
-    const table = document.createElement("table");
-    table.className = "table table-sm table-bordered text-center small";
-
-    let thead = "<thead><tr><th></th>";
-
-    diasPeriodo.forEach(d => {
-        const data = new Date(d);
-        const diaSemana = data.toLocaleDateString(undefined, { weekday: 'short' });
-        thead += `<th>${diaSemana}</th>`;
-    });
-
-    thead += "</tr></thead>";
-
-    let tbody = "<tbody>";
-
-    // TOTAL
-    tbody += `<tr><td class='text-start fw-bold'>Total</td>`;
-    diasPeriodo.forEach(d => {
-        const v = user.dias[d]?.total || 0;
-        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
-    });
-    tbody += "</tr>";
-
-
-    // 🔹 ENSAIOS BLOCO
-    tbody += `<tr>
-        <td colspan="${diasPeriodo.length + 1}" class="text-start fw-bold bg-light">
-            Ensaios
-        </td>
-    </tr>`;
-
-    // Necessárias
-    tbody += "<tr><td class='text-start'>Necessárias</td>";
-    diasPeriodo.forEach(d => {
-        const v = user.dias[d]?.n_necessario || 0;
-        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
-    });
-    tbody += "</tr>";
-
-    // Colocadas
-    tbody += "<tr><td class='text-start'>Colocadas</td>";
-    diasPeriodo.forEach(d => {
-        const v = user.dias[d]?.n_existente || 0;
-        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
-    });
-    tbody += "</tr>";
-
-
-    // 🔹 GERAIS BLOCO
-    tbody += `<tr>
-        <td colspan="${diasPeriodo.length + 1}" class="text-start fw-bold bg-light">
-            Gerais
-        </td>
-    </tr>`;
-
-    // Necessárias
-    tbody += "<tr><td class='text-start'>Necessárias</td>";
-    diasPeriodo.forEach(d => {
-        const v = user.dias[d]?.g_necessario || 0;
-        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
-    });
-    tbody += "</tr>";
-
-    // Colocadas
-    tbody += "<tr><td class='text-start'>Colocadas</td>";
-    diasPeriodo.forEach(d => {
-        const v = user.dias[d]?.g_existente || 0;
-        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
-    });
-    tbody += "</tr>";
-
-
-    // 🔹 A GERAR BLOCO
-    tbody += `<tr>
-        <td colspan="${diasPeriodo.length + 1}" class="text-start fw-bold bg-light">
-            A Gerar
-        </td>
-    </tr>`;
-
-    // Ensaios
-    tbody += "<tr><td class='text-start'>Ensaios</td>";
-    diasPeriodo.forEach(d => {
-        const v = user.dias[d]?.n_gerar || 0;
-        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
-    });
-    tbody += "</tr>";
-
-    // Gerais
-    tbody += "<tr><td class='text-start'>Gerais</td>";
-    diasPeriodo.forEach(d => {
-        const v = user.dias[d]?.g_gerar || 0;
-        tbody += `<td>${v ? v.toFixed(1) + "h" : "-"}</td>`;
-    });
-    tbody += "</tr>";
-
-    tbody += "</tbody>";
-
-
-    table.innerHTML = thead + tbody;
-    container.appendChild(table);
-}
-
-function preencherTabelaPreview(resumo) {
-
-    if (!resumo || Object.keys(resumo).length === 0) return;
-
-    const container = document.getElementById("resumoHorasAuto");
-    container.innerHTML = "";
-
-    const dias = Object.keys(Object.values(resumo)[0].dias).sort();
-
-    const table = document.createElement("table");
-    table.className = "table table-sm table-bordered text-center small";
-
-    let thead = "<thead><tr><th>Nome</th>";
-
-    dias.forEach(d => {
-        const data = new Date(d);
-        const diaSemana = data.toLocaleDateString(undefined, { weekday: 'short' });
-        thead += `<th>${diaSemana}</th>`;
-    });
-
-    thead += "</tr></thead>";
-
-    let tbody = "<tbody>";
-
-    Object.values(resumo).forEach(user => {
-
-        tbody += `<tr><td class="text-start">${user.nome}</td>`;
-
-        dias.forEach(d => {
-            const info = user.dias[d];
-            const total = info?.total || 0;
-
-            tbody += `
-                <td>
-                    ${total > 0 ? total + "h" : "-"}
-                </td>
-            `;
-        });
-
-        tbody += "</tr>";
-    });
-
-    tbody += "</tbody>";
-
-    table.innerHTML = thead + tbody;
-    container.appendChild(table);
-}
-
-function irParaDetalhe() {
-
-    document.getElementById("viewPreview").style.display = "none";
-    document.getElementById("viewDetalhe").style.display = "block";
-
-    // inicializar detalhe
-    preencherSelectUtilizadores();
-    mostrarUtilizadorSelecionado();
-    document.getElementById("tituloDetalhe").innerText =`Resumo por Pessoa (${periodoAtualLabel})`;
-
-}
-
-function voltarPreview() {
-
-    document.getElementById("viewDetalhe").style.display = "none";
-    document.getElementById("viewPreview").style.display = "block";
-    document.getElementById("resumoHorasAutoDetalhe").innerHTML = "";
-}
-
-
-function mostrarPeriodoAtual() {
-
-    if (!periodosHorasAuto.length) return;
-
-    const p = periodosHorasAuto[periodoAtualIndex];
-
-    document.getElementById("periodoLabel").innerText =
-        `${p.start} → ${p.end} (${periodoAtualIndex + 1}/${periodosHorasAuto.length})`;
-
-    dadosHorasAuto = p.resumo;
-
-    diasPeriodo = Object.keys(
-        Object.values(p.resumo)[0].dias
-    ).sort();
-
-    periodoAtualLabel = `${p.start} → ${p.end}`;
-
-    preencherTabelaPreview(p.resumo);
-
-    atualizarBotoes();
-}
-
-function preencherSelectUtilizadores() {
-
-    const select = document.getElementById("selectUserHorasAuto");
-    select.innerHTML = "";
-
-    Object.entries(dadosHorasAuto).forEach(([userId, user]) => {
-
-        const opt = document.createElement("option");
-        opt.value = userId;
-        opt.textContent = user.nome;
-
-        select.appendChild(opt);
-    });
-
-    if (select.options.length > 0) {
-        select.value = select.options[0].value;
-    }
-}
-
-
-function mostrarUtilizadorSelecionado() {
-
-    const userId = document.getElementById("selectUserHorasAuto").value;
-
-    const user = dadosHorasAuto[userId];
-
-    preencherTabelaUtilizador(user);
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    const select = document.getElementById("selectUserHorasAuto");
-
-    if (select) {
-        select.addEventListener("change", mostrarUtilizadorSelecionado);
-    }
-
-});
-
-
-function periodoAnterior() {
-    if (periodoAtualIndex > 0) {
-        periodoAtualIndex--;
-        mostrarPeriodoAtual();
-    }
-}
-
-function proximoPeriodo() {
-    if (periodoAtualIndex < periodosHorasAuto.length - 1) {
-        periodoAtualIndex++;
-        mostrarPeriodoAtual();
-    }
-}
-
-function atualizarBotoes() {
-
-    document.getElementById("btnPrev").disabled =
-        periodoAtualIndex === 0;
-
-    document.getElementById("btnNext").disabled =
-        periodoAtualIndex === periodosHorasAuto.length - 1;
-}
-
-
-
-function transformarParaMatriz(resumo) {
-
-    const pessoas = new Set();
-
-    // recolher todos os nomes
-    Object.values(resumo).forEach(lista => {
-        lista.forEach(nome => pessoas.add(nome));
-    });
-
-    const matriz = [];
-
-    pessoas.forEach(nome => {
-
-        const linha = {
-            nome: nome,
-            dias: {}
-        };
-
-        Object.keys(resumo).forEach(dia => {
-            linha.dias[dia] = resumo[dia].includes(nome);
-        });
-
-        matriz.push(linha);
-    });
-
-    return matriz;
-}
 
 /////////////////////////////////////////////////////
 
@@ -1389,6 +906,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (existsInList) {
             selectLab.value = userLab;
         }
+
+        await carregarHorasBloqueadas();
 
         // Se função == 1 (técnico), NÃO pode alterar
         if (userFunc === 1) {

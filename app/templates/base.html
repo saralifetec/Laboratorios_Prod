@@ -140,7 +140,7 @@
                 </div>
               </li>
 
-              <li class="nav-item">
+              <li class="nav-item" id="menuHoras">
                 <a data-bs-toggle="collapse" href="#horas">
                   <i class="fas fa-clock"></i>
                   <p data-i18n="nav.hours">Horas</p>
@@ -187,7 +187,7 @@
               </li>
 
               {% if user and user.funcao_id != 1 %}
-              <li class="nav-item">
+              <li class="nav-item" id="menuArmazemPLME">
                 <a data-bs-toggle="collapse" href="#armazem">
                   <i class="fas fa-box"></i>
                   <p data-i18n="nav.plme_warehouse">Armazém PLME</p>
@@ -213,7 +213,7 @@
               {% endif %}
 
               
-              <li class="nav-item">
+              <li class="nav-item" id="menuArmazemExterno">
                 <a data-bs-toggle="collapse" href="#armazemexterno">
                   <i class="fas fa-truck"></i>
                   <p data-i18n="nav.external_warehouse">Armazém Externo</p>
@@ -632,6 +632,59 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
       });
+
+
+
+
+
+
+
+
+      
+</script>
+
+<script>
+
+let confGeral = null;
+
+async function carregarConfiguracaoGlobal() {
+
+    const res = await fetch('/obter_configuracao');
+
+    confGeral = await res.json();
+
+    aplicarConfiguracaoGlobal();
+}
+
+function aplicarConfiguracaoGlobal() {
+
+    if (confGeral.horas !== '1') {
+
+        document
+            .getElementById('menuHoras')
+            ?.remove();
+    }
+
+    if (confGeral.armazem_plme !== '1') {
+
+        document
+            .getElementById('menuArmazemPLME')
+            ?.remove();
+    }
+
+    if (confGeral.armazem_ext !== '1') {
+
+        document
+            .getElementById('menuArmazemExterno')
+            ?.remove();
+    }
+
+
+}  
+
+
+document.addEventListener('DOMContentLoaded', carregarConfiguracaoGlobal);
+
 </script>
 
 

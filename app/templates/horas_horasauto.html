@@ -423,9 +423,7 @@
 
                 </div>
 
-                <table id="tabelaEsgotarHoras"
-                       class="table table-sm table-bordered table-striped w-100 tabelaEsgotarHoras">
-
+                <table id="tabelaEsgotarHoras" class="table table-sm table-bordered table-striped w-100 tabelaEsgotarHoras">
                     <thead>
                         <tr>
                             <th></th>
@@ -439,9 +437,7 @@
 
                     <tbody>
                     </tbody>
-
                 </table>
-
             </div>
         </div>
     </div>
@@ -474,17 +470,12 @@
 
                     <!-- Laboratório -->
                     <div class="col-md-3">
-                        <label
-                            class="form-label"
-                            data-i18n="field.laboratorio">
-                            Laboratório
-                        </label>
+                        <label class="form-label" data-i18n="field.laboratorio"> Laboratório </label>
 
                         <select id="laboratorioRecalcularHoras" class="form-select form-select-sm">
                             <option value="" data-i18n="common.all">
                                 Todos
                             </option>
-
                         </select>
                     </div>
 
@@ -505,15 +496,9 @@
                         </label>
 
                         <div class="d-flex align-items-center" style="height:31px;">
-                            <input
-                                type="checkbox"
-                                id="incluirEsgotadosManual"
-                                class="me-2">
+                            <input type="checkbox" id="incluirEsgotadosManual" class="me-2">
 
-                            <label
-                                for="incluirEsgotadosManual"
-                                class="mb-0"
-                                data-i18n="field.incluir_esgotados_manualmente">
+                            <label for="incluirEsgotadosManual" class="mb-0" data-i18n="field.incluir_esgotados_manualmente">
                                 Incluir esgotados manualmente
                             </label>
                         </div>
@@ -527,13 +512,10 @@
                             Ação
                         </label>
 
-                        <button
-                            class="btn btn-success btn-sm"
-                            onclick="recalcularHorasSelecionadas()"
-                            data-i18n="action.recalcular">
+                        <button class="btn btn-success btn-sm" onclick="recalcularHorasSelecionadas()" data-i18n="action.recalcular">
                             Recalcular
                         </button>
-                                            </div>
+                    </div>
                 </div>
                 <table id="tabelaRecalcularHoras" class="table table-sm table-bordered table-striped w-100 tabelaRecalcularHoras">
                     <thead>
@@ -584,9 +566,7 @@ const diasSemana = [
 
 
 //ao abrir a página
-document.addEventListener(
-    'DOMContentLoaded',
-    async () => {
+document.addEventListener( 'DOMContentLoaded', async () => {
 
         await i18n.init();
 
@@ -609,35 +589,21 @@ let periodoSelecionado = null;
 
 async function recalcularHorasSelecionadas() {
 
-    const tabela =
-        $('#tabelaRecalcularHoras')
-            .DataTable();
+    const tabela = $('#tabelaRecalcularHoras') .DataTable();
 
     const selecionados = [];
 
-    tabela.$(
-        '.chk-recalcular-teste:checked',
-        { page: 'all' }
-    ).each(function () {
-
-        selecionados.push(
-            parseInt(this.value)
-        );
-
+    tabela.$( '.chk-recalcular-teste:checked', { page: 'all' } ).each(function () {
+        selecionados.push( parseInt(this.value) );
     });
 
     if (selecionados.length === 0) {
 
-        alert(
-            i18n.t('msg.selecione_pelo_menos_um_teste')
-        );
-
+        alert( i18n.t('msg.selecione_pelo_menos_um_teste') );
         return;
     }
 
-    if (
-        !confirm(i18n.t('msg.confirmar_recalcular_testes','',{ total: selecionados.length }))
-    ) {
+    if ( !confirm(i18n.t('msg.confirmar_recalcular_testes','',{ total: selecionados.length })) ) {
         return;
     }
 
@@ -656,36 +622,20 @@ async function recalcularHorasSelecionadas() {
             }
         );
 
-        const resultado =
-            await res.json();
+        const resultado = await res.json();
 
         if (resultado.success) {
-
-            alert(
-                i18n.t('msg.testes_recalculados','',
-                    { total: resultado.total }
-                )
-            );
-
+            alert( i18n.t('msg.testes_recalculados','', { total: resultado.total } ) );
             carregarTabelaRecalcularHoras();
-
         } else {
-
-            alert(
-                resultado.error_key
-                    ? i18n.t(resultado.error_key)
-                    : i18n.t('msg.erro_recalcular')
-            );
-
+            alert( resultado.error_key ? i18n.t(resultado.error_key) : i18n.t('msg.erro_recalcular') );
         }
 
     } catch (erro) {
 
         console.error(erro);
 
-        alert(
-            i18n.t('msg.falha_comunicacao_servidor')
-        );
+        alert( i18n.t('msg.falha_comunicacao_servidor') );
 
     }
 
@@ -701,39 +651,23 @@ async function abrirModalRecalcularHoras() {
 
     carregarTabelaRecalcularHoras();
 
-    new bootstrap.Modal(
-        document.getElementById(
-            "modalRecalcularHoras"
-        )
-    ).show();
+    new bootstrap.Modal( document.getElementById( "modalRecalcularHoras" ) ).show();
 
 }
 
 async function carregarLaboratoriosRecalcularHoras() {
 
-    const select = document.getElementById(
-        "laboratorioRecalcularHoras"
-    );
+    const select = document.getElementById( "laboratorioRecalcularHoras" );
 
-    select.innerHTML = `
-        <option value="">
-            ${i18n.t('common.all')}
-        </option>
-    `;
+    select.innerHTML = ` <option value=""> ${i18n.t('common.all')} </option> `;
 
-    const res = await fetch(
-        "/laboratorios/ativos"
-    );
+    const res = await fetch( "/laboratorios/ativos" );
 
     const labs = await res.json();
 
     labs.forEach(lab => {
 
-        select.innerHTML += `
-            <option value="${lab.id}">
-                ${lab.laboratorio}
-            </option>
-        `;
+        select.innerHTML += ` <option value="${lab.id}"> ${lab.laboratorio} </option> `;
 
     });
 
@@ -758,42 +692,19 @@ function carregarAnosRecalcularHoras() {
 
 }
 
-document
-    .getElementById(
-        "laboratorioRecalcularHoras"
-    )
-    .addEventListener(
-        "change",
-        carregarTabelaRecalcularHoras
-    );
+document .getElementById( "laboratorioRecalcularHoras" ) .addEventListener( "change", carregarTabelaRecalcularHoras );
 
-document
-    .getElementById(
-        "anoRecalcularHoras"
-    )
-    .addEventListener(
-        "change",
-        carregarTabelaRecalcularHoras
-    );
+document .getElementById( "anoRecalcularHoras" ) .addEventListener( "change", carregarTabelaRecalcularHoras );
 
 document.getElementById("incluirEsgotadosManual").addEventListener("change", carregarTabelaRecalcularHoras );
 
 function carregarTabelaRecalcularHoras() {
 
-    const laboratorioId =
-        document.getElementById(
-            "laboratorioRecalcularHoras"
-        ).value;
+    const laboratorioId = document.getElementById( "laboratorioRecalcularHoras" ).value;
 
-    const ano =
-        document.getElementById(
-            "anoRecalcularHoras"
-        ).value;
+    const ano = document.getElementById( "anoRecalcularHoras" ).value;
 
-    const incluirEsgotados =
-        document.getElementById(
-            "incluirEsgotadosManual"
-        ).checked;
+    const incluirEsgotados = document.getElementById( "incluirEsgotadosManual" ).checked;
 
     $('#tabelaRecalcularHoras').DataTable({
 
@@ -862,11 +773,7 @@ async function esgotarTestesSelecionados() {
         return;
     }
 
-    if (
-        !confirm(
-            i18n.t('msg.confirmar_esgotar_testes')
-        )
-    ) {
+    if ( !confirm( i18n.t('msg.confirmar_esgotar_testes') ) ) {
         return;
     }
 
@@ -886,24 +793,17 @@ async function esgotarTestesSelecionados() {
             }
         );
 
-        const resultado =
-            await res.json();
+        const resultado = await res.json();
 
         if (resultado.success) {
 
-            alert(
-                i18n.t('msg.testes_esgotados_sucesso','',{ total: selecionados.length })
-            );
+            alert( i18n.t('msg.testes_esgotados_sucesso','',{ total: selecionados.length }) );
 
             carregarTabelaEsgotarHoras();
 
         } else {
 
-            alert(
-                resultado.error_key
-                    ? i18n.t(resultado.error_key)
-                    : i18n.t('msg.erro_esgotar_testes')
-            );
+            alert( resultado.error_key ? i18n.t(resultado.error_key) : i18n.t('msg.erro_esgotar_testes') );
 
         }
 
@@ -911,9 +811,7 @@ async function esgotarTestesSelecionados() {
 
         console.error(erro);
 
-        alert(
-            i18n.t('msg.erro_comunicar_servidor')
-        );
+        alert( i18n.t('msg.erro_comunicar_servidor') );
     }
 }
 
@@ -923,31 +821,18 @@ async function abrirModalEsgotarHoras() {
 
     carregarTabelaEsgotarHoras();
 
-    new bootstrap.Modal(
-        document.getElementById(
-            'modalEsgotarHoras'
-        )
-    ).show();
+    new bootstrap.Modal( document.getElementById( 'modalEsgotarHoras' ) ).show();
 }
 
 document.getElementById("laboratorioEsgotarHoras").addEventListener("change", carregarTabelaEsgotarHoras);
 
 async function carregarLaboratoriosEsgotarHoras() {
 
-    const select =
-        document.getElementById(
-            "laboratorioEsgotarHoras"
-        );
+    const select = document.getElementById( "laboratorioEsgotarHoras" );
 
-    select.innerHTML = `
-        <option value="">
-            ${i18n.t('common.all')}
-        </option>
-    `;
+    select.innerHTML = ` <option value=""> ${i18n.t('common.all')} </option> `;
 
-    const res = await fetch(
-        '/laboratorios/ativos'
-    );
+    const res = await fetch( '/laboratorios/ativos' );
 
     const labs = await res.json();
 
@@ -964,11 +849,7 @@ async function carregarLaboratoriosEsgotarHoras() {
 
 function carregarTabelaEsgotarHoras() {
 
-    const laboratorioId =
-        document.getElementById(
-            "laboratorioEsgotarHoras"
-        ).value;
-
+    const laboratorioId = document.getElementById( "laboratorioEsgotarHoras" ).value;
 
     $('#tabelaEsgotarHoras').DataTable({
 
@@ -988,25 +869,13 @@ function carregarTabelaEsgotarHoras() {
                 orderable: false,
                 searchable: false
             },
-            {
-                data: 'laboratorio'
-            },
-            {
-                data: 'ensaio'
-            },
-            {
-                data: 'teste'
-            },
-            {
-                data: 'datainicio'
-            },
-            {
-                data: 'datafim'
-            }
+            { data: 'laboratorio' },
+            { data: 'ensaio' },
+            { data: 'teste' },
+            { data: 'datainicio' },
+            { data: 'datafim' }
         ],
-
         pageLength: 10,
-
         language: {
             url: i18n.getDataTablesLanguageUrl()
         }
@@ -1016,17 +885,13 @@ function carregarTabelaEsgotarHoras() {
 
 async function iniciarGeracaoHorasAuto() {
 
-    const semanaSelect =
-        document.getElementById("semanaHorasAuto");
+    const semanaSelect = document.getElementById("semanaHorasAuto");
 
-    const semanaIndex =
-        Number(semanaSelect.value);
+    const semanaIndex = Number(semanaSelect.value);
 
-    const ano =
-        Number(document.getElementById("anoHorasAuto").value);
+    const ano = Number(document.getElementById("anoHorasAuto").value);
 
-    const mes =
-        Number(document.getElementById("mesHorasAuto").value);
+    const mes = Number(document.getElementById("mesHorasAuto").value);
 
     const semanas = periodosHistorico.filter(p =>
         p.ano === ano &&
@@ -1058,29 +923,21 @@ async function iniciarGeracaoHorasAuto() {
         Object.values(data.resumo.resumo)[0].dias
     ).sort();
 
-    periodoAtualLabel =
-        `${periodo.inicio} → ${periodo.fim}`;
+    periodoAtualLabel = `${periodo.inicio} → ${periodo.fim}`;
 
     document.getElementById("geracaoHorasAuto").style.display = "block";
 
-    document.getElementById("tituloPassoHorasAuto").innerText =
-    i18n.t('field.confirmar_presencas');
+    document.getElementById("tituloPassoHorasAuto").innerText = i18n.t('field.confirmar_presencas');
 
     preencherTabelaPreview(
         data.resumo.resumo
     );
 
-    document.getElementById(
-        "btnProximoPasso"
-    ).style.visibility = "visible";
+    document.getElementById( "btnProximoPasso" ).style.visibility = "visible";
 
-    document.getElementById(
-        "btnProximoPasso"
-    ).onclick = irParaDetalhe;
+    document.getElementById( "btnProximoPasso" ).onclick = irParaDetalhe;
 
-    document.getElementById(
-        "btnProximoPasso"
-    ).innerText = "→";
+    document.getElementById( "btnProximoPasso" ).innerText = "→";
 
 }
 

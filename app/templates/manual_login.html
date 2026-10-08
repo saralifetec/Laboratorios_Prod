@@ -151,8 +151,60 @@
 
                 </div>
 
-            </div>
+                <div class="mb-3">
 
+                    <label class="form-label" data-i18n="field.linguagem">
+                        Linguagem
+                    </label>
+
+                    <select id="cfgLinguagem" class="form-select">
+                        <option value="pt">
+                            PT
+                        </option>
+                        <option value="es">
+                            ES
+                        </option>
+                        <option value="en">
+                            EN
+                        </option>
+                    </select>
+
+                </div>
+
+            
+
+                <div class="mb-3">
+
+                    <label class="form-label" data-i18n="field.modulos_disponiveis">
+                        &nbsp Módulos Disponíveis
+                    </label>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="cfgModuloHoras">
+
+                        <label class="form-check-label" for="cfgModuloHoras" data-i18n="nav.hours">
+                            Horas
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="cfgModuloArmazem">
+
+                        <label class="form-check-label" for="cfgModuloArmazem" data-i18n="nav.plme_warehouse">
+                            Armazém PLME
+                        </label>
+                    </div>
+
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="cfgModuloArmazemE">
+
+                        <label class="form-check-label" for="cfgModuloArmazemE" data-i18n="nav.external_warehouse">
+                            Armazém Externo
+                        </label>
+                    </div>
+
+                </div>
+            </div>
             <div class="modal-footer">
                 <button class="btn btn-sm btn-success" onclick="gravarConfiguracao()" data-i18n="action.save">
                     Guardar
@@ -292,45 +344,34 @@ async function abrirConfiguracao() {
 
     carregarConfiguracao();
 
-    new bootstrap.Modal(
-        document.getElementById(
-            'modalConfiguracao'
-        )
-    ).show();
+    new bootstrap.Modal(document.getElementById('modalConfiguracao')).show();
 
 }
 
 async function carregarConfiguracao() {
 
-    const res =
-        await fetch(
-            '/obter_configuracao'
-        );
+    const res =await fetch('/obter_configuracao');
 
-    const conf =
-        await res.json();
+    const conf = await res.json();
 
-    document.getElementById(
-        'cfgPais'
-    ).value = conf.pais;
+    document.getElementById('cfgPais').value = conf.pais || 'Portugal';
 
-    atualizarLocalizacoes(
-        conf.localizacao
-    );
+    atualizarLocalizacoes(conf.localizacao);
 
+    document.getElementById('cfgLinguagem').value = conf.linguagem || 'pt';
+    document.getElementById('cfgModuloHoras').checked = conf.horas === '1';
+    document.getElementById('cfgModuloArmazem').checked = conf.armazem_plme === '1';
+    document.getElementById('cfgModuloArmazemE').checked = conf.armazem_ext === '1';
 }
 
 async function gravarConfiguracao() {
 
-    const pais =
-        document.getElementById(
-            'cfgPais'
-        ).value;
-
-    const localizacao =
-        document.getElementById(
-            'cfgLocalizacao'
-        ).value;
+    const pais =document.getElementById('cfgPais').value;
+    const localizacao =document.getElementById('cfgLocalizacao').value;
+    const linguagem =document.getElementById('cfgLinguagem').value;
+    const horas =document.getElementById('cfgModuloHoras').checked ? '1' : '0';
+    const armazem_plme = document.getElementById('cfgModuloArmazem').checked ? '1' : '0';
+    const armazem_ext = document.getElementById('cfgModuloArmazemE').checked ? '1' : '0';
 
     const res =
         await fetch(
@@ -339,40 +380,27 @@ async function gravarConfiguracao() {
                 method: 'POST',
                 headers: {
                     'Content-Type':
-                        'application/json'
+                    'application/json'
                 },
                 body: JSON.stringify({
                     pais,
-                    localizacao
+                    localizacao,
+                    linguagem,
+                    horas,
+                    armazem_plme,
+                    armazem_ext
                 })
             }
         );
 
-    const resultado =
-        await res.json();
+    const resultado = await res.json();
 
     if (resultado.success) {
-
-        alert(
-            i18n.t('msg.configuracao_guardada_sucesso')
-        );
-
-        bootstrap.Modal
-            .getInstance(
-                document.getElementById(
-                    'modalConfiguracao'
-                )
-            )
-            .hide();
-
+        alert(i18n.t('msg.configuracao_guardada_sucesso'));
+        bootstrap.Modal.getInstance(document.getElementById('modalConfiguracao')).hide();
     } else {
-
-        alert(
-            'Erro ao gravar configuração.'
-        );
-
+        alert(i18n.t('msg.erro_gravar_configuracao'));
     }
-
 }
 
 </script>    
