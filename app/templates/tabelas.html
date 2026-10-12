@@ -206,32 +206,25 @@ option.norma-com-doc {
 								<div class="col-md-12 p-0">
 									<br>
 									<select class="form-control" id="tabela_id" name="tabela_id">
-										<option value="clientes" selected data-i18n="table.clientes">Clientes</option>
-										<option value="codigosg" data-i18n="table.codigo_g">Códigos G</option>
-										<option value="componentes" data-i18n="table.componentes">Componentes</option>
-
+										<option value="clientes" data-i18n="field.clientes" selected>Clientes</option>
+										<option value="codigosg" data-i18n="field.codigo_g"> Cód. Gerais </option>
+										<option value="componentes" data-i18n="field.componentes">Componentes</option>
 										<option value="componentesae" data-i18n="table.ae_components">Armazém Externo Componentes</option>
 										<option value="codificacaoae" data-i18n="table.ae_codification">Armazém Externo Codificação</option>
 										<option value="localizacoes_ae" data-i18n="table.ae_locations">Armazém Externo Localizações</option>
-
-										<option value="fases" data-i18n="field.faseS">Fases</option>
+										<option value="fases" data-i18n="field.fases">Fases</option>
 										<option value="laboratorios" data-i18n="field.laboratorio">Laboratórios</option>
 										<option value="localizacoes" data-i18n="table.stock_locations">Localizações Stocks</option>
-										<option value="maquinas" data-i18n="field.maquinaS">Máquinas</option>
-
+										<option value="maquinas" data-i18n="field.maquinas">Máquinas</option>
 										<option value="motivosatraso" data-i18n="table.delay_reasons">Motivos Atraso</option>
 										<option value="motivosfalhaensaios" data-i18n="table.test_failure_reasons">Motivos Falha Ensaios</option>
-
 										<option value="normas" data-i18n="field.normas">Normas</option>
 										<option value="normasdocumentos" data-i18n="table.norm_documents">Normas Documentos</option>
-
 										<option value="projetos" data-i18n="field.projetos">Projetos</option>
 										<option value="solicitantes" data-i18n="field.solicitantes">Solicitantes</option>
-
 										<option value="templatenormas" data-i18n="table.norm_templates">Template Normas</option>
 										<option value="tipotestes" data-i18n="field.tipos_testes">Tipo de Testes</option>
 										<option value="tipopecas" data-i18n="field.tipos_pecas">Tipo de Peças</option>
-
 										<option value="users" data-i18n="field.users">Users</option>
 										<option value="tipovolumeae" data-i18n="table.ae_volume_type">Armazém Externo Tipo Volume</option>
 									</select>
@@ -830,6 +823,10 @@ option.norma-com-doc {
 					  <button id="addUser" class="btn btn-success btn-sm text-white dt-btn-rounded" title="">
 						<i class="fas fa-plus"></i> 
 					  </button>
+					  <button type="button" id ="gbs" class="btn btn-primary btn-sm" style="border-radius: 0;" onclick="abrirModalNovoUtilizador()">
+							GBS
+						</button>
+
 					  <br><br>
 					  <table id="usersTable">
 						<thead>
@@ -1077,6 +1074,103 @@ option.norma-com-doc {
 
 	</div>
 
+	<div class="modal fade" id="modalNovoUtilizador" tabindex="-1">
+
+    <div class="modal-dialog modal-sm">
+
+        <div class="modal-content">
+
+            <div class="modal-header py-2">
+
+                <h6 class="modal-title" data-i18n="modal.adicionar_novo_utilizador">
+                    Adicionar Novo Utilizador
+                </h6>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body py-2">
+
+                <div class="mb-2">
+
+                    <label class="form-label mb-1 small" data-i18n="field.username">
+                        Username
+                    </label>
+
+                    <div class="input-group input-group-sm">
+
+                        <input type="text" id="novoUsername" class="form-control">
+
+                        <button class="btn btn-outline-primary" onclick="procurarUtilizadorGBS()" data-i18n="action.search">
+                            Procurar
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="mb-2">
+
+                    <label class="form-label mb-1 small" data-i18n="field.nome">
+                        Nome
+                    </label>
+
+                    <input type="text" id="novoNome" class="form-control form-control-sm">
+
+                </div>
+
+                <div class="mb-2">
+
+                    <label class="form-label mb-1 small">
+                        Email
+                    </label>
+
+                    <input type="text" id="novoEmail" class="form-control form-control-sm" readonly>
+
+                </div>
+
+                <div class="mb-2">
+
+                    <label class="form-label mb-1 small" data-i18n="field.funcao">
+                        Função
+                    </label>
+
+                    <select id="novaFuncao" class="form-select form-select-sm">
+                    </select>
+
+                </div>
+
+                <div class="mb-2">
+
+                    <label class="form-label mb-1 small" data-i18n="field.laboratorio">
+                        Laboratório
+                    </label>
+
+                    <select id="novoLaboratorio" class="form-select form-select-sm">
+                    </select>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer py-2">
+
+                <button class="btn btn-success btn-sm" onclick="guardarUtilizadorGBS()" data-i18n="action.save">
+                    Guardar
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
 
 	<!--MODAL PASSWORD-->
 	<div class="modal fade" id="passwordModal" tabindex="-1" aria-labelledby="passwordModalLabel" aria-hidden="true">
@@ -1084,68 +1178,34 @@ option.norma-com-doc {
 		<form id="passwordForm">
 		  <div class="modal-content">
 			<div class="modal-header">
-				<h5
-					class="modal-title"
-					id="passwordModalLabel"
-					data-i18n="auth.change_password"
-				>
+				<h5 class="modal-title" id="passwordModalLabel" data-i18n="auth.change_password" >
 					Alterar Password
 				</h5>
 
-				<button
-					type="button"
-					class="btn-close"
-					data-bs-dismiss="modal"
-					aria-label="Fechar"
-					data-i18n="action.close"
-					data-i18n-attr="aria-label"
-				></button>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar" data-i18n="action.close" data-i18n-attr="aria-label" >
+				</button>
 				</div>
 
 				<div class="modal-body">
 				<input type="hidden" id="userId" name="user_id" />
 
 				<div class="mb-3">
-					<label
-					for="newPassword"
-					class="form-label"
-					data-i18n="auth.new_password"
-					>
+					<label for="newPassword" class="form-label" data-i18n="auth.new_password" >
 					Nova Password
 					</label>
-					<input
-					type="password"
-					class="form-control"
-					id="newPassword"
-					name="new_password"
-					required
-					/>
+					<input type="password" class="form-control" id="newPassword" name="new_password" required />
 				</div>
 
 				<div class="mb-3">
-					<label
-					for="confirmPassword"
-					class="form-label"
-					data-i18n="auth.confirm_password"
-					>
+					<label for="confirmPassword" class="form-label" data-i18n="auth.confirm_password" >
 					Confirmar Password
 					</label>
-					<input
-					type="password"
-					class="form-control"
-					id="confirmPassword"
-					name="confirm_password"
-					required
-					/>
+					<input type="password" class="form-control" id="confirmPassword" name="confirm_password" required />
 				</div>
 				</div>
 
 				<div class="modal-footer justify-content-end">
-				<button
-					type="submit"
-					class="btn btn-success btn-sm"
-					data-i18n="action.save"
-				>
+				<button type="submit" class="btn btn-success btn-sm" data-i18n="action.save" >
 					Guardar
 				</button>
 				</div>
@@ -1155,12 +1215,7 @@ option.norma-com-doc {
 	  </div>
 	</div>
 
-
-
-
 	<div id="anosPermitidos" data-anos='{{ anos_permitidos | tojson }}'></div>
-
-
 
 </div>
 
@@ -1173,14 +1228,8 @@ option.norma-com-doc {
 		<h5 class="modal-title" data-i18n="modal.alterar_valor_teste_normas">
 			Alterar valor do teste nas normas selecionadas
 		</h5>
-		<button
-			type="button"
-			class="btn-close"
-			data-bs-dismiss="modal"
-			aria-label="Fechar"
-			data-i18n="action.close"
-			data-i18n-attr="aria-label"
-		></button>
+		<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar" data-i18n="action.close" data-i18n-attr="aria-label" >
+		</button>
 		</div>
 
 		<div class="modal-body">
@@ -1216,24 +1265,14 @@ option.norma-com-doc {
 			<label for="normasLista" class="form-label" data-i18n="field.normas_com_teste">
 				Normas com este teste
 			</label>
-			<select
-				id="normasLista"
-				class="form-select"
-				multiple
-				required
-				style="height: 200px;"
-			></select>
+			<select id="normasLista" class="form-select" multiple required style="height: 200px;" >
+			</select>
 
 			<div class="form-text" data-i18n="msg.selecionar_varias_normas">
 				Selecione várias normas com Ctrl ou Shift, ou use "Selecionar todas".
 			</div>
 
-			<button
-				type="button"
-				class="btn btn-link p-0"
-				id="btnSelecionarTodasNormas"
-				data-i18n="action.select_all"
-			>
+			<button type="button" class="btn btn-link p-0" id="btnSelecionarTodasNormas" data-i18n="action.select_all" >
 				Selecionar todas
 			</button>
 			</div>
@@ -1270,6 +1309,148 @@ option.norma-com-doc {
 <script src="{{ url_for('static', filename='js/plugin/select2/select2.full.min.js') }}"></script>
 
 <script>
+
+////////////////////////////////////////////////////////////////////
+//utilizadores do gbs
+async function abrirModalNovoUtilizador() {
+
+    document.getElementById( 'novoUsername' ).value = '';
+
+    document.getElementById( 'novoNome' ).value = '';
+
+    document.getElementById( 'novoEmail' ).value = '';
+
+    const [
+        funcoes,
+        laboratorios
+    ] = await Promise.all([
+        fetch('/funcoes/ativos').then(
+            r => r.json()
+        ),
+        fetch('/laboratorios/ativos').then(
+            r => r.json()
+        )
+    ]);
+
+    const selectFuncao = document.getElementById( 'novaFuncao' );
+
+    selectFuncao.innerHTML = '';
+
+    funcoes.forEach(funcao => {
+
+        selectFuncao.innerHTML += `
+            <option value="${funcao.id}">
+                ${funcao.funcao}
+            </option>
+        `;
+
+    });
+
+    const selectLaboratorio = document.getElementById( 'novoLaboratorio' );
+
+    selectLaboratorio.innerHTML = '';
+
+    laboratorios.forEach(
+        laboratorio => {
+
+            selectLaboratorio.innerHTML += `
+                <option value="${laboratorio.id}">
+                    ${laboratorio.laboratorio}
+                </option>
+            `;
+
+        }
+    );
+
+    new bootstrap.Modal( document.getElementById( 'modalNovoUtilizador' ) ).show();
+}
+
+async function procurarUtilizadorGBS() {
+
+    const username = document.getElementById( 'novoUsername' ).value.trim();
+
+    if (!username) {
+        return;
+    }
+
+    const res = await fetch( `/gbs/person/${username}` );
+
+    const pessoa = await res.json();
+
+    if (!pessoa.success) {
+        alert( i18n.t('msg.utilizador_nao_encontrado_gbs') );
+        return;
+    }
+
+    document.getElementById( 'novoNome' ).value = pessoa.nome;
+
+    document.getElementById( 'novoEmail' ).value = pessoa.email;
+}
+
+async function guardarUtilizadorGBS() {
+
+    const username = document.getElementById( 'novoUsername' ).value.trim().toUpperCase();
+
+    const full_name = document.getElementById( 'novoNome' ).value.trim();
+
+    const email = document.getElementById( 'novoEmail' ).value.trim();
+
+    const funcao_id = document.getElementById( 'novaFuncao' ).value;
+
+    const laboratorio_id = document.getElementById( 'novoLaboratorio' ).value;
+
+    if ( !username || !full_name || !email || !funcao_id || !laboratorio_id ) {
+        alert( i18n.t( 'msg.preencher_campos_obrigatorios' ) );
+        return;
+    }
+
+    const response = await fetch(
+        '/users',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type':
+                'application/json'
+            },
+            body: JSON.stringify({
+                username,
+                full_name,
+                email,
+                funcao_id,
+                laboratorio_id
+            })
+        }
+    );
+
+    const resultado = await response.json();
+
+    if (response.ok) {
+
+        alert( i18n.t(resultado.message_key) );
+
+
+        bootstrap.Modal .getInstance( document.getElementById( 'modalNovoUtilizador' ) ) .hide();
+
+        if (typeof carregarUtilizadores === 'function') {
+            carregarUtilizadores();
+        }
+
+		usersTable.ajax.reload(null, false);
+
+    } else {
+
+        alert(
+			resultado.error_key
+				? i18n.t(resultado.error_key)
+				: (
+					resultado.error ||
+					i18n.t('msg.erro_criar_utilizador')
+				)
+		);
+
+    }
+}
+
 
 
 ////////////////////////////////////////////////////////////////////
@@ -1308,15 +1489,32 @@ function initSelect2Combo(selector, opts) {
 }
 
 function refreshTabelaSelectUI() {
-    const select = document.getElementById("tabela_id");
+
+    const select =
+        document.getElementById(
+            "tabela_id"
+        );
+
     if (!select) return;
 
-    sortSelectOptionsAlphabetically(select, true);
+    const valorAtual =
+        select.value;
+
+    sortSelectOptionsAlphabetically(
+        select,
+        true
+    );
 
     if (!$(select).data("select2")) {
-    initSelect2Combo("#tabela_id");
+
+        initSelect2Combo(
+            "#tabela_id"
+        );
+
     } else {
-    $("#tabela_id").trigger("change.select2");
+
+        $("#tabela_id").select2("destroy");
+initSelect2Combo("#tabela_id");
     }
 }
 
@@ -6600,11 +6798,9 @@ document.getElementById('alterartempos').addEventListener('click', async functio
 });
 
 // Ao mudar o tipo de teste, carregar normas
-document.getElementById('tipoTeste')
-  .addEventListener('change', carregarNormas);
+document.getElementById('tipoTeste') .addEventListener('change', carregarNormas);
 
-document.getElementById('campoNorma')
-  .addEventListener('change', carregarNormas);
+document.getElementById('campoNorma') .addEventListener('change', carregarNormas);
 
 // Botão selecionar todas
 document.getElementById('btnSelecionarTodasNormas').addEventListener('click', function() {

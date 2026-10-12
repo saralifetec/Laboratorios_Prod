@@ -3,6 +3,7 @@ from decimal import ROUND_HALF_UP, Decimal
 import subprocess
 import os
 from flask import current_app, flash, render_template, jsonify, request, url_for, redirect, session, render_template_string, send_file
+from services.gbs_service import get_jwt_info
 from services.horasauto_services import verificar_alerta_horas_auto
 from ..models import Cliente, Codigosg, ConfEmailAuto, ConfHorasAuto, ConsultaLayout, ConsultaLayoutUser, Fase, Horas, Laboratorio, Localizacao, Localizacao_ae, Maquina, Motivosatraso, Normas, Normasdocumentos, Projeto, Solicitante, Templatenormas, Testes, Tipotestes, User, ReferenciaAE, DadosGerais
 from ..models import Tipopeca, ConfValidacaoManual, Ensaio, Funcao, Motivosfalhaensaios, Componente, Referencia, MovimentoStock, ConfHorasAuto, ConfHorasAutoCodg, ConfHorasAutoLab, Report, ConfEmailAutoLab, PedidoHorasExtra, Componentesae, Tipovolumeae, Codificacaoae, MovimentoAE
@@ -266,6 +267,51 @@ def init_routes(app):
     def logout():
         session.clear()
         return redirect(url_for('login'))
+
+    @app.route('/gbs_login', methods=['POST'])
+    def gbs_login():
+
+        data = request.get_json()
+
+        username = data.get('sub')
+
+        exp = data.get('exp')
+
+        if not username:
+
+            return jsonify({
+                'success': False,
+                'error': 'JWT inválido.'
+            }), 401
+
+        import time
+
+        if exp and exp < int(time.time()):
+
+            return jsonify({
+                'success': False,
+                'error': 'Sessão GBS expirada.'
+            }), 401
+
+        user = User.query.filter(
+            func.lower(User.username) ==
+            username.lower()
+        ).first()
+
+        if not user:
+
+            return jsonify({
+                'success': False,
+                'error': 'Utilizador sem acesso à aplicação.'
+            })
+
+        session['user_id'] = user.id
+        session['funcao_id'] = user.funcao_id
+        session['laboratorio_id'] = user.laboratorio_id
+
+        return jsonify({
+            'success': True
+        })
 
 
     ########################################################################
@@ -3830,7 +3876,7 @@ def init_routes(app):
             )
             db.session.add(novo)
             db.session.commit()
-            return jsonify({'message':'Utilizador criado com sucesso'})
+            return jsonify({ 'message_key': 'msg.utilizador_criado_sucesso' })
         except Exception as e:
             db.session.rollback()
             return jsonify({'error':f'Erro ao criar: {e}'}), 500

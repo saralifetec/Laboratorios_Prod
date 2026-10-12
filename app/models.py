@@ -1,6 +1,6 @@
 from . import db
 from datetime import datetime
-from sqlalchemy import DateTime, Double, Numeric, text
+from sqlalchemy import DateTime, Double, Numeric, text, UniqueConstraint
 from sqlalchemy.dialects.mysql import TINYINT
 
 class User(db.Model):
@@ -307,8 +307,9 @@ class DadosGerais(db.Model):
 
 class Tipotestes(db.Model):
     __tablename__ = 'tipotestes'
+    __table_args__ = (UniqueConstraint( 'teste', 'laboratorio_id', name='uq_tipotestes_teste_laboratorio' ), )
     id = db.Column(db.Integer, primary_key=True)
-    teste = db.Column(db.String(50), nullable=False, unique=True)
+    teste = db.Column(db.String(50), nullable=False)
     laboratorio_id = db.Column(db.Integer, db.ForeignKey('laboratorios.id'), nullable=False)
     criarpasta = db.Column(db.Boolean, nullable=False)
     mediveis = db.Column(db.Boolean, nullable=True)

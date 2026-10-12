@@ -11,6 +11,43 @@
 {% block content %}
 
 <style>
+#testesTable {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+#testesTable th {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    padding: 8px 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#testesTable td {
+    border: 0px solid #dee2e6;
+    padding: 4px;
+    vertical-align: middle;
+}
+
+#testesTable tbody tr:nth-child(even) {
+    background-color: #fafafa;
+}
+
+#testesTable tbody tr:hover {
+    background-color: #f2f7ff;
+}
+
+#testesTable .form-control,
+#testesTable .select2-container--default .select2-selection--single {
+    min-height: 30px;
+    font-size: 0.8rem;
+}
 
 #loadingGBS {
     position: fixed;
@@ -166,6 +203,34 @@ table.dataTable tbody td .form-control-sm {
 
 #testesTable .select2-container--default .select2-selection--single .select2-selection__arrow {
     height: 26px !important;
+}
+
+.teststeps-table {
+    font-size: 0.72rem;
+}
+
+.teststeps-table th,
+.teststeps-table td {
+    padding: 0.12rem 0.25rem !important;
+    line-height: 2.0;
+    vertical-align: middle;
+}
+
+.teststeps-table th {
+    font-size: 0.68rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.teststeps-table .form-control,
+.teststeps-table .form-select {
+    font-size: 0.72rem;
+    min-height: 24px;
+    padding: 0.10rem 0.25rem;
+}
+
+.teststeps-table input {
+    height: 24px;
 }
 
 </style>
@@ -688,9 +753,13 @@ table.dataTable tbody td .form-control-sm {
                 <button id="carregarNormaBtn" type="button" class="btn btn-primary btn-sm" title="Carregar template da norma" {% if user.funcao_id == 1 %}disabled{% endif %}>
                     <i class="fas fa-file-import"></i> <span data-i18n="action.load_norma">Carregar Norma</span>
                 </button>
+                <button type="button" id ="gbs-teststeps" class="btn btn-success btn-sm" style="border-radius: 0;">
+                    GBS
+                </button>
             </div>
             <div class="card-body">
                 <div style="overflow-x:auto;">
+                    <div class="table-responsive"></div>
                 <table id="testesTable">
                     <thead>
                         <tr>
@@ -715,6 +784,7 @@ table.dataTable tbody td .form-control-sm {
                         <!-- Linhas serão adicionadas dinamicamente -->
                     </tbody>
                 </table>
+                </div>
                 </div>
             </div>
         </div>
@@ -1000,9 +1070,7 @@ table.dataTable tbody td .form-control-sm {
                             </select>
                         </div>
                         <div class="col-4 text-end">
-                            <button id="btnNovoTipoPeca"
-                                    class="btn btn-sm btn-primary"
-                                    data-i18n="action.novo_tipo_peca">
+                            <button id="btnNovoTipoPeca" class="btn btn-sm btn-primary" data-i18n="action.novo_tipo_peca">
                                 Novo Tipo de Peça
                             </button>
                         </div>
@@ -1032,6 +1100,95 @@ table.dataTable tbody td .form-control-sm {
     </div>
 </div>
 
+<!-- modal importação tipos de testes do GBS -->
+<div class="modal fade"
+     id="modalTestStepsGBS"
+     tabindex="-1">
+
+    <div class="modal-dialog modal-xl">
+
+        <div class="modal-content">
+
+            <div class="modal-header py-2">
+
+                <h5 class="modal-title" data-i18n="modal.importar_testes_gbs">
+                    Importar Testes GBS
+                </h5>
+
+                <button type="button" class="btn-close" data-bs-dismiss="modal">
+                </button>
+
+            </div>
+
+            <div class="modal-body p-2">
+
+                <div class="table-responsive">
+
+                    <table class="table table-sm table-bordered align-middle mb-0 teststeps-table">
+
+                        <thead>
+
+                            <tr>
+                                <th style="width:30px;">
+                                    <center>
+                                        <i class="fas fa-grip-vertical"></i>
+                                    </center>
+                                </th>
+                                <th style="width:30px;">
+                                    
+                                </th>
+                                <th  style="width:250px;" data-i18n="field.tipo_teste">
+                                    Tipo de Teste
+                                </th>
+                                <th style="width:80px;" data-i18n="field.qtd">
+                                    Qtd
+                                </th>
+                                <th style="width:100px;" data-i18n="field.cod_maquina">
+                                    Cód. Máquina
+                                </th>
+                                <th style="width:250px;" data-i18n="field.maquina">
+                                    Máquina
+                                </th>
+                                <th style="width:150px;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span data-i18n="field.data_inicio">
+                                            Data Início
+                                        </span>
+                                        <i class="fa-solid fa-xmark text-danger limpar-coluna-data-inicio" style="cursor:pointer;" data-i18n="action.clear" data-i18n-attr="title"> </i>
+                                    </div>
+                                </th>
+                                <th style="width:150px;">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span data-i18n="field.data_fim">
+                                            Data Fim
+                                        </span>
+                                        <i class="fa-solid fa-xmark text-danger limpar-coluna-data-fim" style="cursor:pointer;" data-i18n="action.clear" data-i18n-attr="title">
+                                        </i>
+                                    </div>
+                                </th>
+                            </tr>
+                        </thead>
+
+                        <tbody id="tbodyTestStepsGBS">
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+
+            <div class="modal-footer py-2">
+
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" data-i18n="action.cancel">
+                    Cancelar
+                </button>
+
+                <button type="button" class="btn btn-success btn-sm" id="btnGuardarTestStepsGBS" data-i18n="action.save">
+                    Guardar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 
 {% endblock %}
@@ -1060,6 +1217,9 @@ document.addEventListener("DOMContentLoaded", function () {
     const btn = document.getElementById("gbs");
     btn.addEventListener("click", importarDadosGBS);
 
+    const btn2 = document.getElementById("gbs-teststeps");
+    btn2.addEventListener("click", importarDadosGBSTS);
+
 });
 
 //OBTER DADOS
@@ -1070,6 +1230,469 @@ let tipopecaId = null;
 let projetoIdGBS = null;
 let solicitanteIdGBS = null;
 
+/////////////////////////////////////////
+//TEST STEPS
+
+//botão guardar
+document .getElementById( 'btnGuardarTestStepsGBS' ) .addEventListener( 'click', guardarTestStepsGBS );
+
+//guardar 
+async function guardarTestStepsGBS() {
+
+    const linhas = [];
+
+    $('#tbodyTestStepsGBS tr').each(function(index) {
+        linhas.push({
+            ordem: index + 1,
+            tipo_teste: $(this) .find('.tipo-teste option:selected') .text() .trim(),
+            qtd: $(this) .find('.qtd') .val(),
+            codigo_maquina: $(this) .find('.codigo-maquina option:selected') .text() .trim(),
+            nome_maquina: $(this) .find('.nome-maquina') .val() .trim(),
+            datainicio: $(this) .find('.data-inicio') .val(),
+            datafim: $(this) .find('.data-fim') .val()
+        });
+
+    });
+
+    const response = await fetch(
+        '/gbs/guardar_teststeps',
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                ensaio_id: $('#ensaio_id').val(),
+                laboratorio_id: $('#laboratorio_id').val(),
+                linhas
+            })
+        }
+    );
+
+    const resultado = await response.json();
+
+    if (!resultado.success) {
+        throw new Error( resultado.error || 'Erro ao guardar.' );
+    }
+
+    mostrarNotificacao( i18n.t('msg.dados_guardados_sucesso'), 'success' );
+
+    console.log(resultado);
+
+    bootstrap.Modal .getInstance( document.getElementById( 'modalTestStepsGBS' ) ) .hide();
+
+    await carregarDadosTestes();
+
+    carregarTestes( $('#ensaio').val() );
+
+}
+
+
+async function importarDadosGBSTS() {
+
+    const ensaioIdAtual = $('#ensaio_id').val();
+
+    if (!ensaioIdAtual) {
+        mostrarNotificacao( i18n.t('msg.guardar_ensaio_antes'), 'error' );
+        return;
+    }
+
+    showLoadingGBS();
+
+    try {
+
+        const ensaio = $('#ensaio').val();
+
+        const responseSeries =
+            await fetch(
+                '/gbs/test-series',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type':
+                        'application/json'
+                    },
+                    body: JSON.stringify({
+                        full_series_number: ensaio
+                    })
+                }
+            );
+
+        const dadosGBS = await responseSeries.json();
+
+        const testSeriesId = dadosGBS.testSeriesId;
+
+        if (!testSeriesId) {
+            throw new Error( 'testSeriesId não encontrado.' );
+        }
+
+        const responseSteps = await fetch( `/gbs/test-steps/${testSeriesId}` );
+
+        const testSteps = await responseSteps.json();
+
+        console.log( 'TEST STEPS:', testSteps );
+
+        const laboratorioId = $('#laboratorio_id').val();
+
+        const responseTipos = await fetch( `/gbs/tipotestes/${laboratorioId}` );
+
+        const tiposTeste = await responseTipos.json();
+
+        console.log( 'TIPOS TESTE:', tiposTeste );
+
+        const responseMaquinas = await fetch( `/gbs/maquinas/${laboratorioId}` );
+
+        const maquinas = await responseMaquinas.json();
+
+        preencherModalTestSteps( testSteps, tiposTeste, maquinas );
+
+        new bootstrap.Modal( document.getElementById( 'modalTestStepsGBS' ) ).show();
+
+    } catch (err) {
+
+        console.error( 'Erro na importação GBS:', err );
+
+    } finally {
+
+        hideLoadingGBS();
+
+    }
+
+}
+
+
+
+function extrairTipoTeste( scheduleType ) {
+
+    if (!scheduleType) {
+        return '';
+    }
+
+    const partes = scheduleType.split('|');
+
+    return partes[ partes.length - 1 ].trim();
+
+}
+
+function preencherModalTestSteps( testSteps, tiposTeste, maquinas ) {
+
+    const tbody = document.getElementById( 'tbodyTestStepsGBS' );
+
+    tbody.innerHTML = '';
+
+    testSteps.forEach((step, index) => {
+
+        const tipoTeste = extrairTipoTeste( step.scheduleType );
+
+        const maquinaInfo = extrairMaquina( step.resourceName );
+
+        // TIPO TESTE
+
+        const testeEncontrado =
+            tiposTeste.find(
+                t =>
+                    t.teste.toLowerCase() ===
+                    tipoTeste.toLowerCase()
+            );
+
+        const classeSelect =
+            testeEncontrado
+                ? 'form-select form-select-sm tipo-teste'
+                : 'form-select form-select-sm tipo-teste border-danger';
+
+        let options = '';
+
+        if (!testeEncontrado) {
+            options += ` <option value=""> ${tipoTeste} </option> `;
+        }
+
+        tiposTeste.forEach(t => {
+            options += `
+                <option
+                    value="${t.id}"
+                    ${testeEncontrado && t.id === testeEncontrado.id ? 'selected' : ''}>
+                    ${t.teste}
+                </option>
+            `;
+        });
+
+        // MÁQUINA
+        const maquinaEncontrada =
+            maquinas.find(
+                m =>
+                    m.codigo.toLowerCase() ===
+                    maquinaInfo.codigo.toLowerCase()
+            );
+
+        const classeMaquina =
+            maquinaEncontrada
+                ? 'form-select form-select-sm codigo-maquina'
+                : 'form-select form-select-sm codigo-maquina border-danger';
+
+        let optionsMaquina = ` <option value=""></option> `;
+
+        if (!maquinaEncontrada) {
+            optionsMaquina += `
+                <option value="" selected>
+                    ${maquinaInfo.codigo}
+                </option>
+            `;
+        }
+
+        maquinas.forEach(m => {
+
+            optionsMaquina += `
+                <option
+                    value="${m.id}"
+                    data-codigo="${m.codigo}"
+                    data-nome="${m.nome}"
+                    ${
+                        maquinaEncontrada &&
+                        maquinaEncontrada.id === m.id
+                            ? 'selected'
+                            : ''
+                    }>
+                    ${m.codigo}
+                </option>
+            `;
+
+        });
+
+        tbody.insertAdjacentHTML(
+            'beforeend',
+            `
+            <tr draggable="true">
+                <td class="text-center drag-handle" style="cursor:move;">
+                <i class="fas fa-grip-vertical"></i>
+                </td>
+
+                <td class="text-center">
+                ${index + 1}
+                </td>
+
+                <td>
+                    <select class="${classeSelect}">
+                        ${options}
+                    </select>
+                </td>
+                <td>
+                    <input type="number" class="form-control form-control-sm qtd" value="${step.partCount || 0}">
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <select class="${classeMaquina}">
+                            ${optionsMaquina}
+                        </select>
+                        <i class="fa-solid fa-xmark text-danger limpar-maquina" style="cursor:pointer;" title="Limpar">
+                        </i>
+                    </div>
+                </td>
+                <td>
+                    <input type="text" class="form-control form-control-sm nome-maquina" value="${ maquinaEncontrada ? maquinaEncontrada.nome : maquinaInfo.maquina }">
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <input type="datetime-local" class="form-control form-control-sm data-inicio" value="${dataGbsParaDateTimeLocal(step.begin)}">
+                        <i class="fa-solid fa-xmark text-danger limpar-data-inicio" style="cursor:pointer;" title="Limpar">
+                        </i>
+                    </div>
+                </td>
+
+                <td>
+                    <div class="d-flex align-items-center gap-1">
+                        <input type="datetime-local" class="form-control form-control-sm data-fim" value="${dataGbsParaDateTimeLocal(step.end)}">
+                        <i class="fa-solid fa-xmark text-danger limpar-data-fim" style="cursor:pointer;" title="Limpar">
+                        </i>
+                    </div>
+                </td>
+            </tr>
+            `
+        );
+    });
+
+    // EVENTOS DAS COMBOS DE MÁQUINAS
+
+    document .querySelectorAll('.codigo-maquina') .forEach(select => {
+
+        select.addEventListener( 'change', function () {
+
+            const option = this.options[ this.selectedIndex ];
+
+            const linha = this.closest('tr');
+
+            linha .querySelector('.nome-maquina') .value = option.dataset.nome || '';
+
+        });
+    });
+
+    // BOTÃO LIMPAR
+
+    document .querySelectorAll('.limpar-maquina') .forEach(btn => {
+
+        btn.addEventListener( 'click', function () {
+
+            const linha = this.closest('tr');
+
+            const select = linha.querySelector( '.codigo-maquina' );
+
+            const nome = linha.querySelector( '.nome-maquina' );
+            select.selectedIndex = 0;
+
+            nome.value = '';
+
+        });
+
+    });
+
+
+    document .querySelectorAll('.limpar-data-inicio') .forEach(btn => {
+        btn.addEventListener( 'click', function () {
+            this .closest('td') .querySelector('.data-inicio') .value = '';
+        });
+    });
+
+    document .querySelectorAll('.limpar-data-fim') .forEach(btn => {
+        btn.addEventListener( 'click', function () {
+            this .closest('td') .querySelector('.data-fim') .value = '';
+        });
+    });
+
+    document .querySelector( '.limpar-coluna-data-inicio' ) ?.addEventListener( 'click', function () {
+        document .querySelectorAll( '.data-inicio' ) .forEach(input => { input.value = ''; });
+    });
+
+    document .querySelector( '.limpar-coluna-data-fim' ) ?.addEventListener( 'click', function () {
+        document .querySelectorAll( '.data-fim' ) .forEach(input => { input.value = ''; });
+    });
+
+    inicializarDragDropTestSteps();
+
+}
+
+function inicializarDragDropTestSteps() {
+
+    const tbody = document.getElementById( 'tbodyTestStepsGBS' );
+
+    let draggedElement = null;
+
+    tbody.addEventListener( 'dragstart', function (e) {
+
+        const tr = e.target.closest('tr');
+
+        if (!tr) {
+            return;
+        }
+
+        draggedElement = tr;
+
+        tr.classList.add(
+            'dragging'
+        );
+
+    });
+
+    tbody.addEventListener( 'dragend', function (e) {
+
+        const tr = e.target.closest('tr');
+
+        if (!tr) {
+            return;
+        }
+
+        tr.classList.remove( 'dragging' );
+
+    });
+
+    tbody.addEventListener( 'dragover', function (e) {
+
+        e.preventDefault();
+
+        const afterElement = getDragAfterElement( tbody, e.clientY );
+
+        if (!afterElement) {
+            tbody.appendChild( draggedElement );
+        } else {
+            tbody.insertBefore( draggedElement, afterElement );
+        }
+    });
+
+    tbody.addEventListener( 'drop', function (e) {
+        e.preventDefault();
+        renumerarTestSteps();
+    });
+
+}
+
+function renumerarTestSteps() {
+    document .querySelectorAll( '#tbodyTestStepsGBS tr' ) .forEach((tr, index) => {
+        tr.children[1].textContent = index + 1;
+    });
+}
+
+
+function dataGbsParaDateTimeLocal(dataGBS) {
+
+    if (!dataGBS) {
+        return '';
+    }
+
+    const data = new Date(dataGBS);
+
+    const ano = data.getFullYear();
+
+    const mes = String( data.getMonth() + 1 ).padStart(2, '0');
+
+    const dia = String( data.getDate() ).padStart(2, '0');
+
+    const hora = String( data.getHours() ).padStart(2, '0');
+
+    const minuto = String( data.getMinutes() ).padStart(2, '0');
+
+    return `${ano}-${mes}-${dia}T${hora}:${minuto}`;
+}
+
+
+function extrairMaquina(resourceName) {
+
+    if (!resourceName) {
+        return { maquina: '', codigo: '' };
+    }
+
+    const partes = resourceName.split('#');
+
+    return {
+        maquina: partes[0].trim(),
+        codigo: partes.length > 1
+            ? partes[1].trim()
+            : ''
+    };
+
+}
+
+function formatarDataGBS(dataGBS) {
+
+    if (!dataGBS) {
+        return '';
+    }
+
+    const data = new Date(dataGBS);
+
+    const dia = String( data.getDate() ).padStart(2, '0');
+
+    const mes = String( data.getMonth() + 1 ).padStart(2, '0');
+
+    const ano = data.getFullYear();
+
+    const horas = String( data.getHours() ).padStart(2, '0');
+
+    const minutos = String( data.getMinutes() ).padStart(2, '0');
+
+    return `${dia}/${mes}/${ano} ${horas}:${minutos}`;
+
+}
+
+//////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////
 
 async function importarDadosGBS() {
 
@@ -1638,24 +2261,15 @@ async function preencherFormulario({laboratorioId, normaId, clienteId, projetoId
         $("#partnumbercli").val( dadosGBS.customerPartNumber );
     }
 
-    await carregarTestesGBS( dadosGBS.testSeriesId );
+    //await carregarTestesGBS( dadosGBS.testSeriesId );
+
+    //const testSteps = await carregarTestesGBS( dadosGBS.testSeriesId );
+
+    //const tiposTesteIds = await garantirTiposTeste( testSteps, laboratorioId );
 
 }
 
-async function carregarTestesGBS(testSeriesId) {
 
-    console.log("TEST ID:", testSeriesId);
-
-    if (!testSeriesId) {
-        return;
-    }
-
-    const response = await fetch( `/gbs/test-steps/${testSeriesId}` );
-
-    const data = await response.json();
-
-    console.log( "TEST STEPS GBS:", data );
-}
 
 async function refreshLaboratorios() {
     await atualizarComboLaboratorios();
@@ -2837,6 +3451,8 @@ async function calcularDataSucatear(dataConclusao) {
     return `${pad(dt.getDate())}-${pad(dt.getMonth() + 1)}-${dt.getFullYear()}`;
 }
 
+let atualizarOrdem = false;
+
 /////////////////////////////////////////////////////////////////////
 //DATA CONCLUIDO
 
@@ -3286,14 +3902,7 @@ mostrarNotificacao(
 };
 
 
-$('#testesTable').DataTable({
-    searching: false,   
-    ordering: false,    
-    paging: false,
-    scrollX: true, 
-    info: false,        
-    language: { url: i18n.getDataTablesLanguageUrl() }
-});
+
 
 
 ///////////////////////////////////////////////////////
@@ -4047,23 +4656,41 @@ function formatDateTimeInput(dt) {
 
 
 // Carregar testes de um ensaio
-function carregarTestes(ensaioNumero) {
+async function carregarTestes(ensaioNumero) {
+
     if (!ensaioNumero) {
         $('#testesTableBody').empty();
         return;
     }
-    
+
     ensaioAtual = ensaioNumero;
-    
-    fetch(`/testes/${ensaioNumero}`)
-        .then(res => res.json())
-        .then(data => {
-            renderizarTestes(data);
-        })
-        .catch(err => {
-            console.error('Erro ao carregar testes:', err);
-            mostrarNotificacao(i18n.t('common.error_loading') + ' ' + i18n.t('field.testes'), 'error');
-        });
+
+    try {
+
+        const response =
+            await fetch(`/testes/${ensaioNumero}`);
+
+        const data =
+            await response.json();
+
+        renderizarTestes(data);
+
+    } catch (err) {
+
+        console.error(
+            'Erro ao carregar testes:',
+            err
+        );
+
+        mostrarNotificacao(
+            i18n.t('common.error_loading') +
+            ' ' +
+            i18n.t('field.testes'),
+            'error'
+        );
+
+    }
+
 }
 
 // Renderizar tabela de testes
@@ -4078,6 +4705,10 @@ function renderizarTestes(testes) {
         tbody.append($row);
         initSelect2Tabela($row.find(".tipoteste-select, .maquina-select, .tecnico-select"));
     });
+
+
+    //$('#testesTable') .DataTable() .columns .adjust();
+
 }
 
 // Criar linha de teste
@@ -4088,7 +4719,9 @@ function criarLinhaTeste(teste, ordem) {
     row.append(`<td class="grip-handle"><i class="fas fa-grip-vertical"></i></td>`);
     
     // Ordem
-    row.append(`<td contenteditable="false">${ordem}</td>`);
+    // Ordem
+    row.append(` <td> <input type="number" min="1" class="form-control form-control-sm ordem-input" value="${ordem}" style="width:50px;"> </td> `);
+
     
     // Tipo Teste (select)
     const selectTipoTeste = $('<select class="form-control form-control-sm tipoteste-select"></select>');
@@ -4147,7 +4780,79 @@ function criarLinhaTeste(teste, ordem) {
     return row;
 }
 
+$('#testesTableBody').on(
+    'change',
+    '.ordem-input',
+    async function () {
 
+        const row = $(this).closest('tr');
+
+        let novaOrdem =
+            parseInt($(this).val());
+
+        const tbody =
+            $('#testesTableBody');
+
+        const totalLinhas =
+            tbody.children('tr').length;
+
+        if (isNaN(novaOrdem)) {
+            novaOrdem = 1;
+        }
+
+        novaOrdem =
+            Math.max(
+                1,
+                Math.min(
+                    novaOrdem,
+                    totalLinhas
+                )
+            );
+
+        $(this).val(novaOrdem);
+
+        // retirar linha
+        row.detach();
+
+        const restantes =
+            tbody.children('tr');
+
+        if (novaOrdem > restantes.length) {
+
+            tbody.append(row);
+
+        } else {
+
+            restantes
+                .eq(novaOrdem - 1)
+                .before(row);
+
+        }
+
+        renumerarInputs();
+
+        await salvarOrdem();
+
+    }
+);
+
+function renumerarInputs() {
+
+    atualizarOrdem = true;
+
+    $('#testesTableBody tr').each(
+        function(index) {
+
+            $(this)
+                .find('.ordem-input')
+                .val(index + 1);
+
+        }
+    );
+
+    atualizarOrdem = false;
+
+}
 
 
 // Formatar data/hora
@@ -4169,56 +4874,67 @@ $('#testesTableBody').on('change', '.datainicio-input', function() {
     const datainicio = $(this).val();
     const duracaoCell = tr.find('td').eq(7);
     const duracao = parseFloat(duracaoCell.text().trim());
+
     if (datainicio && duracao) {
-        // Calcular data de fim
         const inicioDate = new Date(datainicio);
-        inicioDate.setTime(inicioDate.getTime() + duracao * 60 * 60 * 1000);
-        const fimStr = inicioDate.toISOString().slice(0, 16); // yyyy-mm-ddThh:mm
-        tr.find('.datafim-input').val(fimStr).trigger('change');
+
+        inicioDate.setTime(
+            inicioDate.getTime() + duracao * 60 * 60 * 1000
+        );
+
+        const fimStr = formatDateTimeLocal(inicioDate);
+
+        tr.find('.datafim-input')
+            .val(fimStr)
+            .trigger('change');
     }
-    // Atualizar backend (já existe no código original)
+
     const id = tr.data('id');
     if (tr.data('novo') === 'true') return;
+
     fetch(`testes/testes/update/${id}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ datainicio: datainicio })
-    }).then(r => r.json()).then(data => {
-        if (data.error) mostrarNotificacao(data.error, 'error');
-        else mostrarNotificacao(data.message, 'success');
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error)
+            mostrarNotificacao(data.error, 'error');
+        else
+            mostrarNotificacao(data.message, 'success');
     });
 });
 
+
+function formatDateTimeLocal(date) {
+    return (
+        date.getFullYear() + '-' +
+        String(date.getMonth() + 1).padStart(2, '0') + '-' +
+        String(date.getDate()).padStart(2, '0') + 'T' +
+        String(date.getHours()).padStart(2, '0') + ':' +
+        String(date.getMinutes()).padStart(2, '0')
+    );
+}
 
 function atualizarDataFim(tr) {
     const datainicio = tr.find('.datainicio-input').val();
     const duracaoCell = tr.find('td').eq(7);
     const duracao = parseFloat(duracaoCell.text().trim());
+
     if (datainicio && duracao) {
         const inicioDate = new Date(datainicio);
-        inicioDate.setTime(inicioDate.getTime() + duracao * 60 * 60 * 1000);
-        const fimStr = inicioDate.toISOString().slice(0, 16);
-        tr.find('.datafim-input').val(fimStr).trigger('change');
+
+        inicioDate.setTime(
+            inicioDate.getTime() + duracao * 60 * 60 * 1000
+        );
+
+        const fimStr = formatDateTimeLocal(inicioDate);
+
+        tr.find('.datafim-input') .val(fimStr) .trigger('change');
     }
 }
 
-// Evento para preencher automaticamente Data Fim quando Duração for alterada
-$('#testesTableBody').on('blur', 'td[contenteditable="true"]', function() {
-    const tr = $(this).closest('tr');
-    const colIndex = $(this).index();
-    // Se for a coluna de duração (7)
-    if (colIndex === 7 || colIndex === 8) {
-        const duracao = parseFloat($(this).text().trim());
-        const datainicio = tr.find('.datainicio-input').val();
-        if (duracao && datainicio) {
-            const inicioDate = new Date(datainicio);
-            inicioDate.setTime(inicioDate.getTime() + duracao * 60 * 60 * 1000);
-            const fimStr = inicioDate.toISOString().slice(0, 16); // yyyy-mm-ddThh:mm
-            tr.find('.datafim-input').val(fimStr).trigger('change');
-        }
-    }
-
-});
 
 
 
@@ -4238,14 +4954,12 @@ $('#testesTableBody').on('change', '.datafim-input', function() {
     });
 });
 
-$('#testesTableBody').on('change', '.duracao', function() {
-    const tr = $(this).closest('tr');
-    const colIndex = $(this).index();
-    // Se for a coluna de duração (7)
-    if (colIndex === 7) {
-        atualizarDataFim(tr);
+$('#testesTableBody').on('blur', 'td[contenteditable="true"]', function() {
+    if ($(this).index() === 7) {
+        atualizarDataFim($(this).closest('tr'));
     }
 });
+
 
 
 
@@ -4431,40 +5145,95 @@ function salvarNovoTeste(tr) {
 //////////////////////////////////////////////////////////////
 // Eliminar teste
 $('#testesTableBody').on('click', '.delete-teste', function() {
+
     const tr = $(this).closest('tr');
     const id = tr.data('id');
-    
+
+    const dataInicio = tr.find('.datainicio-input').val();
+
+    const dataFim = tr.find('.datafim-input').val();
+
+    const maquina = tr.find('.maquina-select').val();
+
+    const tecnico = tr.find('.tecnico-select').val();
+
+    const bemPrimeira = tr.find('.bem-primeira-input').text().trim();
+
+    const observacoes = tr.find('td:eq(13)').text().trim();
+
+    const linhaVazia =
+        !dataInicio &&
+        !dataFim &&
+        !maquina &&
+        !tecnico &&
+        !bemPrimeira &&
+        !observacoes;
+
     if (!id || tr.data('novo') === 'true') {
+
         tr.remove();
-        renumerar();
+        renumerarInputs();
+
         return;
+
     }
-    
-    if (!confirm(i18n.t('msg.deseja_eliminar') + ' ' + i18n.t('field.teste') + '?')) return;
-    
-    fetch(`/testes/${id}`, { method: 'DELETE' })
-        .then(r => r.json())
-        .then(data => {
-            if (data.error) {
-                mostrarNotificacao(data.error, 'error');
-            } else {
-                mostrarNotificacao(data.message, 'success');
-                tr.remove();
-                renumerar();
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            mostrarNotificacao(i18n.t('msg.error_delete'), 'error');
-        });
+
+    if (!linhaVazia) {
+
+        if (!confirm(
+            i18n.t('msg.deseja_eliminar') +
+            ' ' +
+            i18n.t('field.teste') +
+            '?'
+        )) {
+            return;
+        }
+
+    }
+
+    fetch(`/testes/${id}`, {
+        method: 'DELETE'
+    })
+    .then(r => r.json())
+    .then(data => {
+
+        if (data.error) {
+
+            mostrarNotificacao(
+                data.error,
+                'error'
+            );
+
+        } else {
+
+            mostrarNotificacao(
+                data.message,
+                'success'
+            );
+
+            tr.remove();
+
+            renumerarInputs();
+
+        }
+
+    })
+    .catch(err => {
+
+        console.error(err);
+
+        mostrarNotificacao(
+            i18n.t('msg.error_delete'),
+            'error'
+        );
+
+    });
+
 });
 
-// Renumerar ordem
-function renumerar() {
-    $('#testesTableBody tr').each(function(index) {
-        $(this).find('td:eq(1)').text(index + 1);
-    });
-}
+
+
+
 
 // ========== DRAG & DROP ==========
 function inicializarDragDrop() {
@@ -4494,52 +5263,141 @@ function inicializarDragDrop() {
         }
     });
     
-    tbody.addEventListener('drop', function(e) {
+    tbody.addEventListener('drop', async function(e) {
         e.preventDefault();
-        renumerar();
-        salvarOrdem();
+        renumerarInputs();
+        await salvarOrdem();
     });
 }
 
-function getDragAfterElement(container, y) {
-    const draggableElements = [...container.querySelectorAll('tr:not(.dragging)')];
-    
-    return draggableElements.reduce((closest, child) => {
-        const box = child.getBoundingClientRect();
-        const offset = y - box.top - box.height / 2;
-        
-        if (offset < 0 && offset > closest.offset) {
-            return { offset: offset, element: child };
-        } else {
+function getDragAfterElement( container, y ) {
+
+    const draggableElements =
+        [
+            ...container.querySelectorAll(
+                'tr:not(.dragging)'
+            )
+        ];
+
+    return draggableElements.reduce(
+
+        (
+            closest,
+            child
+        ) => {
+
+            const box = child.getBoundingClientRect();
+
+            const offset =
+                y -
+                box.top -
+                box.height / 2;
+
+            if ( offset < 0 && offset > closest.offset ) {
+
+                return {
+                    offset,
+                    element: child
+                };
+
+            }
+
             return closest;
+
+        },
+
+        {
+            offset:
+                Number.NEGATIVE_INFINITY
         }
-    }, { offset: Number.NEGATIVE_INFINITY }).element;
+
+    ).element;
+
 }
+
+let guardarOrdemEmCurso = false;
+
 
 // GUARDAR nova ordem
-function salvarOrdem() {
-    const ordens = [];
-    $('#testesTableBody tr').each(function(index) {
-        const id = $(this).data('id');
-        if (id) {
-            ordens.push({ id: id, ordem: index + 1 });
+async function salvarOrdem() {
+
+    console.log('salvarOrdem');
+
+    if (guardarOrdemEmCurso) {
+        return;
+    }
+
+    guardarOrdemEmCurso = true;
+
+    try {
+
+        const ordens = [];
+
+        $('#testesTableBody tr').each(function(index) {
+
+            const id = $(this).data('id');
+
+            if (id) {
+
+                ordens.push({
+                    id: id,
+                    ordem: index + 1
+                });
+
+            }
+
+        });
+
+        const response = await fetch(
+            '/testes/reordenar',
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    ordens: ordens
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (data.error) {
+
+            mostrarNotificacao(
+                data.error,
+                'error'
+            );
+
+            throw new Error(data.error);
+
         }
-    });
-    
-    fetch('/testes/reordenar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ordens: ordens })
-    })
-    .then(r => r.json())
-    .then(data => {
-        if (data.error) mostrarNotificacao(data.error, 'error');
-        else mostrarNotificacao(i18n.t('msg.ordem_atualizada'), 'success');
-    })
-    .catch(err => {
+
+        mostrarNotificacao(
+            i18n.t('msg.ordem_atualizada'),
+            'success'
+        );
+
+        // Recarregar a tabela a partir da BD
+        await carregarTestes(ensaioAtual);
+
+    } catch (err) {
+
         console.error(err);
-        mostrarNotificacao(i18n.t('msg.erro_ao_guardar') + ' ' + i18n.t('field.ordem'), 'error');
-    });
+
+        mostrarNotificacao(
+            i18n.t('msg.erro_ao_guardar') + ' ' +
+            i18n.t('field.ordem'),
+            'error'
+        );
+
+    } finally {
+
+        guardarOrdemEmCurso = false;
+
+    }
+
 }
 
 // Carregar testes quando seleciona ensaio

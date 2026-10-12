@@ -1,8 +1,11 @@
+from datetime import datetime
+
 from flask import Blueprint, app, jsonify, request
 from app import db
-from app.models import Projeto, Solicitante, Cliente, Laboratorio, Normas, Tipopeca, Fase
+from app.models import Maquina, Projeto, Solicitante, Cliente, Laboratorio, Normas, Testes, Tipopeca, Fase, Tipotestes
 from gbs3api.exceptions import ApiException, NotFoundException
-from services.gbs_service import find_test_series_details, find_test_step_details
+from services.gbs_service import find_test_series_details, find_test_step_details, get_person_gbs
+from sqlalchemy import func
 
 gbs_bp = Blueprint('gbs', __name__)
 
@@ -434,21 +437,215 @@ def criar_fase_gbs():
     })
 
 """
-TEST SERIES
+TEST STEPS
 """
-@gbs_bp.route("/gbs/test-steps/<int:test_series_id>")
-def get_test_steps(test_series_id):
+@gbs_bp.route( '/gbs/test-steps/<int:test_series_id>', methods=['GET'] )
+def get_test_steps_gbs( test_series_id ):
 
     try:
-
-        data = find_test_step_details(
+        test_steps = find_test_step_details(
             test_series_id
         )
 
-        return jsonify(data)
+        return jsonify(
+            test_steps
+        )
 
     except Exception as e:
 
         return jsonify({
-            "error": str(e)
+            'error': str(e)
         }), 500
+
+"""
+TIPOS DE TESTES
+"""    
+@gbs_bp.route( '/gbs/tipotestes/<int:laboratorio_id>', methods=['GET'] )
+def obter_tipotestes_laboratorio( laboratorio_id ):
+
+    tipotestes = Tipotestes.query.filter(
+        Tipotestes.laboratorio_id == laboratorio_id,
+        Tipotestes.obsoleto == False
+    ).order_by(
+        Tipotestes.teste
+    ).all()
+
+    return jsonify([
+        {
+            'id': t.id,
+            'teste': t.teste
+        }
+        for t in tipotestes
+    ])
+
+
+
+@gbs_bp.route( '/gbs/maquinas/<int:laboratorio_id>', methods=['GET'] )
+def obter_maquinas_laboratorio( laboratorio_id ):
+    maquinas = Maquina.query.filter(
+        Maquina.laboratorio_id == laboratorio_id,
+        Maquina.obsoleto == False
+    ).order_by(
+        Maquina.codigo
+    ).all()
+
+    return jsonify([
+        {
+            'id': m.id,
+            'codigo': m.codigo,
+            'nome': m.nome
+        }
+        for m in maquinas
+    ])
+
+
+def guardar_teststeps_gbs_service( ensaio_id, laboratorio_id, linhas ):
+
+    testes_criados = []
+
+    for linha in linhas:
+
+        # TIPO DE TESTE
+        tipoteste = Tipotestes.query.filter(
+            func.lower(
+                Tipotestes.teste
+            ) == linha['tipo_teste'].lower(),
+            Tipotestes.laboratorio_id
+            == laboratorio_id
+        ).first()
+
+        if not tipoteste:
+
+            tipoteste = Tipotestes(
+                teste= linha['tipo_teste'],
+                laboratorio_id= laboratorio_id,
+                criarpasta=True,
+                mediveis=True,
+                obsoleto=False
+            )
+
+            db.session.add( tipoteste )
+
+            db.session.flush()
+
+        # MAQUINA
+        maquina = None
+
+        if linha['codigo_maquina']:
+
+            maquina = Maquina.query.filter(
+                func.lower(
+                    Maquina.codigo
+                ) == linha['codigo_maquina'].lower(),
+                Maquina.laboratorio_id
+                == laboratorio_id
+            ).first()
+
+            if not maquina:
+
+                maquina = Maquina(
+                    codigo= linha['codigo_maquina'],
+                    nome= linha['nome_maquina'],
+                    laboratorio_id= laboratorio_id,
+                    obsoleto=False
+                )
+
+                db.session.add( maquina )
+
+                db.session.flush()
+
+        # DATAS
+        datainicio = None
+        datafim = None
+
+        if linha['datainicio']:
+
+            datainicio = datetime.fromisoformat(
+                linha['datainicio']
+            )
+
+        if linha['datafim']:
+
+            datafim = datetime.fromisoformat(
+                linha['datafim']
+            )
+
+        # TESTE
+        teste = Testes(
+            ensaio_id= ensaio_id,
+            teste_id= tipoteste.id,
+            ordem= linha['ordem'],
+            qtd= linha['qtd'],
+            datainicio= datainicio,
+            datafim= datafim,
+            maquina_id= maquina.id if maquina else None,
+            fator=1,
+            motivofalhaensaio_id=1
+        )
+
+        db.session.add( teste )
+
+        testes_criados.append( teste )
+
+    db.session.commit()
+
+    return {
+        'criados':
+            len(testes_criados)
+    }
+
+@gbs_bp.route( '/gbs/guardar_teststeps', methods=['POST'] )
+def guardar_teststeps_gbs():
+
+    try:
+
+        data = request.get_json()
+
+        resultado = guardar_teststeps_gbs_service(
+            ensaio_id= data['ensaio_id'],
+            laboratorio_id= data['laboratorio_id'],
+            linhas= data['linhas']
+        )
+
+        return jsonify({
+            'success': True,
+            'resultado': resultado
+        })
+
+    except Exception as e:
+
+        db.session.rollback()
+
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+    
+"""
+Dados dos utilizadores
+"""
+@gbs_bp.route( '/gbs/person/<username>' )
+def obter_pessoa_gbs(username):
+    try:
+        pessoa = get_person_gbs( username )
+
+        if not pessoa:
+            return jsonify({
+                'success': False,
+                'message': 'Utilizador não encontrado.'
+            })
+
+        return jsonify({
+            'success': True,
+            'username': pessoa['username'],
+            'nome': pessoa['nome'],
+            'email': pessoa['email']
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+

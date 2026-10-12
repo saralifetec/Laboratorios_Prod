@@ -1081,27 +1081,18 @@ function preencherTabelaUtilizador(user) {
 
 function irParaDetalhe() {
 
-    document.getElementById(
-        "tituloPassoHorasAuto"
-    ).innerText =
-        i18n.t('field.confirmar_horas_pessoa');
+    document.getElementById( "tituloPassoHorasAuto" ).innerText = i18n.t('field.confirmar_horas_pessoa');
 
 
-    document.getElementById(
-        "resumoHorasAuto"
-    ).innerHTML = `
+    document.getElementById( "resumoHorasAuto" ).innerHTML = `
 
         <div class="row mb-3">
 
             <div class="col-4"></div>
 
             <div class="col-4">
-
-                <select
-                id="selectUserHorasAuto"
-                class="form-control form-control-sm">
+                <select id="selectUserHorasAuto" class="form-control form-control-sm">
                 </select>
-
             </div>
 
             <div class="col-4"></div>
@@ -1114,67 +1105,37 @@ function irParaDetalhe() {
 
     preencherSelectUtilizadores();
 
-    document
-        .getElementById("selectUserHorasAuto")
-        .addEventListener(
-            "change",
-            mostrarUtilizadorSelecionado
-        );
+    document .getElementById("selectUserHorasAuto") .addEventListener( "change", mostrarUtilizadorSelecionado );
 
     mostrarUtilizadorSelecionado();
 
-    document.getElementById(
-        "btnPassoAnterior"
-    ).style.visibility = "visible";
+    document.getElementById( "btnPassoAnterior" ).style.visibility = "visible";
 
-    document.getElementById(
-        "btnPassoAnterior"
-    ).onclick = voltarParaPasso1;
+    document.getElementById( "btnPassoAnterior" ).onclick = voltarParaPasso1;
 
-    document.getElementById(
-        "btnProximoPasso"
-    ).onclick = irParaNetwork;
+    document.getElementById( "btnProximoPasso" ).onclick = irParaNetwork;
 
-    document.getElementById(
-        "btnProximoPasso"
-    ).innerText = "→";
+    document.getElementById( "btnProximoPasso" ).innerText = "→";
 
 }
 
 function irParaNetwork() {
 
-    document.getElementById(
-        "tituloPassoHorasAuto"
-    ).innerText =
-        i18n.t('field.horas_descontar_networks');
+    document.getElementById( "tituloPassoHorasAuto" ).innerText = i18n.t('field.horas_descontar_networks');
 
-    document.getElementById(
-        "resumoHorasAuto"
-    ).innerHTML = `
-        <div id="resumoHorasAutoNetwork"></div>
-    `;
+    document.getElementById( "resumoHorasAuto" ).innerHTML = ` <div id="resumoHorasAutoNetwork"></div> `;
 
-    document.getElementById(
-        "btnPassoAnterior"
-    ).onclick = voltarParaDetalhe;
+    document.getElementById( "btnPassoAnterior" ).onclick = voltarParaDetalhe;
 
-    document.getElementById(
-        "btnPassoAnterior"
-    ).style.visibility = "visible";
+    document.getElementById( "btnPassoAnterior" ).style.visibility = "visible";
 
-    document.getElementById(
-    "btnProximoPasso"
-).style.visibility = "visible";
+    document.getElementById( "btnProximoPasso" ).style.visibility = "visible";
 
-document.getElementById(
-    "btnProximoPasso"
-).innerText = i18n.t('action.start');
+    document.getElementById( "btnProximoPasso" ).innerText = i18n.t('action.start');
 
-document.getElementById(
-    "btnProximoPasso"
-).onclick = iniciarGeracao;
+    document.getElementById( "btnProximoPasso" ).onclick = iniciarGeracao;
 
-preencherTabelaNetwork();
+    preencherTabelaNetwork();
 }
 
 function preencherTabelaNetwork() {
@@ -1233,11 +1194,8 @@ function preencherTabelaNetwork() {
     fetch('/horasauto/disponivel')   
         .then(res => res.json())
         .then(res => {
-
             const totalDisponivel = res.total || 0;
-
             mostrarResumoNetwork(totalGerar, totalDisponivel);
-
         });
     }
 
@@ -1245,33 +1203,20 @@ function voltarParaDetalhe() {
 
     irParaDetalhe();
 
-    document.getElementById(
-        "btnPassoAnterior"
-    ).style.visibility = "visible";
+    document.getElementById( "btnPassoAnterior" ).style.visibility = "visible";
 
-    document.getElementById(
-        "btnProximoPasso"
-    ).style.visibility = "visible";
+    document.getElementById( "btnProximoPasso" ).style.visibility = "visible";
 }
 
 function voltarParaPasso1() {
 
-    document.getElementById(
-        "tituloPassoHorasAuto"
-    ).innerText =
-        i18n.t('field.confirmar_presencas');
+    document.getElementById( "tituloPassoHorasAuto" ).innerText = i18n.t('field.confirmar_presencas');
 
-    preencherTabelaPreview(
-        dadosHorasAuto
-    );
+    preencherTabelaPreview( dadosHorasAuto );
 
-    document.getElementById(
-        "btnPassoAnterior"
-    ).style.visibility = "hidden";
+    document.getElementById( "btnPassoAnterior" ).style.visibility = "hidden";
 
-    document.getElementById(
-        "btnProximoPasso"
-    ).onclick = irParaDetalhe;
+    document.getElementById( "btnProximoPasso" ).onclick = irParaDetalhe;
 }
 
 function preencherTabelaPreview(resumo) {
@@ -1282,19 +1227,15 @@ function preencherTabelaPreview(resumo) {
 
     container.innerHTML = "";
 
-    const dias = Object.keys(
-        Object.values(resumo)[0].dias
-    ).sort();
+    const dias = Object.keys( Object.values(resumo)[0].dias ).sort();
 
     const table = document.createElement("table");
 
     table.id = "tabelaPreviewHorasAuto";
 
-    table.className =
-        "table table-sm table-bordered text-center small";
+    table.className = "table table-sm table-bordered text-center small";
 
-    let thead =
-    `<thead><tr><th>${i18n.t('field.nome')}</th>`;
+    let thead = `<thead><tr><th>${i18n.t('field.nome')}</th>`;
 
     dias.forEach(d => {
 
@@ -1324,8 +1265,7 @@ function preencherTabelaPreview(resumo) {
 
             const info = user.dias[d];
 
-            const total =
-                info?.total || 0;
+            const total = info?.total || 0;
 
             tbody += `
                 <td>
@@ -1365,11 +1305,7 @@ function preencherAnos() {
 
     select.innerHTML = '';
 
-    const anos = [
-        ...new Set(
-            periodosHistorico.map(p => p.ano)
-        )
-    ];
+    const anos = [ ...new Set( periodosHistorico.map(p => p.ano) ) ];
 
     anos.sort((a, b) => b - a);
 
@@ -1391,9 +1327,7 @@ function preencherAnos() {
 
 function preencherMeses() {
 
-    const ano = Number(
-        document.getElementById('anoHorasAuto').value
-    );
+    const ano = Number( document.getElementById('anoHorasAuto').value );
 
     const select = document.getElementById('mesHorasAuto');
 
@@ -1429,13 +1363,9 @@ function preencherMeses() {
 
 function preencherSemanas() {
 
-    const ano = Number(
-        document.getElementById('anoHorasAuto').value
-    );
+    const ano = Number( document.getElementById('anoHorasAuto').value );
 
-    const mes = Number(
-        document.getElementById('mesHorasAuto').value
-    );
+    const mes = Number( document.getElementById('mesHorasAuto').value );
 
     const select = document.getElementById('semanaHorasAuto');
 
@@ -1450,10 +1380,7 @@ function preencherSemanas() {
 
     semanas.forEach((s, idx) => {
 
-        if (
-            periodoDefault &&
-            s.inicio === periodoDefault.inicio
-        ) {
+        if ( periodoDefault && s.inicio === periodoDefault.inicio ) {
             defaultIndex = idx;
         }
 
@@ -1492,22 +1419,18 @@ function carregarHistoricoExportacoes() {
 
         columns: [
             { data: 'data_execucao' },
-
             {
                 data: 'data_inicio',
                 className: 'text-center'
             },
-
             {
                 data: 'data_fim',
                 className: 'text-center'
             },
-
             {
                 data: 'utilizador',
                 className: 'text-center'
             },
-
             {
                 data: 'anular',
                 className: 'text-center',
@@ -1515,29 +1438,21 @@ function carregarHistoricoExportacoes() {
                 searchable: false
             }
         ],
-
         order: [[0, 'desc']],
-
         pageLength: 10,
-
         lengthMenu: [
             [10, 25, 50, 100],
             [10, 25, 50, 100]
         ],
-
         language: {
             url: i18n.getDataTablesLanguageUrl()
         }
     });
 }
 
-$(document).on(
-    'click',
-    '.anular-exportacao',
-    async function () {
+$(document).on( 'click', '.anular-exportacao', async function () {
 
-        const execucaoId =
-            $(this).data('id');
+        const execucaoId = $(this).data('id');
 
         if (!confirm(i18n.t('msg.confirmar_anular_exportacao'))) {
             return;
@@ -1553,15 +1468,10 @@ $(document).on(
         const data = await res.json();
 
         console.log(data);
-    console.log(data.resumo);
+        console.log(data.resumo);
 
         if (!data.ok) {
-
-            alert(
-                data.error_key
-                    ? i18n.t(data.error_key)
-                    : i18n.t('msg.erro_anular_exportacao')
-            );
+            alert( data.error_key ? i18n.t(data.error_key) : i18n.t('msg.erro_anular_exportacao') );
 
             return;
         }
@@ -1602,7 +1512,6 @@ function mostrarResumoNetwork(totalGerar, totalDisponivel) {
 
     resumo.innerHTML = `
         <table class="table table-sm table-bordered small mt-2 w-auto">
-
             <thead>
                 <tr>
                     <th></th>
@@ -1610,29 +1519,23 @@ function mostrarResumoNetwork(totalGerar, totalDisponivel) {
                     <th class="text-center">${i18n.t('field.disponivel')}</th>
                 </tr>
             </thead>
-
             <tbody>
-
                 <tr>
                     <td>${i18n.t('field.networks')}</td>
                     <td class="text-center">${totalGerar.toFixed(2)}h</td>
                     <td class="text-center">${totalDisponivel.toFixed(2)}h</td>
                 </tr>
-
                 <tr>
                     <td>${i18n.t('field.peps')}</td>
                     <td class="text-center">${totalPepEnsaios.toFixed(2)}h</td>
                     <td class="text-center">∞</td>
                 </tr>
-
                 <tr>
                     <td>${i18n.t('field.gerais')}</td>
                     <td class="text-center">${totalCodigosG.toFixed(2)}h</td>
                     <td class="text-center">∞</td>
                 </tr>
-
             </tbody>
-
         </table>
     `;
 
@@ -1672,18 +1575,10 @@ function calcularTotaisExtra() {
 
 function iniciarGeracao() {
 
-    document.getElementById(
-        "tituloPassoHorasAuto"
-    ).innerText =
-        i18n.t('field.gerar_horas_passo');
-
-
-    document.getElementById(
-        "resumoHorasAuto"
-    ).innerHTML = `
+    document.getElementById( "tituloPassoHorasAuto" ).innerText = i18n.t('field.gerar_horas_passo');
+    document.getElementById( "resumoHorasAuto" ).innerHTML = `
 
         <div class="mb-3">
-
             <div
                 class="progress"
                 style="height:30px;">
@@ -1693,46 +1588,26 @@ function iniciarGeracao() {
                     class="progress-bar progress-bar-striped progress-bar-animated bg-success"
                     role="progressbar"
                     style="width:0%;">
-
                     0%
-
                 </div>
-
             </div>
-
-            <div
-                id="progressTextoHorasAuto"
-                class="small text-center mt-2">
-
+            <div id="progressTextoHorasAuto" class="small text-center mt-2">
                 ${i18n.t('msg.a_iniciar')}
-
             </div>
-
         </div>
-
     `;
 
-    const btn = document.getElementById(
-        "btnProximoPasso"
-    );
+    const btn = document.getElementById( "btnProximoPasso" );
 
     btn.disabled = true;
 
-
-
-    timer = setInterval(
-        consultarEstado,
-        500
-    );
+    timer = setInterval( consultarEstado, 500 );
 
     fetch('/horas_horasauto/gerar', {
-
         method: 'POST',
-
         headers: {
             'Content-Type': 'application/json'
         },
-
         body: JSON.stringify({
             periodos: [{
                 start: periodoSelecionado.inicio,
@@ -1740,59 +1615,26 @@ function iniciarGeracao() {
                 resumo: dadosHorasAuto
             }]
         })
-
     })
     .then(res => res.json())
     .then(res => {
-
         console.log(res);
-
         if (!res.ok) {
-
-            atualizarProgress(
-                100,
-                i18n.t('field.erro')
-            );
-
-            alert(
-                res.error ||
-                i18n.t('msg.erro_geracao_horas')
-            );
-
-
+            atualizarProgress( 100, i18n.t('field.erro') );
+            alert( res.error || i18n.t('msg.erro_geracao_horas') );
             btn.disabled = false;
-
             return;
         }
 
-        atualizarProgress(
-            100,
-            i18n.t('field.concluido_exclamacao')
-        );
-
+        atualizarProgress( 100, i18n.t('field.concluido_exclamacao') );
         carregarHistoricoExportacoes();
-
-        alert(
-            i18n.t('msg.horas_geradas_sucesso', '', {
-                total: res.total_inserts
-            })
-        );
-
+        alert( i18n.t('msg.horas_geradas_sucesso', '', { total: res.total_inserts }) );
         btn.style.visibility = "hidden";
     })
     .catch(err => {
-
         console.error(err);
-
-        atualizarProgress(
-            100,
-            i18n.t('field.erro')
-        );
-
-        alert(
-            i18n.t('msg.erro_durante_geracao')
-        );
-
+        atualizarProgress( 100, i18n.t('field.erro') );
+        alert( i18n.t('msg.erro_durante_geracao') );
         btn.disabled = false;
     });
 }
@@ -1801,41 +1643,26 @@ let timer = null;
 
 async function consultarEstado() {
 
-    const res =
-        await fetch('/horas_horasauto/estado');
+    const res = await fetch('/horas_horasauto/estado');
 
-    const data =
-        await res.json();
+    const data = await res.json();
 
-    atualizarProgress(
-        data.percentagem,
-        data.texto ? i18n.t(data.texto) : ''
-    );
+    atualizarProgress( data.percentagem, data.texto ? i18n.t(data.texto) : '' );
 
     if (data.percentagem >= 100) {
-
         clearInterval(timer);
-
     }
 }
 
 function atualizarProgress(percentagem, texto) {
 
-    const barra =
-        document.getElementById(
-            "progressHorasAuto"
-        );
+    const barra = document.getElementById( "progressHorasAuto" );
 
-    barra.style.width =
-        `${percentagem}%`;
+    barra.style.width = `${percentagem}%`;
 
-    barra.innerText =
-        `${percentagem}%`;
+    barra.innerText = `${percentagem}%`;
 
-    document.getElementById(
-        "progressTextoHorasAuto"
-    ).innerText =
-        texto;
+    document.getElementById( "progressTextoHorasAuto" ).innerText = texto;
 }
 
 </script>

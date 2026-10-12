@@ -668,5 +668,15 @@
 "email.horas_removidas_fim": "Por favor regularizem estes valores manualmente.\n\nCumprimentos,\n{nome}",
 "email.assunto_eliminacao_horas": "Eliminação de registos de horas",
 "msg.horas_eliminadas_sucesso": "Horas eliminadas com sucesso.",
-"msg.erro_eliminar_horas": "Erro ao eliminar horas."
+"msg.erro_eliminar_horas": "Erro ao eliminar horas.",
+"modal.adicionar_novo_utilizador": "Adicionar Novo Utilizador",
+"msg.utilizador_nao_encontrado_gbs": "Utilizador não encontrado no GBS.",
+"action.search": "Procurar",
+"msg.erro_criar_utilizador": "Erro ao criar utilizador.",
+"msg.utilizador_criado_sucesso": "Utilizador criado com sucesso.",
+"table.codigos_g": "Códigos G",
+"action.gbs_password": "Password GBS",
+"field.posicao": "Posição",
+"modal.importar_testes_gbs": "Importar Testes GBS",
+"field.cod_maquina": "Cód. Máquina"
 }

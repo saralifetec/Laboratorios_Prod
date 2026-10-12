@@ -48,20 +48,53 @@ def find_test_step_details(test_series_id):
 
         api = gbs3api.RequestApi(api_client)
 
-        print(
-            "TEST SERIES ID:",
-            test_series_id
+        params = api._find_test_step_details_serialize(
+            id=test_series_id,
+            _request_auth=None,
+            _content_type=None,
+            _headers=None,
+            _host_index=0
         )
 
-        response = api.find_test_step_details(
-            test_series_id
-        )
+        response = api_client.call_api(*params)
 
-        data = json.loads(
-            response.data.decode("utf-8")
-        )
+        response.read()
+
+        raw = response.data.decode("utf-8")
+
+        print("RAW RESPONSE:")
+        print(raw)
+
+        return json.loads(raw)
+
         
-        if not data:
+
+
+def get_person_gbs(username):
+
+    with gbs3api.ApiClient(configuration) as api_client:
+
+        api = gbs3api.MasterdataApi( api_client )
+
+        pessoas = api.get_persons1( username=username )
+
+        if not pessoas:
             return None
 
-        return data[0]
+        pessoa = pessoas[0]
+
+        return {
+            'username': pessoa.user,
+            'nome': f'{pessoa.first_name} {pessoa.last_name}',
+            'email': pessoa.email
+        }
+
+def get_jwt_info():
+
+    with gbs3api.ApiClient( configuration ) as api_client:
+
+        api = gbs3api.AuthenticationApi(
+            api_client
+        )
+
+        return api.get_jwt_info()

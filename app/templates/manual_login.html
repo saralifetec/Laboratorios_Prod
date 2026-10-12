@@ -4,8 +4,8 @@
     <title>Login Manual</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-     <link rel="stylesheet" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" />
-     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/kaiadmin.min.css') }}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         body {
             background: url("{{ url_for('static', filename='../assets/img/fundo.jpg') }}") no-repeat center center fixed;
@@ -98,9 +98,19 @@
                     Lembrar-se de mim
                 </label>
             </div>
-            <button type="submit" class="btn btn-login w-100" data-i18n="auth.login">
-                Entrar
-            </button>
+            
+            <div class="row g-2">
+                <div class="col-7">
+                    <button type="submit" class="btn btn-login w-100" data-i18n="auth.login">
+                        Entrar
+                    </button>
+                </div>
+                <div class="col-5">
+                    <button type="button" class="btn btn-light w-100" id="btnGbsLogin" data-i18n="action.gbs_password">
+                        Password GBS
+                    </button>
+                </div>
+            </div>
         </form>
     </div>
 </body>
@@ -244,6 +254,73 @@
 
 <script>
 
+$('#btnGbsLogin').on('click', async function() {
+
+    try {
+
+        const response = await fetch(
+            'https://alfpwin0044.corp.passivesafety.com/GBS/webservice/authentication/jwt/cookie/info',
+            {
+                credentials: 'include'
+            }
+        );
+
+        if (!response.ok) {
+
+            throw new Error(
+                'Sem sessão GBS ativa.'
+            );
+
+        }
+
+        const dados =
+            await response.json();
+
+        const login =
+            await fetch(
+                '/gbs_login',
+                {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(dados)
+                }
+            );
+
+        const resultado =
+            await login.json();
+
+        if (resultado.success) {
+
+            window.location.href = '/';
+
+        } else {
+
+            mostrarNotificacao(
+                resultado.error,
+                'error'
+            );
+
+        }
+
+    } catch (e) {
+
+        console.error(e);
+
+        mostrarNotificacao(
+            'Não existe uma sessão GBS ativa.',
+            'error'
+        );
+
+    }
+
+});
+
+
+
+
+
 const localizacoes = {
 
     Portugal: [
@@ -258,29 +335,18 @@ const localizacoes = {
 
 };
 
-function atualizarLocalizacoes(
-    localizacaoSelecionada = null
-) {
+function atualizarLocalizacoes( localizacaoSelecionada = null ) {
 
-    const pais =
-        document.getElementById(
-            'cfgPais'
-        ).value;
+    const pais = document.getElementById( 'cfgPais' ).value;
 
-    const select =
-        document.getElementById(
-            'cfgLocalizacao'
-        );
+    const select = document.getElementById( 'cfgLocalizacao' );
 
     select.innerHTML = '';
 
     (localizacoes[pais] || [])
         .forEach(localizacao => {
 
-            const selected =
-                localizacao === localizacaoSelecionada
-                    ? 'selected'
-                    : '';
+            const selected = localizacao === localizacaoSelecionada ? 'selected' : '';
 
             select.innerHTML += `
                 <option
@@ -293,12 +359,7 @@ function atualizarLocalizacoes(
 
 }
 
-document
-    .getElementById('cfgPais')
-    .addEventListener(
-        'change',
-        () => atualizarLocalizacoes()
-    );
+document .getElementById('cfgPais') .addEventListener( 'change', () => atualizarLocalizacoes() );
 
 
 

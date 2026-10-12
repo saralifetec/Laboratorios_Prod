@@ -570,6 +570,10 @@ document.addEventListener('DOMContentLoaded', function() {
         el.addEventListener('hide.bs.collapse', function() {
             localStorage.removeItem('submenu_aberto');
         });
+
+
+
+
     });
 });
 
@@ -612,26 +616,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-      document.addEventListener('DOMContentLoaded', function() {
-          // Restaurar estado do submenu
-          const aberto = localStorage.getItem('submenu_aberto');
-          if (aberto) {
-              const submenu = document.getElementById(aberto);
-              if (submenu) {
-                  submenu.classList.add('show');
-              }
-         }
-
-        // Guardar estado ao expandir/colapsar
-        document.querySelectorAll('.collapse').forEach(function(el) {
-            el.addEventListener('show.bs.collapse', function() {
-                localStorage.setItem('submenu_aberto', this.id);
-            });
-            el.addEventListener('hide.bs.collapse', function() {
-                localStorage.removeItem('submenu_aberto');
-            });
-        });
-      });
+    
 
 
 

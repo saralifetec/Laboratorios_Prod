@@ -69,6 +69,10 @@ const i18n = {
                 document.title
             );
         }
+
+        if (typeof refreshTabelaSelectUI === 'function') {
+            refreshTabelaSelectUI();
+        }
     },
 
     async switchLanguage(lang) {

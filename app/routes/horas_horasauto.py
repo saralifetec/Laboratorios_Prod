@@ -1,5 +1,4 @@
 from datetime import date
-
 from flask import Blueprint, jsonify, render_template, request, session
 from sqlalchemy import or_
 from app.models import Ensaio, HorasAuto, HorasAutoExecucao, Testes, Tipotestes, User, db
