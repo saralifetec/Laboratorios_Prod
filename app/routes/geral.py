@@ -4030,9 +4030,9 @@ def init_routes(app):
                     'teste_id': t.teste_id,
                     'teste': t.teste.teste if t.teste else '',
                     'ordem': t.ordem,
-                    'duracao': t.duracao,
                     'duracaomontagem': t.duracaomontagem,
                     'tempopp': t.tempopp,
+                    'duracao': t.duracao,
                     'tempomp': t.tempomp,
                     'obsoleto': t.obsoleto
                 }
@@ -4065,9 +4065,9 @@ def init_routes(app):
                 norma_id=norma_id,
                 teste_id=teste_id,
                 ordem=ordem,
-                duracao=data.get('duracao'),
                 duracaomontagem=data.get('duracaomontagem'),
                 tempopp=data.get('tempopp'),
+                duracao=data.get('duracao'),
                 tempomp=data.get('tempomp'),
                 obsoleto=False
             )
@@ -4101,14 +4101,15 @@ def init_routes(app):
                 template.teste_id = novo_teste_id
             
             # Atualizar campos numéricos
-            if 'duracao' in data:
-                template.duracao = data['duracao']
-            
+        
             if 'duracaomontagem' in data:
                 template.duracaomontagem = data['duracaomontagem']
             
             if 'tempopp' in data:
                 template.tempopp = data['tempopp']
+
+            if 'duracao' in data:
+                template.duracao = data['duracao']
 
             if 'tempomp' in data:
                 template.tempomp = data['tempomp']
@@ -4253,9 +4254,9 @@ def init_routes(app):
                     norma_id=int(target_id),
                     teste_id=s.teste_id,
                     ordem=ordem_inicial + idx + 1,
-                    duracao=s.duracao,
                     duracaomontagem=getattr(s, 'duracaomontagem', None),
                     tempopp=getattr(s, 'tempopp', None),
+                    duracao=s.duracao,
                     tempomp=getattr(s, 'tempomp', None)
                 )
                 db.session.add(novo)
@@ -4620,9 +4621,9 @@ def init_routes(app):
             testes.append({
                 'teste_id': t.teste_id,
                 'ordem': t.ordem,
-                'duracao': t.duracao,
                 'duracaomontagem': t.duracaomontagem,
                 'tempopp': t.tempopp,
+                'duracao': t.duracao,
                 'tempomp': t.tempomp
             })
         return jsonify({'testes': testes})
@@ -6590,6 +6591,7 @@ def init_routes(app):
                 "denominacao": e.projeto.descricao if e.projeto else "",
                 "tipopeca": e.tipopeca.tipopeca if e.tipopeca else "",
                 "solicitante": e.solicitante.nome if e.solicitante else "",
+                "pendente": e.pendente if e.pendente else 0,
                 "datasolicitada": fmt_date(e.datasolicitada),               # para ordenar e pintar
                 "link": f"/ensaios?ensaio={e.ensaio}"               # ajusta: nome da tua rota de detalhe
             })
@@ -8189,6 +8191,7 @@ def init_routes(app):
                 'peso': str(ref.peso) if ref and ref.peso is not None else '',
                 'dimensoes': ref.dimensoes if ref and ref.dimensoes else '',
                 'observacoes': m.observacoes or '',
+                'pep': m.pep or '',
                 'email_enviado': bool(m.emailenviado),
                 'emailenviado_em': m.emailenviado.strftime('%Y-%m-%d %H:%M:%S') if m.emailenviado else '',
                 'componente_nome': ref.componenteae.nome if ref and ref.componenteae else '',
@@ -8769,6 +8772,18 @@ def init_routes(app):
             download_name=f'{ensaio.ensaio}_Orcamento.xlsx'
         )
 
+    @app.route('/ensaio/<int:ensaio_id>/pendente', methods=['POST'])
+    def atualizar_pendente(ensaio_id):
+
+        ensaio = Ensaio.query.get_or_404(ensaio_id)
+
+        data = request.get_json()
+
+        ensaio.pendente = 1 if data.get('pendente') else 0
+
+        db.session.commit()
+
+        return jsonify(success=True)
     
 
 

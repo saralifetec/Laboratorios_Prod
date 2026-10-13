@@ -1,11 +1,89 @@
 from calendar import monthrange
-from datetime import date
+from datetime import date, timedelta
+from sqlalchemy.orm import joinedload
+from app import db
 from flask import Blueprint, jsonify, request
-from app.models import ConfHorasAuto
+from app.models import ConfHorasAuto, Horas
 from services.hours_service import delete_horas_ensaio_nao_exportadas, get_ensaios_com_horas_bloqueadas_exportacao, get_horas_previstas_periodo,  get_resumo_horas_periodo, get_ultima_exportacao
 from services.users_service import get_scope_users
 
 hours_bp = Blueprint('hours', __name__)
+
+@hours_bp.route('/horas_calendario')
+def horas_calendario():
+
+    try:
+
+        ano = int(request.args.get('ano'))
+        mes = int(request.args.get('mes'))
+        tecnico_id = int(request.args.get('tecnico_id'))
+
+        data_inicio = date(ano, mes, 1)
+
+        if mes == 12:
+            data_fim = date(ano + 1, 1, 1)
+        else:
+            data_fim = date(ano, mes + 1, 1)
+
+        # horas registadas
+        registros = (
+            db.session.query(Horas)
+            .options(joinedload(Horas.codigog))
+            .filter(
+                Horas.tecnico_id == tecnico_id,
+                Horas.data >= data_inicio,
+                Horas.data < data_fim
+            )
+            .all()
+        )
+
+        resultado = {}
+
+        for reg in registros:
+
+            if not reg.data:
+                continue
+
+            dia = reg.data.day
+
+            resultado[str(dia)] = (
+                resultado.get(str(dia), 0)
+                + float(reg.horas or 0)
+            )
+
+            codigog_txt = (
+                (
+                    reg.codigog.codigog
+                    if reg.codigog
+                    else ''
+                ) or ''
+            ).strip().upper()
+
+            if codigog_txt.startswith('E.G7'):
+
+                resultado[f'{dia}_g'] = (
+                    resultado.get(f'{dia}_g', 0)
+                    + float(reg.horas or 0)
+                )
+
+        # horas previstas
+        previstas = get_horas_previstas_periodo(
+            tecnico_id,
+            data_inicio,
+            data_fim - timedelta(days=1)
+        )
+
+        for data_dia, horas_prev in previstas.items():
+
+            resultado[f'{data_dia.day}_prev'] = horas_prev
+
+        return jsonify(resultado)
+
+    except Exception as e:
+
+        return jsonify({
+            'error': str(e)
+        }), 500
 
 @hours_bp.route('/index/home/resumo_horas')
 def resumo_horas():

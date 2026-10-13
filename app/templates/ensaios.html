@@ -1254,9 +1254,7 @@ async function guardarTestStepsGBS() {
 
     });
 
-    const response = await fetch(
-        '/gbs/guardar_teststeps',
-        {
+    const response = await fetch( '/gbs/guardar_teststeps', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -1264,6 +1262,7 @@ async function guardarTestStepsGBS() {
             body: JSON.stringify({
                 ensaio_id: $('#ensaio_id').val(),
                 laboratorio_id: $('#laboratorio_id').val(),
+                norma_id: $('#norma_id').val(),
                 linhas
             })
         }

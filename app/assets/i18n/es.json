@@ -447,9 +447,10 @@
   "label.importar_template_outra_norma": "Importar plantilla de otra norma:",
   "option.selecionar_norma_origem": "Seleccionar norma de origen",
   "action.change_times": "Cambiar Tiempos",
-  "field.tempo_montagem_h": "Tiempo de Montaje (h)",
-  "field.tempo_pessoa_peca_h": "Tiempo Persona/Pieza (h)",
-  "field.tempo_maquina_peca_h": "Tiempo Máquina/Pieza (h)",
+  "field.tempo_montagem_h": "Tiempo de Montaje - Persona (h)",
+"field.tempo_pessoa_peca_h": "Tiempo por Pieza - Persona (h)",
+"field.duracao_maquina_h": "Duración - Máquina (h)",
+"field.tempo_maquina_peca_h": "Tiempo por Pieza - Máquina (h)",
   "field.arraste_icone": "Arrastre por el icono para reordenar",
   "msg.arrastar_ficheiros": "Arrastre archivos aquí o haga clic para seleccionar",
   "action.select_files": "Seleccionar archivos",
@@ -459,7 +460,7 @@
   "field.novo_valor": "Nuevo Valor",
   "field.normas_com_teste": "Normas con este ensayo",
   "msg.selecionar_varias_normas": "Seleccione varias normas con Ctrl o Shift, o use \"Seleccionar todas\".",
-  "action.select_all": "Seleccionar todas",
+  "action.select_all": "Seleccionar todos",
   "field.ficheiro_encontrado": "Archivo encontrado en la carpeta de plantillas",
   "field.ficheiro_nao_encontrado": "Archivo no encontrado en la carpeta de plantillas",
   "msg.password_mismatch": "Las contraseñas no coinciden!",
@@ -678,5 +679,7 @@
 "action.gbs_password": "Contraseña GBS",
 "field.posicao": "Posición",
 "modal.importar_testes_gbs": "Importar Ensayos GBS",
-"field.cod_maquina": "Cód. Máquina"
+"field.cod_maquina": "Cód. Máquina",
+"field.ausente": "Ausente",
+"field.pendente": "En espera"
 }

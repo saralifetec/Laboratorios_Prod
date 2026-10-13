@@ -449,9 +449,10 @@
   "label.importar_template_outra_norma": "Importar template de outra norma:",
   "option.selecionar_norma_origem": "Selecionar Norma de origem",
   "action.change_times": "Alterar Tempos",
-  "field.tempo_montagem_h": "Tempo Montagem (h)",
-  "field.tempo_pessoa_peca_h": "Tempo Pessoa/Peça (h)",
-  "field.tempo_maquina_peca_h": "Tempo Máquina/Peça (h)",
+  "field.tempo_montagem_h": "Tempo Montagem - Pessoa (h)",
+"field.tempo_pessoa_peca_h": "Tempo Peça - Pessoa (h)",
+"field.duracao_maquina_h": "Duração - Máquina (h)",
+"field.tempo_maquina_peca_h": "Tempo Peça - Máquina (h)",
   "field.arraste_icone": "Arraste pelo ícone para reordenar",
   "msg.arrastar_ficheiros": "Arraste ficheiros aqui ou clique para selecionar",
   "action.select_files": "Selecionar ficheiros",
@@ -461,7 +462,7 @@
   "field.novo_valor": "Novo Valor",
   "field.normas_com_teste": "Normas com este teste",
   "msg.selecionar_varias_normas": "Selecione várias normas com Ctrl ou Shift, ou use \"Selecionar todas\".",
-  "action.select_all": "Selecionar todas",
+  "action.select_all": "Selecionar tudo",
   "field.ficheiro_encontrado": "Ficheiro encontrado na pasta dos templates",
   "field.ficheiro_nao_encontrado": "Ficheiro não encontrado na pasta dos templates",
   "msg.password_mismatch": "As passwords não coincidem!",
@@ -678,5 +679,8 @@
 "action.gbs_password": "Password GBS",
 "field.posicao": "Posição",
 "modal.importar_testes_gbs": "Importar Testes GBS",
-"field.cod_maquina": "Cód. Máquina"
+"field.cod_maquina": "Cód. Máquina",
+"field.ausente": "Ausente",
+"field.pendente": "Em espera"
+
 }

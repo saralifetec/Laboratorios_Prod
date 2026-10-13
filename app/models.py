@@ -450,7 +450,8 @@ class Ensaio(db.Model):
     motivoatraso_id = db.Column(db.Integer, db.ForeignKey('motivosatraso.id'), nullable=True)
     anulado = db.Column(db.Boolean, nullable=False, default=False)
     motivoanulacao = db.Column(db.Text, nullable=True)
-    concluido = db.Column(db.Date, nullable=True)  
+    concluido = db.Column(db.Date, nullable=True)
+    pendente = db.Column(db.Integer, default=0)  
 
     # Relacionamentos
     laboratorio = db.relationship('Laboratorio', backref='ensaios')

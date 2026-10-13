@@ -403,6 +403,13 @@
                         <select id="laboratorioEsgotarHoras" class="form-select form-select-sm">
                             <option value="" data-i18n="common.all">Todos</option>
                         </select>
+
+                        <div class="form-check mt-2">
+                            <input class="form-check-input" type="checkbox" id="chkTodosTestes">
+                            <label class="form-check-label" for="chkTodosTestes" data-i18n="action.select_all">
+                                Selecionar todos
+                            </label>
+                        </div>
                     </div>
 
                     <div class="col-md-7">
@@ -516,7 +523,21 @@
                             Recalcular
                         </button>
                     </div>
+                    
+                     
+
                 </div>
+                <div class="row mb-3">
+
+             
+                    <div class="col-md-3">
+                        <input class="form-check-input" type="checkbox" id="chkTodosRecalcular">
+                    <label class="form-check-label" for="chkTodosRecalcula" data-i18n="action.select_all">
+                        Selecionar tudo
+                    </label>
+                    </div>
+                </div>
+
                 <table id="tabelaRecalcularHoras" class="table table-sm table-bordered table-striped w-100 tabelaRecalcularHoras">
                     <thead>
                         <tr>
@@ -673,6 +694,52 @@ async function carregarLaboratoriosRecalcularHoras() {
 
 }
 
+$(document).ready(function() {
+
+    $(document).on( 'change', '#chkTodosTestes', function() {
+
+            const checked = this.checked;
+
+            const table =
+                $('#tabelaEsgotarHoras')
+                    .DataTable();
+
+            $(table.rows().nodes())
+                .find('input[type="checkbox"]')
+                .prop('checked', checked);
+        }
+    );
+
+});
+
+$('#tabelaEsgotarHoras').on(
+    'change',
+    'tbody input[type="checkbox"]',
+    function() {
+
+        const table =
+            $('#tabelaEsgotarHoras')
+                .DataTable();
+
+        const total =
+            $(table.rows().nodes())
+                .find('input[type="checkbox"]')
+                .length;
+
+        const marcados =
+            $(table.rows().nodes())
+                .find('input[type="checkbox"]:checked')
+                .length;
+
+        $('#chkTodosTestes')
+            .prop(
+                'checked',
+                total > 0 && total === marcados
+            );
+
+    }
+);
+
 function carregarAnosRecalcularHoras() {
 
     const anoAtual = new Date().getFullYear();
@@ -700,57 +767,80 @@ document.getElementById("incluirEsgotadosManual").addEventListener("change", car
 
 function carregarTabelaRecalcularHoras() {
 
-    const laboratorioId = document.getElementById( "laboratorioRecalcularHoras" ).value;
+    const laboratorioId =
+        document.getElementById(
+            'laboratorioRecalcularHoras'
+        ).value;
 
-    const ano = document.getElementById( "anoRecalcularHoras" ).value;
+    const ano =
+        document.getElementById(
+            'anoRecalcularHoras'
+        ).value;
 
-    const incluirEsgotados = document.getElementById( "incluirEsgotadosManual" ).checked;
+    const incluirEsgotados =
+        document.getElementById(
+            'incluirEsgotadosManual'
+        ).checked;
+
+    $('#chkTodosRecalcular').prop(
+        'checked',
+        false
+    );
 
     $('#tabelaRecalcularHoras').DataTable({
 
-        destroy: true,
+    destroy: true,
 
-        ajax: {
-            url: '/horas_horasauto/testes_recalcular',
-            data: {
-                laboratorio_id: laboratorioId,
-                ano: ano,
-                incluir_esgotados:
-                    incluirEsgotados ? 1 : 0
-            },
-            dataSrc: ''
+    ajax: {
+        url: '/horas_horasauto/testes_recalcular',
+        data: {
+            laboratorio_id: laboratorioId,
+            ano: ano,
+            incluir_esgotados: incluirEsgotados ? 1 : 0
         },
+        dataSrc: ''
+    },
 
-        columns: [
-            {
-                data: 'selecionar',
-                orderable: false,
-                searchable: false
-            },
-            {
-                data: 'laboratorio'
-            },
-            {
-                data: 'ensaio'
-            },
-            {
-                data: 'teste'
-            },
-            {
-                data: 'datainicio'
-            },
-            {
-                data: 'datafim'
-            }
-        ],
+    columns: [
+        {
+            data: 'selecionar',
+            orderable: false,
+            searchable: false
+        },
+        { data: 'laboratorio' },
+        { data: 'ensaio' },
+        { data: 'teste' },
+        { data: 'datainicio' },
+        { data: 'datafim' }
+    ],
 
-        pageLength: 10,
+    pageLength: 10,
 
-        language: {
-            url: i18n.getDataTablesLanguageUrl()
-        }
+    language: {
+        url: i18n.getDataTablesLanguageUrl()
+    },
 
-    });
+    drawCallback: function() {
+
+        const table = this.api();
+
+        const total =
+            $(table.rows().nodes())
+                .find('input[type="checkbox"]')
+                .length;
+
+        const marcados =
+            $(table.rows().nodes())
+                .find('input[type="checkbox"\]:checked')
+                .length;
+
+        $('#chkTodosRecalcular').prop(
+            'checked',
+            total > 0 && total === marcados
+        );
+    }
+
+});
 
 }
 
@@ -849,7 +939,16 @@ async function carregarLaboratoriosEsgotarHoras() {
 
 function carregarTabelaEsgotarHoras() {
 
-    const laboratorioId = document.getElementById( "laboratorioEsgotarHoras" ).value;
+    const laboratorioId =
+        document.getElementById(
+            'laboratorioEsgotarHoras'
+        ).value;
+
+    // Reiniciar checkbox principal
+    $('#chkTodosTestes').prop(
+        'checked',
+        false
+    );
 
     $('#tabelaEsgotarHoras').DataTable({
 
@@ -869,17 +968,54 @@ function carregarTabelaEsgotarHoras() {
                 orderable: false,
                 searchable: false
             },
-            { data: 'laboratorio' },
-            { data: 'ensaio' },
-            { data: 'teste' },
-            { data: 'datainicio' },
-            { data: 'datafim' }
+            {
+                data: 'laboratorio'
+            },
+            {
+                data: 'ensaio'
+            },
+            {
+                data: 'teste'
+            },
+            {
+                data: 'datainicio'
+            },
+            {
+                data: 'datafim'
+            }
         ],
+
         pageLength: 10,
+
         language: {
             url: i18n.getDataTablesLanguageUrl()
+        },
+
+        initComplete: function() {
+
+            const table = this.api();
+
+            const total =
+                $(table.rows().nodes())
+                    .find('input[type="checkbox"]')
+                    .length;
+
+            const marcados =
+                $(table.rows().nodes())
+                    .find(
+                        'input[type="checkbox"\]:checked'
+                    )
+                    .length;
+
+            $('#chkTodosTestes').prop(
+                'checked',
+                total > 0 &&
+                total === marcados
+            );
         }
+
     });
+
 }
 
 
@@ -1665,6 +1801,37 @@ function atualizarProgress(percentagem, texto) {
     document.getElementById( "progressTextoHorasAuto" ).innerText = texto;
 }
 
+$(document).on( 'change', '#chkTodosRecalcular', function() {
+
+        const checked = this.checked;
+
+        const table =
+            $('#tabelaRecalcularHoras')
+                .DataTable();
+
+        $(table.rows().nodes())
+            .find('input[type="checkbox"]')
+            .prop('checked', checked);
+
+    }
+);
+
+$('#tabelaRecalcularHoras').on( 'change', 'tbody input[type="checkbox"]', function() {
+
+        const table = $('#tabelaRecalcularHoras') .DataTable();
+
+        const total = $(table.rows().nodes()) .find('input[type="checkbox"]') .length;
+
+        const marcados = $(table.rows().nodes()) .find('input[type="checkbox"\]:checked') .length;
+
+        $('#chkTodosRecalcular').prop(
+            'checked',
+            total > 0 &&
+            total === marcados
+        );
+
+    }
+);
 </script>
 
 {% endblock %}

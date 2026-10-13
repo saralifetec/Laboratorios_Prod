@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import Blueprint, app, jsonify, request
 from app import db
-from app.models import Maquina, Projeto, Solicitante, Cliente, Laboratorio, Normas, Testes, Tipopeca, Fase, Tipotestes
+from app.models import Maquina, Projeto, Solicitante, Cliente, Laboratorio, Normas, Templatenormas, Testes, Tipopeca, Fase, Tipotestes
 from gbs3api.exceptions import ApiException, NotFoundException
 from services.gbs_service import find_test_series_details, find_test_step_details, get_person_gbs
 from sqlalchemy import func
@@ -499,7 +499,7 @@ def obter_maquinas_laboratorio( laboratorio_id ):
     ])
 
 
-def guardar_teststeps_gbs_service( ensaio_id, laboratorio_id, linhas ):
+def guardar_teststeps_gbs_service( ensaio_id, laboratorio_id, norma_id, linhas ):
 
     testes_criados = []
 
@@ -527,6 +527,34 @@ def guardar_teststeps_gbs_service( ensaio_id, laboratorio_id, linhas ):
             db.session.add( tipoteste )
 
             db.session.flush()
+
+        # TEMPLATE DA NORMA
+
+        if norma_id:
+
+            template = Templatenormas.query.filter(
+                Templatenormas.norma_id == norma_id,
+                Templatenormas.teste_id == tipoteste.id
+            ).first()
+
+            if not template:
+
+                ultima_ordem = db.session.query(
+                    func.max(
+                        Templatenormas.ordem
+                    )
+                ).filter(
+                    Templatenormas.norma_id == norma_id
+                ).scalar()
+
+                template = Templatenormas(
+                    norma_id=norma_id,
+                    teste_id=tipoteste.id,
+                    ordem=(ultima_ordem or 0) + 1,
+                    obsoleto=False
+                )
+
+                db.session.add(template)
 
         # MAQUINA
         maquina = None
@@ -602,9 +630,10 @@ def guardar_teststeps_gbs():
         data = request.get_json()
 
         resultado = guardar_teststeps_gbs_service(
-            ensaio_id= data['ensaio_id'],
-            laboratorio_id= data['laboratorio_id'],
-            linhas= data['linhas']
+            ensaio_id=data['ensaio_id'],
+            laboratorio_id=data['laboratorio_id'],
+            norma_id=data['norma_id'],
+            linhas=data['linhas']
         )
 
         return jsonify({

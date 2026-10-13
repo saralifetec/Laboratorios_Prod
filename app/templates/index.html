@@ -252,6 +252,7 @@
 								<th data-i18n="field.denominacao">Denominação</th>
 								<th data-i18n="field.peca">Peça</th>
 								<th data-i18n="field.solicitante">Solicitante</th>
+                <th data-i18n="field.pendente">Pendente</th>
 								<th data-i18n="field.data_solicitada">Data Solicitada</th>  
 								</tr>
 							</thead>
@@ -1038,6 +1039,27 @@ document.addEventListener('DOMContentLoaded', async function () {
       { data: 'denominacao' },
       { data: 'tipopeca' },
       { data: 'solicitante' },
+      {
+    data: 'pendente',
+    orderable: false,
+    searchable: false,
+    className: 'text-center',
+    render: function(data, type, row) {
+
+        if (type !== 'display') {
+            return data;
+        }
+
+        return `
+            <input
+                type="checkbox"
+                class="chk-pendente"
+                data-id="${row.id}"
+                ${data ? 'checked' : ''}
+            >
+        `;
+    }
+},
       // 6: datasolicitada
       {
     data: 'datasolicitada',
@@ -1055,7 +1077,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 }
     ],
-    order: [[5, 'asc']], // ordenar por datasolicitada asc
+    order: [[6, 'asc']], // ordenar por datasolicitada asc
     language: { url: i18n.getDataTablesLanguageUrl() },
     dom: '<"top"lf>rt<"bottom"ip><"clear">',
 	pageLength: 5,
@@ -1075,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', async function () {
 
           if (!Number.isNaN(d.getTime()) && d < hoje) {
 
-              $('td', row).eq(5).css({
+              $('td', row).eq(6).css({
                   'background': '#fff4d6'
               });
 
@@ -1112,6 +1134,32 @@ document.addEventListener('DOMContentLoaded', async function () {
   }
 });
 
+$('#homeEnsaiosTable').on(
+    'change',
+    '.chk-pendente',
+    function() {
+
+        const ensaioId =
+            $(this).data('id');
+
+        const pendente =
+            $(this).is(':checked');
+
+        fetch(
+            `/ensaio/${ensaioId}/pendente`,
+            {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    pendente: pendente
+                })
+            }
+        );
+
+    }
+);
 
 ////////////////////////////////////////////////////////////////////////////
 //AVISOS ENSAIOS

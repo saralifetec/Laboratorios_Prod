@@ -447,9 +447,10 @@
   "label.importar_template_outra_norma": "Import template from another specification:",
   "option.selecionar_norma_origem": "Select source specification",
   "action.change_times": "Change Times",
-  "field.tempo_montagem_h": "Setup Time (h)",
-  "field.tempo_pessoa_peca_h": "Person Time per Part (h)",
-  "field.tempo_maquina_peca_h": "Machine Time per Part (h)",
+  "field.tempo_montagem_h": "Setup Time - Person (h)",
+"field.tempo_pessoa_peca_h": "Time/Part - Person (h)",
+"field.duracao_maquina_h": "Duration - Machine (h)",
+"field.tempo_maquina_peca_h": "Time/Part - Machine (h)",
   "field.arraste_icone": "Drag the icon to reorder",
   "msg.arrastar_ficheiros": "Drag files here or click to select",
   "action.select_files": "Select files",
@@ -676,6 +677,8 @@
 "action.gbs_password": "GBS Password",
 "field.posicao": "Position",
 "modal.importar_testes_gbs": "Import GBS Test Steps",
-"field.cod_maquina": "Machine Code"
+"field.cod_maquina": "Machine Code",
+"field.ausente": "Absent",
+"field.pendente": "Pending"
 }
 

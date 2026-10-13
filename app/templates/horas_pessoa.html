@@ -242,7 +242,7 @@
 								<h6 class="fw-bold mb-0" style="white-space: nowrap;">
                                     &nbsp; <span data-i18n="field.horas_inseridas_comp">Horas Inseridas</span>
                                 </h6>
-								<div id="tabelaHorasDia">
+								<div id="tabelaHorasDia" style="overflow-x:auto;">
                                     <table id="tabelaHorasDiaTable" class="table table-sm table-bordered align-middle" style="width:100%">
                                         <thead>
                                             <tr>
@@ -975,7 +975,7 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
             const limiteInferior = horasDiaConfig - TOLERANCE_HOURS;
 
             // 2) Buscar horas já existentes
-            fetch(`/horas_dia?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
+            fetch(`/horas_calendario?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
                 .then(r => r.json())
                 .then(horasPorDia => {
 
@@ -1025,13 +1025,13 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
                         const isDiaPassado =
                             dt.getFullYear() < hoje.getFullYear() ||
                             (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() < hoje.getMonth()) ||
-                            (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() === hoje.getMonth() && dt.getDate() <= hoje.getDate());
+                            (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() === hoje.getMonth() && dt.getDate() < hoje.getDate());
 
-                        if (isWeekend && !temHorasPrevistas) {
+                        if ( horasPrevistas <= TOLERANCE_HOURS && parseFloat(horas) <= TOLERANCE_HOURS ) {
                             bg = 'background:#dddddd;';
-                        } else if (isDiaPassado && horasPrevistas > 0 && parseFloat(horas) > (horasPrevistas + TOLERANCE_HOURS)) {
+                        } else if ( isDiaPassado && horasPrevistas > 0 && parseFloat(horas) > (horasPrevistas + TOLERANCE_HOURS) ) {
                             bg = 'background:#b7e1cd;';
-                        } else if (isDiaPassado && horasPrevistas > 0 && parseFloat(horas) < (horasPrevistas - TOLERANCE_HOURS)) {
+                        }else if ( isDiaPassado && horasPrevistas > 0 && parseFloat(horas) < (horasPrevistas - TOLERANCE_HOURS) ) {
                             bg = 'background:#ffe5b4;';
                         }
 
@@ -1042,10 +1042,7 @@ function renderCalendarioAuto(ano, mes, tecnico_id) {
                         }
 
                         // === LÓGICA PARA CHECKBOX ===
-                        const devePreSelecionar =
-                            isDiaPassado &&
-                            horasPrevistas > 0 &&
-                            parseFloat(horas) < (horasPrevistas - TOLERANCE_HOURS);
+                        const devePreSelecionar = isDiaPassado && horasPrevistas > 0 && parseFloat(horas) < (horasPrevistas - TOLERANCE_HOURS);
 
                         const dataDia = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
 
@@ -2023,7 +2020,7 @@ function renderCalendario(ano, mes, tecnico_id) {
             const limite_azul = horasgerais + TOLERANCE_HOURS; 
             
             // Depois buscar as horas do mês
-            fetch(`/horas_mensal?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
+            fetch(`/horas_calendario?ano=${ano}&mes=${mes}&tecnico_id=${tecnico_id}`)
                 .then(r => r.json())
                 .then(horasPorDia => {
                     const diasSemana = [
@@ -2060,28 +2057,69 @@ function renderCalendario(ano, mes, tecnico_id) {
                             (dt.getFullYear() === hoje.getFullYear() && dt.getMonth() === hoje.getMonth() && dt.getDate() <= hoje.getDate())
                         );
                         
-                        if (isWeekend && !temHorasPrevistas) {
-                            bg = 'background:#dddddd;';
-                        } else if (isDiaPassado) {
-                            const horasG = parseFloat(horasPorDia[dia + '_g']) || 0;
-                            const pctGerais = horas > 0 ? (horasG / horas) * 100 : 0;
-                        
-                            if (pctGerais > limite_azul) {
+                        if (isDiaPassado) {
+
+                            const horasG =
+                                parseFloat(
+                                    horasPorDia[dia + '_g']
+                                ) || 0;
+
+                            const pctGerais =
+                                horas > 0
+                                    ? (horasG / horas) * 100
+                                    : 0;
+
+                            // dia sem horas previstas
+                            // (sábado, domingo, férias,
+                            // feriado, falta...)
+                            if (
+                                horasPrevistas <= TOLERANCE_HOURS &&
+                                horas <= TOLERANCE_HOURS
+                            ) {
+
+                                bg = 'background:#dddddd;';
+
+                            }
+                            else if (
+                                pctGerais > limite_azul
+                            ) {
+
                                 bg = 'background:#b3d1ff;';
                                 color = 'color:#003366;';
-                            } else if (horasPrevistas > 0 && horas < (horasPrevistas - TOLERANCE_HOURS)) {
-                                bg = 'background:#ffe5b4;';
-                            } else if (horasPrevistas > 0 && horas > (horasPrevistas + TOLERANCE_HOURS)) {
-                                bg = 'background:#b7e1cd;';
+
                             }
+                            else if (
+                                horasPrevistas > 0 &&
+                                horas < (
+                                    horasPrevistas -
+                                    TOLERANCE_HOURS
+                                )
+                            ) {
+
+                                bg = 'background:#ffe5b4;';
+
+                            }
+                            else if (
+                                horasPrevistas > 0 &&
+                                horas > (
+                                    horasPrevistas +
+                                    TOLERANCE_HOURS
+                                )
+                            ) {
+
+                                bg = 'background:#b7e1cd;';
+
+                            }
+
                         }
                         
                         html += `<td style="height:38px;${bg}${color}" class="cal-dia" data-dia="${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}">
                             <div><strong>${dia}</strong></div>
                             <div>
-                                ${(!isWeekend || temHorasPrevistas)
-                                    ? horasTxt
-                                    : ''
+                                ${
+                                    horas > 0 || horasPrevistas > 0
+                                        ? horasTxt
+                                        : ''
                                 }
                             </div>
                         </td>`;
@@ -2110,7 +2148,7 @@ function renderCalendario(ano, mes, tecnico_id) {
                         </div>
                         <div style="display:flex;align-items:center;margin-top:4px;">
                             <div style="width:15px;height:15px;background:#dddddd;border:1px solid #ccc;margin-right:6px;"></div>
-                            <span style="font-size:0.6em;" data-i18n="field.fim_semana">Fim de semana</span>
+                            <span style="font-size:0.6em;" data-i18n="field.ausente"> Ausente </span>
                         </div>
                     `;
 

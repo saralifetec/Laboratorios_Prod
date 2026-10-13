@@ -288,6 +288,11 @@ table.dataTable tbody td {
                 </span>
               </th>
               <th>
+                <span data-i18n="field.pep">
+                PEP
+                </span>
+              </th>
+              <th>
                 <span data-i18n="field.notes">
                 Observações
                 </span>
@@ -363,20 +368,21 @@ function exportarexcel() {
       return;
     }
 
-    // Só as 4 colunas pedidas
+    // Só as 5 colunas pedidas
     const dados = linhas.map(r => ({
       [i18n.t('field.tipo_embalagem')]: r.tipovolumeae || '',
       [i18n.t('field.referencia')]: r.referencia || '',
       [i18n.t('field.dimensoes')]: r.dimensoes || '',
-      [i18n.t('field.peso')]: r.peso ?? ''
+      [i18n.t('field.peso')]: r.peso ?? '',
+      [i18n.t('field.pep')]: r.pep ?? ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(dados, {
-      header: [i18n.t('field.tipo_embalagem'), i18n.t('field.referencia'), i18n.t('field.dimensoes'), i18n.t('field.peso')]
+      header: [i18n.t('field.tipo_embalagem'), i18n.t('field.referencia'), i18n.t('field.dimensoes'), i18n.t('field.peso'), i18n.t('field.pep')]
     });
 
     // Ajuste de largura das colunas ao conteúdo
-    const headers = [i18n.t('field.tipo_embalagem'), i18n.t('field.referencia'), i18n.t('field.dimensoes'), i18n.t('field.peso')];
+    const headers = [i18n.t('field.tipo_embalagem'), i18n.t('field.referencia'), i18n.t('field.dimensoes'), i18n.t('field.peso'), i18n.t('field.pep')];
     ws['!cols'] = headers.map(h => {
       let max = String(h).length;
       for (const row of dados) {
@@ -534,6 +540,7 @@ function carregarReferenciasLote(datahora, destinoId) {
           ? `<span title="${row.emailenviado_em || ''}" data-i18n="status.yes">Sim</span>`
           : `<span data-i18n="status.no">Não</span>`
       },
+      { data: 'pep' },
       {
         data: null,
         render: row => `
