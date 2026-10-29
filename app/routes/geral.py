@@ -3,9 +3,10 @@ from decimal import ROUND_HALF_UP, Decimal
 import subprocess
 import os
 from flask import current_app, flash, render_template, jsonify, request, url_for, redirect, session, render_template_string, send_file
+from services.dashboard_service import get_dashboard_config
 from services.gbs_service import get_jwt_info
 from services.horasauto_services import verificar_alerta_horas_auto
-from ..models import Cliente, Codigosg, ConfEmailAuto, ConfHorasAuto, ConsultaLayout, ConsultaLayoutUser, Fase, Horas, Laboratorio, Localizacao, Localizacao_ae, Maquina, Motivosatraso, Normas, Normasdocumentos, Projeto, Solicitante, Templatenormas, Testes, Tipotestes, User, ReferenciaAE, DadosGerais
+from ..models import Cliente, Codigosg, ConfEmailAuto, ConfGeral, ConfHorasAuto, ConsultaLayout, ConsultaLayoutUser, DashboardPerfil, Fase, Horas, Laboratorio, Localizacao, Localizacao_ae, Maquina, Motivosatraso, Normas, Normasdocumentos, Projeto, Solicitante, Templatenormas, Testes, Tipotestes, User, ReferenciaAE, DadosGerais
 from ..models import Tipopeca, ConfValidacaoManual, Ensaio, Funcao, Motivosfalhaensaios, Componente, Referencia, MovimentoStock, ConfHorasAuto, ConfHorasAutoCodg, ConfHorasAutoLab, Report, ConfEmailAutoLab, PedidoHorasExtra, Componentesae, Tipovolumeae, Codificacaoae, MovimentoAE
 from .. import db
 from functools import wraps
@@ -325,13 +326,15 @@ def init_routes(app):
 
         user = User.query.get(session['user_id'])
         alerta_horas_auto = verificar_alerta_horas_auto(user)
+        dashboard_config = get_dashboard_config( user )
 
         return render_template(
             'index.html',
             user=user,
             ano_atual=ano_atual,
             mes_atual=mes_atual,
-            alerta_horas_auto=alerta_horas_auto
+            alerta_horas_auto=alerta_horas_auto,
+            dashboard_config=dashboard_config
         )
 
     @app.route('/home')
@@ -343,13 +346,15 @@ def init_routes(app):
 
         user = User.query.get(session['user_id'])
         alerta_horas_auto = verificar_alerta_horas_auto(user)
+        dashboard_config = get_dashboard_config( user )
 
         return render_template(
             'index.html',
             user=user,
             ano_atual=ano_atual,
             mes_atual=mes_atual,
-            alerta_horas_auto=alerta_horas_auto
+            alerta_horas_auto=alerta_horas_auto,
+            dashboard_config=dashboard_config
         )
     
     @app.route('/plme')
@@ -357,6 +362,7 @@ def init_routes(app):
     def plme():
         user = User.query.get(session['user_id'])
         return render_template('plme.html', user=user)
+
 
     @app.route('/ae_consultas')
     @login_required
@@ -1411,7 +1417,7 @@ def init_routes(app):
     @login_required
     def horas_pessoa():
         user = User.query.get(session['user_id'])
-        tecnicos = User.query.all()
+        tecnicos = User.query.filter_by( obsoleto=0 ).order_by( User.full_name ).all()
         import datetime
         current_date = datetime.date.today().isoformat()
         return render_template('horas_pessoa.html', user=user, tecnicos=tecnicos, current_date=current_date)
@@ -1519,7 +1525,7 @@ def init_routes(app):
     @login_required
     def historico_horas():
         user = User.query.get(session['user_id'])
-        tecnicos = User.query.all()
+        tecnicos = User.query.filter_by( obsoleto=0 ).order_by( User.full_name ).all()
         import datetime
         current_date = datetime.date.today().isoformat()
         return render_template('historico_horas.html', user=user, tecnicos=tecnicos, current_date=current_date)
@@ -2236,6 +2242,7 @@ def init_routes(app):
     def tabelas():
         user = User.query.get(session['user_id'])
         codigosg = Codigosg.query.all()
+        conf_geral = ConfGeral.get_conf_geral()
         
         ano_atual = datetime.now().year
         mes_atual = datetime.now().month
@@ -2255,7 +2262,7 @@ def init_routes(app):
         tipopecas_ativos = Tipopeca.query.filter_by(obsoleto=False).order_by(Tipopeca.tipopeca).all()
         tipopecas_todos = Tipopeca.query.order_by(Tipopeca.tipopeca).all()
         current_app.logger.debug('DEBUG /tabelas: tipopecas ativos=%d, todos=%d', len(tipopecas_ativos), len(tipopecas_todos))
-        return render_template('tabelas.html', projetos=projetos, tipotestes=tipotestes, clientes=clientes_todos, clientes_ativos=clientes_ativos, solicitantes=solicitantes_todos, solicitantes_ativos=solicitantes_ativos, tipopecas=tipopecas_todos, tipopecas_ativos=tipopecas_ativos, codigosg=codigosg, anos_permitidos=anos_permitidos, user=user)
+        return render_template('tabelas.html', projetos=projetos, conf_geral=conf_geral, tipotestes=tipotestes, clientes=clientes_todos, clientes_ativos=clientes_ativos, solicitantes=solicitantes_todos, solicitantes_ativos=solicitantes_ativos, tipopecas=tipopecas_todos, tipopecas_ativos=tipopecas_ativos, codigosg=codigosg, anos_permitidos=anos_permitidos, user=user)
 
     
     #######################################################################
@@ -4545,12 +4552,14 @@ def init_routes(app):
             tipopecas = Tipopeca.query.filter_by(obsoleto=False).order_by(Tipopeca.tipopeca).all()
             fases = Fase.query.filter_by(obsoleto=False).order_by(Fase.fase).all()
             tecnicos = User.query.join(Funcao).filter(
-                User.obsoleto == False,
+                User.obsoleto == 0,
                 Funcao.funcao != 'Sistema'
             ).order_by(User.full_name).all()
             laboratorios = Laboratorio.query.filter_by(obsoleto=False).order_by(Laboratorio.laboratorio).all()
             normas = Normas.query.filter_by(obsoleto=False).order_by(Normas.norma).all()
-    
+
+            conf_geral = ConfGeral.get_conf_geral()
+
             # NOVO: buscar ensaio se vier na query string
             ensaio_numero = request.args.get('ensaio')
             ensaio_selecionado = None
@@ -4567,6 +4576,7 @@ def init_routes(app):
                 tecnicos=tecnicos,
                 laboratorios=laboratorios,
                 normas=normas,
+                conf_geral=conf_geral,
                 ensaio=ensaio_selecionado  # Passa o ensaio selecionado para o template
             )
         except Exception as e:
@@ -4776,7 +4786,7 @@ def init_routes(app):
     def get_tecnicos_ativos():
         try:
             tecnicos = User.query.join(Funcao).filter(
-                User.obsoleto == False,
+                User.obsoleto == 0,
                 Funcao.funcao != 'Sistema'
             ).order_by(User.full_name).all()
             

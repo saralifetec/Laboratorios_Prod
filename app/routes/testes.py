@@ -78,6 +78,7 @@ def testes_disponiveis():
             .join(Ensaio)
             .filter(
                 Ensaio.anulado == False,
+                Ensaio.pendente == 0,
                 or_(
                     Testes.horasesgotadas == 0,
                     Testes.horasesgotadas.is_(None)

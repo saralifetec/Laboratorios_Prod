@@ -280,10 +280,7 @@
                                     </label>
 
                                     <!-- Combo -->
-                                    <select class="form-control form-control-sm" 
-                                            id="laboratorio" 
-                                            name="laboratorio"
-                                            style="width:150px;">
+                                    <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;">
                                     </select>
 
                                     <button class="btn btn-sm btn-warning ms-auto" type="button" onclick="abrirModalHorasExtra()">
@@ -1757,6 +1754,10 @@ document.getElementById('nextDay').addEventListener('click', function() {
                     preencherTabelaHoras(tecnicoPrincipal, dataPrincipal);
                     var modal = bootstrap.Modal.getInstance(document.getElementById('dateTechnicianModal'));
                     if (modal) modal.hide();
+                    setTimeout(() => {
+    document.body.style.removeProperty('overflow');
+    document.body.style.removeProperty('padding-right');
+}, 300);
                     
                     atualizarCalendarioAtual() ;
                 } else {

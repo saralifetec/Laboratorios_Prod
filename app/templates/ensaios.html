@@ -321,13 +321,13 @@ table.dataTable tbody td .form-control-sm {
                                 </a>
 							</li>
 						
-                            {% if user and user.funcao_id != 1 %}
-							<li>
-								<a class="dropdown-item" href="#" id="abrirSaidaStockModal">
-                                    <i class="fas fa-box-open"></i> <span data-i18n="field.saida_stock">Saída Stock</span>
+                            {% if user and user.funcao_id != 1 and conf_geral.armazem_plme == '1' %}
+                            <li>
+                                <a class="dropdown-item" href="#" id="abrirSaidaStockModal">
+                                    <i class="fas fa-box-open"></i>
+                                    <span data-i18n="field.saida_stock">Saída Stock</span>
                                 </a>
-							</li>
-							
+                            </li>
                             {% endif %}
                             {% if user and user.funcao_id != 1 %}
 							<li>
@@ -3505,7 +3505,7 @@ document.getElementById('concluido').addEventListener('change', function(e) {
         const inputBemPrimeira = tr.querySelector('.bem-primeira-input');
         const qtdCell = tr.querySelector('.qtd-input');
         // Motivo de falha pode estar em data attribute ou hidden input, depende da tua implementação
-        const motivoFalha = tr.dataset.motivofalha || tr.getAttribute('data-motivofalha') || tr.getAttribute('motivofalha') || null;
+        const motivoFalha = $(tr).data('motivofalha');
 
         if (!inputDataFim || !inputDataFim.value) {
             algumSemDataFim = true;
@@ -4779,42 +4779,28 @@ function criarLinhaTeste(teste, ordem) {
     return row;
 }
 
-$('#testesTableBody').on(
-    'change',
-    '.ordem-input',
-    async function () {
+$('#testesTableBody').on( 'change', '.ordem-input', async function () {
 
         const row = $(this).closest('tr');
 
-        let novaOrdem =
-            parseInt($(this).val());
+        let novaOrdem = parseInt($(this).val());
 
-        const tbody =
-            $('#testesTableBody');
+        const tbody = $('#testesTableBody');
 
-        const totalLinhas =
-            tbody.children('tr').length;
+        const totalLinhas = tbody.children('tr').length;
 
         if (isNaN(novaOrdem)) {
             novaOrdem = 1;
         }
 
-        novaOrdem =
-            Math.max(
-                1,
-                Math.min(
-                    novaOrdem,
-                    totalLinhas
-                )
-            );
+        novaOrdem = Math.max( 1, Math.min( novaOrdem, totalLinhas ) );
 
         $(this).val(novaOrdem);
 
         // retirar linha
         row.detach();
 
-        const restantes =
-            tbody.children('tr');
+        const restantes = tbody.children('tr');
 
         if (novaOrdem > restantes.length) {
 
@@ -5164,7 +5150,6 @@ $('#testesTableBody').on('click', '.delete-teste', function() {
         !dataInicio &&
         !dataFim &&
         !maquina &&
-        !tecnico &&
         !bemPrimeira &&
         !observacoes;
 

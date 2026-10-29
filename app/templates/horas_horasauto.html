@@ -257,19 +257,26 @@
 
 						<div class="row">
 
-                            <div class="col-md-2">
-                                <label class="form-label" data-i18n="field.ano">Ano</label>
-                                <select id="anoHorasAuto" class="form-control form-control-sm"></select>
+                            <div class="card-header">
+                                <h5 class="mb-0" data-i18n="field.gerar">
+                                    Gerar
+                                </h5>
                             </div>
 
                             <div class="col-md-2">
-                                <label class="form-label" data-i18n="field.mes">Mês</label>
-                                <select id="mesHorasAuto" class="form-control form-control-sm"></select>
+                                <label class="form-label" data-i18n="field.data_inicio">
+                                    Data Início
+                                </label>
+
+                                <input type="date" id="dataInicioHorasAuto" class="form-control form-control-sm">
                             </div>
 
-                            <div class="col-md-7">
-                                <label class="form-label" data-i18n="field.semana">Semana</label>
-                                <select id="semanaHorasAuto" class="form-control form-control-sm"></select>
+                            <div class="col-md-2">
+                                <label class="form-label" data-i18n="field.data_fim">
+                                    Data Fim
+                                </label>
+
+                                <input type="date" id="dataFimHorasAuto" class="form-control form-control-sm">
                             </div>
 
                             <div class="col-md-1 d-flex flex-column justify-content-end">
@@ -285,6 +292,8 @@
                             </div>
 
                         </div>
+
+                        <br>
 			
 
                     <!-- GERAÇÃO -->
@@ -439,6 +448,7 @@
                             <th data-i18n="field.teste">Teste</th>
                             <th data-i18n="field.data_inicio">Data Início</th>
                             <th data-i18n="field.data_fim">Data Fim</th>
+                            <th data-i18n="field.data_conclusao">Data Conclusão</th>
                         </tr>
                     </thead>
 
@@ -503,12 +513,27 @@
                         </label>
 
                         <div class="d-flex align-items-center" style="height:31px;">
-                            <input type="checkbox" id="incluirEsgotadosManual" class="me-2">
-
-                            <label for="incluirEsgotadosManual" class="mb-0" data-i18n="field.incluir_esgotados_manualmente">
-                                Incluir esgotados manualmente
+                            <label for="filtroEsgotadosManual" class="me-2 mb-0" data-i18n="field.status">
+                                Estado
                             </label>
+
+                            <select id="filtroEsgotadosManual" class="form-select form-select-sm">
+
+                                <option value="nao" selected data-i18n="field.nao_esgotados_manualmente">
+                                    Não esgotados manualmente
+                                </option>
+
+                                <option value="todos" data-i18n="common.all">
+                                    Todos
+                                </option>
+
+                                <option value="sim" data-i18n="field.esgotados_manualmente">
+                                    Esgotados manualmente
+                                </option>
+
+                            </select>
                         </div>
+
                     </div>
 
 
@@ -589,15 +614,27 @@ const diasSemana = [
 //ao abrir a página
 document.addEventListener( 'DOMContentLoaded', async () => {
 
-        await i18n.init();
+    await i18n.init();
 
-        i18n.applyTranslations();
+    i18n.applyTranslations();
 
-        carregarPeriodosHistorico();
-        carregarHistoricoExportacoes();
+    carregarHistoricoExportacoes();
 
-    }
-);
+    fetch( '/horas_horasauto/proximo_periodo' )
+    .then(r => r.json())
+    .then(data => {
+
+        if (!data.success) {
+            return;
+        }
+
+        document .getElementById( 'dataInicioHorasAuto' ) .value = data.data_inicio;
+
+        document .getElementById( 'dataFimHorasAuto' ) .value = data.data_fim;
+
+    });
+
+});
 
 //variaveis globais
 let periodosHistorico = [];
@@ -763,7 +800,7 @@ document .getElementById( "laboratorioRecalcularHoras" ) .addEventListener( "cha
 
 document .getElementById( "anoRecalcularHoras" ) .addEventListener( "change", carregarTabelaRecalcularHoras );
 
-document.getElementById("incluirEsgotadosManual").addEventListener("change", carregarTabelaRecalcularHoras );
+document.getElementById("filtroEsgotadosManual") .addEventListener( "change", carregarTabelaRecalcularHoras );
 
 function carregarTabelaRecalcularHoras() {
 
@@ -777,10 +814,10 @@ function carregarTabelaRecalcularHoras() {
             'anoRecalcularHoras'
         ).value;
 
-    const incluirEsgotados =
-        document.getElementById(
-            'incluirEsgotadosManual'
-        ).checked;
+    const filtroEsgotados =
+    document.getElementById(
+        'filtroEsgotadosManual'
+    ).value;
 
     $('#chkTodosRecalcular').prop(
         'checked',
@@ -796,7 +833,7 @@ function carregarTabelaRecalcularHoras() {
         data: {
             laboratorio_id: laboratorioId,
             ano: ano,
-            incluir_esgotados: incluirEsgotados ? 1 : 0
+            filtro_esgotados: filtroEsgotados
         },
         dataSrc: ''
     },
@@ -846,15 +883,13 @@ function carregarTabelaRecalcularHoras() {
 
 async function esgotarTestesSelecionados() {
 
+    const tabela = $('#tabelaEsgotarHoras').DataTable();
+
     const selecionados = [];
 
-    document
-        .querySelectorAll('.chk-esgotar-teste:checked')
-        .forEach(chk => {
-            selecionados.push(
-                parseInt(chk.value)
-            );
-        });
+    tabela.$('.chk-esgotar-teste:checked').each(function () {
+        selecionados.push(parseInt(this.value));
+    });
 
     if (selecionados.length === 0) {
         alert(
@@ -939,16 +974,10 @@ async function carregarLaboratoriosEsgotarHoras() {
 
 function carregarTabelaEsgotarHoras() {
 
-    const laboratorioId =
-        document.getElementById(
-            'laboratorioEsgotarHoras'
-        ).value;
+    const laboratorioId = document.getElementById( 'laboratorioEsgotarHoras' ).value;
 
     // Reiniciar checkbox principal
-    $('#chkTodosTestes').prop(
-        'checked',
-        false
-    );
+    $('#chkTodosTestes').prop( 'checked', false );
 
     $('#tabelaEsgotarHoras').DataTable({
 
@@ -982,7 +1011,11 @@ function carregarTabelaEsgotarHoras() {
             },
             {
                 data: 'datafim'
+            },
+            {
+                data: 'dataconclusao'
             }
+
         ],
 
         pageLength: 10,
@@ -1021,20 +1054,18 @@ function carregarTabelaEsgotarHoras() {
 
 async function iniciarGeracaoHorasAuto() {
 
-    const semanaSelect = document.getElementById("semanaHorasAuto");
+    const inicio = document.getElementById( "dataInicioHorasAuto" ).value;
 
-    const semanaIndex = Number(semanaSelect.value);
+    const fim = document.getElementById( "dataFimHorasAuto" ).value;
 
-    const ano = Number(document.getElementById("anoHorasAuto").value);
+    if (!inicio || !fim) {
 
-    const mes = Number(document.getElementById("mesHorasAuto").value);
+        alert( i18n.t('msg.periodo_invalido') );
+        return;
+    }
 
-    const semanas = periodosHistorico.filter(p =>
-        p.ano === ano &&
-        p.mes === mes
-    );
+    const periodo = { inicio: inicio, fim: fim };
 
-    const periodo = semanas[semanaIndex];
     periodoSelecionado = periodo;
 
     if (!periodo) {
@@ -1065,9 +1096,7 @@ async function iniciarGeracaoHorasAuto() {
 
     document.getElementById("tituloPassoHorasAuto").innerText = i18n.t('field.confirmar_presencas');
 
-    preencherTabelaPreview(
-        data.resumo.resumo
-    );
+    preencherTabelaPreview(data.resumo.resumo);
 
     document.getElementById( "btnProximoPasso" ).style.visibility = "visible";
 
@@ -1327,7 +1356,7 @@ function preencherTabelaNetwork() {
     const totalGerar = calcularTotalHorasGerar();
 
     //  ir buscar horas disponíveis
-    fetch('/horasauto/disponivel')   
+    fetch('/horas_horasauto/disponivel')   
         .then(res => res.json())
         .then(res => {
             const totalDisponivel = res.total || 0;
@@ -1420,125 +1449,6 @@ function preencherTabelaPreview(resumo) {
     container.appendChild(table);
 }
 
-async function carregarPeriodosHistorico() {
-
-    const res = await fetch('/horas_horasauto/periodos');
-
-    const data = await res.json();
-
-    console.log(data);
-    console.log(data.resumo);
-
-    periodosHistorico = data.periodos || [];
-    periodoDefault = data.periodo_default;
-
-    preencherAnos();
-}
-
-function preencherAnos() {
-
-    const select = document.getElementById('anoHorasAuto');
-
-    select.innerHTML = '';
-
-    const anos = [ ...new Set( periodosHistorico.map(p => p.ano) ) ];
-
-    anos.sort((a, b) => b - a);
-
-    anos.forEach(ano => {
-
-        select.innerHTML += `
-            <option value="${ano}">
-                ${ano}
-            </option>
-        `;
-    });
-
-    if (periodoDefault) {
-        select.value = periodoDefault.ano;
-    }
-
-    preencherMeses();
-}
-
-function preencherMeses() {
-
-    const ano = Number( document.getElementById('anoHorasAuto').value );
-
-    const select = document.getElementById('mesHorasAuto');
-
-    select.innerHTML = '';
-
-    const meses = [
-        ...new Set(
-            periodosHistorico
-                .filter(p => p.ano === ano)
-                .map(p => p.mes)
-        )
-    ];
-
-    meses.sort((a, b) => a - b);
-
-    meses.forEach(mes => {
-
-        select.innerHTML += `
-            <option value="${mes}">
-                ${mes}
-            </option>
-        `;
-
-    });
-
-    if (periodoDefault) {
-        select.value = periodoDefault.mes;
-    }
-
-    preencherSemanas();
-}
-
-
-function preencherSemanas() {
-
-    const ano = Number( document.getElementById('anoHorasAuto').value );
-
-    const mes = Number( document.getElementById('mesHorasAuto').value );
-
-    const select = document.getElementById('semanaHorasAuto');
-
-    select.innerHTML = '';
-
-    const semanas = periodosHistorico.filter(p =>
-        p.ano === ano &&
-        p.mes === mes
-    );
-
-    let defaultIndex = -1;
-
-    semanas.forEach((s, idx) => {
-
-        if ( periodoDefault && s.inicio === periodoDefault.inicio ) {
-            defaultIndex = idx;
-        }
-
-        select.innerHTML += `
-            <option value="${idx}">
-                ${s.inicio} → ${s.fim}
-            </option>
-        `;
-    });
-
-    if (defaultIndex >= 0) {
-        select.selectedIndex = defaultIndex;
-    }
-}
-
-document.getElementById('anoHorasAuto').addEventListener('change',
-    preencherMeses
-);
-
-document.getElementById('mesHorasAuto').addEventListener('change',
-    preencherSemanas
-);
 
 
 //TABELA HISTORICO

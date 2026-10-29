@@ -681,6 +681,17 @@
 "modal.importar_testes_gbs": "Importar Testes GBS",
 "field.cod_maquina": "Cód. Máquina",
 "field.ausente": "Ausente",
-"field.pendente": "Em espera"
-
+"field.pendente": "Em espera",
+"field.nao_esgotados_manualmente": "Não esgotados manualmente",
+"field.esgotados_manualmente": "Esgotados manualmente",
+"field.configuracao_dashboard": "Configuração Dashboard",
+"field.perfis_dashboard": "Perfis Dashboard",
+"field.perfis": "Perfis",
+"action.novo_perfil": "Novo Perfil",
+"field.perfil": "Perfil",
+"field.coluna_esquerda": "Coluna Esquerda",
+"field.coluna_direita": "Coluna Direita",
+"field.perfil_dashboard": "Perfil Dashboard",
+"field.registos": "Registos",
+"field.sem_configuracao": "Sem configuração"
 }

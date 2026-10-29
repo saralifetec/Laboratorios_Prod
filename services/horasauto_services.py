@@ -192,8 +192,10 @@ def gerar_resumo_periodo(start, end):
     user_ids = [c.tecnico_id for c in configs]
 
     users = {
-        u.id: u.full_name for u in User.query.filter(
-            User.id.in_(user_ids)
+        u.id: u.full_name
+        for u in User.query.filter(
+            User.id.in_(user_ids),
+            User.obsoleto == 0
         ).all()
     }
 

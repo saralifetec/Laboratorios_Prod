@@ -13,7 +13,9 @@ class User(db.Model):
     funcao_id = db.Column(db.Integer, db.ForeignKey('funcoes.id'), nullable=False)
     laboratorio_id = db.Column(db.Integer, db.ForeignKey('laboratorios.id'), nullable=False)
     obsoleto = db.Column(db.Boolean, nullable=False)
+    dashboard_perfil_id = db.Column( db.Integer, db.ForeignKey('dashboard_perfis.id'), nullable=True )
 
+    dashboard_perfil = db.relationship( 'DashboardPerfil', foreign_keys=[dashboard_perfil_id], backref='utilizadores_dashboard' )
     funcao = db.relationship('Funcao', backref='users')
     laboratorio = db.relationship('Laboratorio', backref='users')
 
@@ -721,12 +723,9 @@ class HorasAuto(db.Model):
     __tablename__ = 'horas_auto'
 
     id = db.Column(db.Integer, primary_key=True)
-
     ativo = db.Column(db.Boolean, default=False)
-
     frequencia = db.Column(db.String(20), default="semanal")
     repeticao = db.Column(db.Integer)  # dia da semana (2=segunda...)
-
     dia_inicio = db.Column(db.Date)
 
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
@@ -773,3 +772,14 @@ class ConfGeral(db.Model):
     @staticmethod
     def get_conf_geral():
         return ConfGeral.query.first()
+
+class DashboardPerfil(db.Model):
+    __tablename__ = "dashboard_perfis"
+
+    id = db.Column(db.Integer, primary_key=True)
+    nome = db.Column(db.String(100), nullable=False)
+    descricao = db.Column(db.String(255), nullable=False)
+    configuracao = db.Column(db.Text, nullable=False)
+    criado_por = db.Column( db.Integer, db.ForeignKey('users.id') )
+
+    criador = db.relationship( 'User', foreign_keys=[criado_por] )

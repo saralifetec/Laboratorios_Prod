@@ -163,16 +163,6 @@ def preview_horasauto():
         "periodos": data
     })
 
-@horasauto_bp.route('/disponivel', methods=['GET'])
-def horas_disponiveis():
-    """
-    Retorna o total de horas disponíveis em todos os testes.
-    (Versão simplificada para horas auto)
-    """
-
-    return jsonify({
-        "total": calcular_total_disponivel()
-    })
 
 
 @horasauto_bp.route('/gerar', methods=['POST'])

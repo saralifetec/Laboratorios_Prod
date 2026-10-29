@@ -679,6 +679,18 @@
 "modal.importar_testes_gbs": "Import GBS Test Steps",
 "field.cod_maquina": "Machine Code",
 "field.ausente": "Absent",
-"field.pendente": "Pending"
+"field.pendente": "Pending",
+"field.nao_esgotados_manualmente": "Not manually emptied",
+"field.esgotados_manualmente": "Manually emptied",
+"field.configuracao_dashboard": "Dashboard Configuration",
+"field.perfis_dashboard": "Dashboard Profiles",
+"field.perfis": "Profiles",
+"action.novo_perfil": "New Profile",
+"field.perfil": "Profile",
+"field.coluna_esquerda": "Left Column",
+"field.coluna_direita": "Right Column",
+"field.perfil_dashboard": "Dashboard Profile",
+"field.registos": "Records",
+"field.sem_configuracao": "No configuration"
 }
 

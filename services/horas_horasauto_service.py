@@ -179,7 +179,12 @@ def calcular_total_disponivel():
 
         ensaio = Ensaio.query.get(teste.ensaio_id)
 
-        if not ensaio or not ensaio.norma_id:
+        if (
+            not ensaio
+            or not ensaio.norma_id
+            or ensaio.pendente == 1
+            or ensaio.anulado == 1
+        ):
             continue
 
         tpl = Templatenormas.query.filter_by(
@@ -250,7 +255,7 @@ def calcular_disponibilidade_por_teste():
         .all()
     )
 
-    ensaios = Ensaio.query.filter_by(anulado=False).all()
+    ensaios = ( Ensaio.query .filter( Ensaio.anulado != 1, Ensaio.pendente != 1 ) .all() )
 
     for ensaio in ensaios:
 
@@ -266,6 +271,12 @@ def calcular_disponibilidade_por_teste():
 
             tpl = template_map.get(teste.teste_id)
             if not tpl:
+                continue
+
+            if teste.horasesgotadas == 1:
+                continue
+
+            if teste.esgotadomanualmente == 1:
                 continue
 
             num_pecas = teste.qtd or 0
@@ -553,15 +564,26 @@ def obter_horas_network_por_ensaio(data):
     resultados = db.session.query(
         Horas.ensaio_id,
         func.sum(Horas.horas)
-    ).join(User).join(ConfHorasAuto).filter(
+    ).join(
+        Ensaio,
+        Ensaio.id == Horas.ensaio_id
+    ).join(
+        User
+    ).join(
+        ConfHorasAuto
+    ).filter(
 
         Horas.data == data,
         Horas.ensaio_id.isnot(None),
 
-        #  só NETWORK
-        ConfHorasAuto.pepnet == "network"
+        ConfHorasAuto.pepnet == "network",
 
-    ).group_by(Horas.ensaio_id).all()
+        Ensaio.pep.isnot(None),
+        Ensaio.pep != ''
+
+    ).group_by(
+        Horas.ensaio_id
+    ).all()
 
     return {
         r[0]: float(r[1]) for r in resultados if r[0]

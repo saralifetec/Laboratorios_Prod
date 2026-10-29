@@ -7,4 +7,5 @@ app.jinja_env.globals['now'] = datetime.now
 app.jinja_env.globals['LOCALIZACAO'] = app.config['LOCALIZACAO']
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5002, debug=True)
+    app.run(host='0.0.0.0', port=5002,
+            debug=True)

@@ -206,15 +206,42 @@ option.norma-com-doc {
 								<div class="col-md-12 p-0">
 									<br>
 									<select class="form-control" id="tabela_id" name="tabela_id">
+										{% if conf_geral.armazem_ext == '1' %}
+										<option value="componentesae" data-i18n="table.ae_components">
+											Armazém Externo Componentes
+										</option>
+
+										<option value="codificacaoae" data-i18n="table.ae_codification">
+											Armazém Externo Codificação
+										</option>
+
+										<option value="localizacoes_ae" data-i18n="table.ae_locations">
+											Armazém Externo Localizações
+										</option>
+
+										<option value="tipovolumeae" data-i18n="table.ae_volume_type">
+											Armazém Externo Tipo Volume
+										</option>
+										{% endif %}
+
+										{% if conf_geral.armazem_plme == '1' %}
+										<option value="componentes" data-i18n="field.componentes">
+											Componentes
+										</option>
+
+										<option value="localizacoes" data-i18n="table.stock_locations">
+											Localizações Stocks
+										</option>
+										{% endif %}
+										{% if conf_geral.horas == '1' %}
+										<option value="codigosg" data-i18n="field.codigo_g">
+											Cód. Gerais
+										</option>
+										{% endif %}
+
 										<option value="clientes" data-i18n="field.clientes" selected>Clientes</option>
-										<option value="codigosg" data-i18n="field.codigo_g"> Cód. Gerais </option>
-										<option value="componentes" data-i18n="field.componentes">Componentes</option>
-										<option value="componentesae" data-i18n="table.ae_components">Armazém Externo Componentes</option>
-										<option value="codificacaoae" data-i18n="table.ae_codification">Armazém Externo Codificação</option>
-										<option value="localizacoes_ae" data-i18n="table.ae_locations">Armazém Externo Localizações</option>
 										<option value="fases" data-i18n="field.fases">Fases</option>
 										<option value="laboratorios" data-i18n="field.laboratorio">Laboratórios</option>
-										<option value="localizacoes" data-i18n="table.stock_locations">Localizações Stocks</option>
 										<option value="maquinas" data-i18n="field.maquinas">Máquinas</option>
 										<option value="motivosatraso" data-i18n="table.delay_reasons">Motivos Atraso</option>
 										<option value="motivosfalhaensaios" data-i18n="table.test_failure_reasons">Motivos Falha Ensaios</option>
@@ -226,7 +253,6 @@ option.norma-com-doc {
 										<option value="tipotestes" data-i18n="field.tipos_testes">Tipo de Testes</option>
 										<option value="tipopecas" data-i18n="field.tipos_pecas">Tipo de Peças</option>
 										<option value="users" data-i18n="field.users">Users</option>
-										<option value="tipovolumeae" data-i18n="table.ae_volume_type">Armazém Externo Tipo Volume</option>
 									</select>
 								</div>
 							</div>

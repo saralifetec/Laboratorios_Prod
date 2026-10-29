@@ -1,11 +1,38 @@
 
 {% extends "base.html" %}
+{% set widgets = dashboard_config.get('widgets', {}) %}
+{% set ensaios_registos =
+    widgets.get('ensaios_pendentes', {}).get('registos', 5)
+%}
+
+{% set relatorios_registos =
+    widgets.get('relatorios_pendentes', {}).get('registos', 5)
+%}
+
+{% set pedidos_horas_extra_registos =
+    widgets.get('pedidos_horas_extra', {}).get('registos', 5)
+%}
+
+{% set resumo_horas_registos =
+    widgets.get('resumo_horas', {}).get('registos', 10)
+%}
+
+{% set horas_bloqueadas_registos =
+    widgets.get('horas_bloqueadas', {}).get('registos', 5)
+%}
 
 {% block page_title %}<span data-i18n="page.home">Laboratórios</span>{% endblock %}
 
 {% block navbar %}
   <h4 class="page-title" data-i18n="page.home">Home</h4>
 {% endblock %}
+
+{% set dashboard_widgets =
+    dashboard_config.get(
+        'widgets',
+        {}
+    )
+%}
 
 
 {% block content %}
@@ -184,232 +211,241 @@
 
 </style>
 
+
 <div class="tabelas-page">
 
-<div class="row">    
-	<div class="col-md-6">
-		<div class="card">
-			<div class="card-header">
-				<div class="card-title">
-					<div class="row align-items-center">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-center gap-2">
-                                <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio"><b>Laboratório</b></label>
+    <!-- Barra superior -->
+    <div class="card mb-3">
+        <div class="card-body py-2">
+            <div class="d-flex align-items-center gap-2">
+                <label for="laboratorio" class="form-label mb-0" data-i18n="field.laboratorio">
+                    <b>Laboratório</b>
+                </label>
+                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;"
+                    {% if user.funcao_id == 1 %}
+                        disabled
+                    {% endif %}>
+                </select>
+            </div>
+        </div>
+    </div>
 
-                                <select class="form-control form-control-sm" id="laboratorio" name="laboratorio" style="width:150px;" {% if user.funcao_id == 1 %} disabled {% endif %}>
-                                    
-                                </select>
-                            </div>
-                        </div>
-						
-					</div>
-
-				</div>			
-			</div>        
-			<div class="card-body">   
-
-        {% if alerta_horas_auto %}
-          <div class="alert-horas-auto shadow-sm mb-3">
-
-            <div class="d-flex align-items-center justify-content-between">
-
-                <div class="d-flex align-items-center gap-2">
-                    <i class="fa-solid fa-triangle-exclamation text-warning fs-4"></i>
-
-                    <div>
-                        <strong data-i18n="field.exp_horas_pendente">
-                            Exportação de horas pendente
-                        </strong><br>
-
-                        <small data-i18n="field.nao_geradas">
-                            As horas automáticas ainda não foram geradas esta semana
-                        </small>
-                    </div>
+    <!-- Alerta fixo -->
+    {% if user.funcao_id == 3 and alerta_horas_auto %}
+    <div class="alert-horas-auto shadow-sm mb-3">
+        <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-2">
+                <i class="fa-solid fa-triangle-exclamation text-warning fs-4">
+                </i>
+                <div>
+                    <strong data-i18n="field.exp_horas_pendente">
+                        Exportação de horas pendente
+                    </strong>
+                    <br>
+                    <small data-i18n="field.nao_geradas">
+                        As horas automáticas ainda não foram geradas esta semana
+                    </small>
                 </div>
-
-                <button
-                    class="btn btn-sm btn-warning"
-                    onclick="window.location.href='{{ url_for('horas_horasauto.horas_horasauto') }}'">
-
-                    Gerar
-
-                </button>
-
             </div>
 
+            <button class="btn btn-sm btn-warning" onclick="window.location.href='{{ url_for('horas_horasauto.horas_horasauto') }}'">
+                Gerar
+            </button>
         </div>
-
-        {% endif %}
-        
-
-				<div class="row">
-						<h6 class="fw-bold" data-i18n="index.pending_tests">Ensaios Pendentes</h6>
-						<table id="homeEnsaiosTable" class="table table-striped table-sm" style="width:100%">
-							<thead>
-								<tr>
-								<th data-i18n="field.ensaio">Ensaio</th>
-								<th data-i18n="field.projeto">Projeto</th>
-								<th data-i18n="field.denominacao">Denominação</th>
-								<th data-i18n="field.peca">Peça</th>
-								<th data-i18n="field.solicitante">Solicitante</th>
-                <th data-i18n="field.pendente">Pendente</th>
-								<th data-i18n="field.data_solicitada">Data Solicitada</th>  
-								</tr>
-							</thead>
-							<tbody></tbody>
-						</table>
-				
-				</div>
-        <br>
-        <div class="row" id="relatoriosPendentesContainer" style="display:none;">
-            <h6 class="fw-bold" data-i18n="index.pending_reports">Relatórios Pendentes</h6>
-            <table id="homeRelatoriosTable" class="table table-striped table-sm" style="width:100%">
-              <thead>
-                <tr>
-                  <th data-i18n="field.ensaio">Ensaio</th>
-                  <th data-i18n="field.projeto">Projeto</th>
-                  <th data-i18n="field.denominacao">Denominação</th>
-                  <th data-i18n="field.solicitante">Solicitante</th>
-                  <th data-i18n="field.nome">Nome</th>
-                  <th data-i18n="field.data_inicio">Data Início</th>
-                  <th data-i18n="field.concluido">Concluído</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
-          </div>
-
-          {% if user and user.funcao_id in [2, 3] %}
-          <div class="card-body" id="avisosenviosCard" style="display:none;">
-              <h6 class="fw-bold" data-i18n="index.warehouse_alerts">Avisos Armazém Externo</h6>
-              <div id="home_avisos_enviospendentes_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
-              <div id="home_avisos_envios_planeados" class="alert alert-danger py-1 mb-1" style="display:none;"></div>
-          </div>
-          {% endif %}
-				
-			</div>
-		</div>
-	</div>
-
-
-    
-
-
-	<div class="col-md-6">
-		<div class="card">
-			<div class="card-header">
-				<div class="card-title">
-					 <div class="row">
-						<br>
-					</div>
-				</div>		
-			
-				<div class="card-body" id="avisosHorasCard" style="display:none;">            
-            <h6 class="fw-bold" data-i18n="index.hours_alerts">Avisos Horas</h6>
-            <div id="home_avisos_horas_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
-            <div id="home_avisos_horas_percentagem" class="alert alert-danger py-1 mb-1" style="display:none;"></div>
-        </div>	
-
-        <div class="card-body" id="pedidosHorasExtraContainer" style="display:none;">
-          <h6 class="fw-bold" data-i18n="index.extra_hours_requests">Pedidos Horas Extra</h6>
-          <table id="pedidosHorasExtraTable" class="table table-striped table-sm" style="width:100%">
-            <thead>
-              <tr>
-                <th data-i18n="field.nome">Nome</th>
-                <th data-i18n="field.horas">Horas</th>
-                <th data-i18n="field.teste">Teste</th>
-                <th data-i18n="field.status">Estado</th>
-                <th data-i18n="field.acoes">Ações</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-
-        <div class="card-body">         
-          <div id="horasBloqueadasContainer" style="display:none;">
-          <h6 class="fw-bold" data-i18n="index.missing_information">Informação em Falta</h6>
-          
-          <table id="horasBloqueadasTable" class="table table-striped table-sm" style="width:100%">
-            <thead>
-              <tr>
-              <th data-i18n="field.ensaio">Ensaio</th>
-              <th class="text-center" data-i18n="field.motivo">Motivo</th>
-              <th class="text-center" data-i18n="field.horas">Horas</th>
-              <th class="text-center" data-i18n="action.delete">
-              Eliminar
-              </th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-          
-          </div>
-        </div>   
-
-        <div class="card-body" id="avisosEnsaiosCard" style="display:none;">            
-          <h6 class="fw-bold" data-i18n="index.test_alerts">Avisos Ensaios</h6>
-          <div id="home_avisos_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
-        </div>
-
-        <div class="card-body">         
-          <div id="resumoHorasContainer" style="display:none;">
-          <h6 class="fw-bold" data-i18n="index.hours_summary">Resumo Horas</h6>
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <label for="ano" class="form-label mb-0 me-2" data-i18n="field.ano">Ano</label>
-            <select class="form-control form-control-sm w-auto" id="ano" name="ano" required>
-              {% set ano_inicio = 2026 %}
-              {% set ano_fim = ano_atual %}
-              {% set ano_selecionado = ano_atual %}
-              {% for ano in range(ano_inicio, ano_fim + 1) %}
-                <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
-              {% endfor %}
-            </select>
-            <label for="mes" class="form-label mb-0 ms-3 me-2" data-i18n="field.mes">Mês</label>
-            <select class="form-control form-control-sm w-auto" id="mes" name="mes" required>
-              {% for i in range(1, 13) %}
-                <option value="{{ i }}" {% if i == mes_atual %}selected{% endif %}>
-                  {{ i }}
-                </option>
-              {% endfor %}
-            </select>
-          </div>
-              <table id="resumoHorasTable" class="table table-striped table-sm" style="width:100%">
-                <thead>
-                    <tr>
-                        <th data-i18n="field.nome">Nome</th>
-                        <th class="text-center" data-i18n="field.horas_previstas">H. Previstas</th>
-                        <th class="text-center" data-i18n="field.horas_inseridas">H. Inseridas</th>
-                        <th class="text-center" data-i18n="field.perc_gerais">% H. Gerais</th>
-                        <th class="text-center" data-i18n="field.ultima_exportacao">Ult. Exp.</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-						</table>
-        
-        </div>
-        </div>      
     </div>
-			     
-		
-		</div>
-	</div>
-</div>       
+    {% endif %}
+
+    <!-- Dashboard -->
+    <div class="row">
+        <div class="col-md-6" id="dashboardLeftColumn">
+        </div>
+        <div class="col-md-6" id="dashboardRightColumn">
+        </div>
+    </div>
 </div>
 
-<div class="row">    
-	<div class="col-md-6">
-			      
+{% if widgets.get('ensaios_pendentes', {}).get('ativo', True) %}
+<div class="card mb-3" id="widget_ensaios_pendentes">
+    <div class="card-body">
+        <h6 class="fw-bold" data-i18n="index.pending_tests">
+            Ensaios Pendentes
+        </h6>
+        <table id="homeEnsaiosTable" class="table table-striped table-sm" style="width:100%">
+            <thead>
+                <tr>
+                    <th data-i18n="field.ensaio">
+                        Ensaio
+                    </th>
+                    <th data-i18n="field.projeto">
+                        Projeto
+                    </th>
+                    <th data-i18n="field.denominacao">
+                        Denominação
+                    </th>
+                    <th data-i18n="field.peca">
+                        Peça
+                    </th>
+                    <th data-i18n="field.solicitante">
+                        Solicitante
+                    </th>
+                    <th data-i18n="field.pendente">
+                        Pendente
+                    </th>
+                    <th data-i18n="field.data_solicitada">
+                        Data Solicitada
+                    </th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+{% if widgets.get('relatorios_pendentes', {}).get('ativo', True) %}
+  <div class="card mb-3" id="widget_relatorios_pendentes">
+    <div class="card-body">
+      <h6 class="fw-bold" data-i18n="index.pending_reports">
+        Relatórios Pendentes
+      </h6>
+      <table id="homeRelatoriosTable" class="table table-striped table-sm" style="width:100%">
+        <thead>
+          <tr>
+            <th data-i18n="field.ensaio">Ensaio</th>
+            <th data-i18n="field.projeto">Projeto</th>
+            <th data-i18n="field.denominacao">Denominação</th>
+            <th data-i18n="field.solicitante">Solicitante</th>
+            <th data-i18n="field.nome">Nome</th>
+            <th data-i18n="field.data_inicio">Data Início</th>
+            <th data-i18n="field.concluido">Concluído</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+{% endif %}
+
+
+{% if widgets.get('avisos_armazem', {}).get('ativo', True) and user and user.funcao_id in [2, 3] %}
+  <div class="card mb-3" id="widget_avisos_armazem">
+    <div class="card-body" id="avisosenviosCard" style="display:none;">
+        <h6 class="fw-bold" data-i18n="index.warehouse_alerts">Avisos Armazém Externo</h6>
+        <div id="home_avisos_enviospendentes_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
+        <div id="home_avisos_envios_planeados" class="alert alert-danger py-1 mb-1" style="display:none;"></div>
+    </div>
+  </div>
+{% endif %}
+
+{% if widgets.get('avisos_horas', {}).get('ativo', True) %}
+<div class="card mb-3" id="widget_avisos_horas">
+<div class="card-body" id="avisosHorasCard" style="display:none;">            
+    <h6 class="fw-bold" data-i18n="index.hours_alerts">Avisos Horas</h6>
+    <div id="home_avisos_horas_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
+    <div id="home_avisos_horas_percentagem" class="alert alert-danger py-1 mb-1" style="display:none;"></div>
+</div>	
+</div>
+{% endif %}
+
+{% if widgets.get('pedidos_horas_extra', {}).get('ativo', True) %}
+<div class="card mb-3" id="widget_pedidos_horas_extra">
+<div class="card-body" id="pedidosHorasExtraContainer" style="display:none;">
+  <h6 class="fw-bold" data-i18n="index.extra_hours_requests">Pedidos Horas Extra</h6>
+  <table id="pedidosHorasExtraTable" class="table table-striped table-sm" style="width:100%">
+    <thead>
+      <tr>
+        <th data-i18n="field.nome">Nome</th>
+        <th data-i18n="field.horas">Horas</th>
+        <th data-i18n="field.teste">Teste</th>
+        <th data-i18n="field.status">Estado</th>
+        <th data-i18n="field.acoes">Ações</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+</div>
+{% endif %}
+
+{% if widgets.get('horas_bloqueadas', {}).get('ativo', True) %}
+<div class="card mb-3" id="widget_horas_bloqueadas">         
+  <div class="card-body" id="horasBloqueadasContainer" style="display:none;">
+  <h6 class="fw-bold" data-i18n="index.missing_information">Informação em Falta</h6>
+  
+  <table id="horasBloqueadasTable" class="table table-striped table-sm" style="width:100%">
+    <thead>
+      <tr>
+      <th data-i18n="field.ensaio">Ensaio</th>
+      <th class="text-center" data-i18n="field.motivo">Motivo</th>
+      <th class="text-center" data-i18n="field.horas">Horas</th>
+      <th class="text-center" data-i18n="action.delete">
+      Eliminar
+      </th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  
+  </div>
+</div>   
+{% endif %}
+
+{% if widgets.get('avisos_ensaios', {}).get('ativo', True) %}
+<div class="card mb-3" id="widget_avisos_ensaios"> 
+<div class="card-body" id="avisosEnsaiosCard" style="display:none;">            
+  <h6 class="fw-bold" data-i18n="index.test_alerts">Avisos Ensaios</h6>
+  <div id="home_avisos_container" class="alert alert-warning py-1 mb-1" style="display:none;"></div>
+</div>
+</div>
+{% endif %}
+
+{% if widgets.get('resumo_horas', {}).get('ativo', True) %}
+<div class="card mb-3" id="widget_resumo_horas">         
+  <div class="card-body" id="resumoHorasContainer" style="display:none;">
+  <h6 class="fw-bold" data-i18n="index.hours_summary">Resumo Horas</h6>
+  <div class="d-flex align-items-center gap-2 mb-2">
+    <label for="ano" class="form-label mb-0 me-2" data-i18n="field.ano">Ano</label>
+    <select class="form-control form-control-sm w-auto" id="ano" name="ano" required>
+      {% set ano_inicio = 2026 %}
+      {% set ano_fim = ano_atual %}
+      {% set ano_selecionado = ano_atual %}
+      {% for ano in range(ano_inicio, ano_fim + 1) %}
+        <option value="{{ ano }}" {% if ano == ano_selecionado %}selected{% endif %}>{{ ano }}</option>
+      {% endfor %}
+    </select>
+    <label for="mes" class="form-label mb-0 ms-3 me-2" data-i18n="field.mes">Mês</label>
+    <select class="form-control form-control-sm w-auto" id="mes" name="mes" required>
+      {% for i in range(1, 13) %}
+        <option value="{{ i }}" {% if i == mes_atual %}selected{% endif %}>
+          {{ i }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+      <table id="resumoHorasTable" class="table table-striped table-sm" style="width:100%">
+        <thead>
+            <tr>
+                <th data-i18n="field.nome">Nome</th>
+                <th class="text-center" data-i18n="field.horas_previstas">H. Previstas</th>
+                <th class="text-center" data-i18n="field.horas_inseridas">H. Inseridas</th>
+                <th class="text-center" data-i18n="field.perc_gerais">% H. Gerais</th>
+                <th class="text-center" data-i18n="field.ultima_exportacao">Ult. Exp.</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+
+</div>
+</div>     
+{% endif %} 
+
+
+
 			
-		</div>
-	</div>
 
-
-    
-
-
-	      
-</div>
+        
+        
+   
 
 
 <div class="modal fade" id="tratarPedidoModal" tabindex="-1" aria-hidden="true">
@@ -641,7 +677,7 @@ if (document.getElementById('horasBloqueadasTable')) {
                 </i>
             `;
         }}],
-        pageLength: 5,
+        pageLength: {{ horas_bloqueadas_registos }},
         paging: true,
         lengthChange: false,
         searching: false,
@@ -656,6 +692,15 @@ if (document.getElementById('horasBloqueadasTable')) {
 }
 
 async function carregarHorasBloqueadas() {
+
+  const container =
+        document.getElementById(
+            'horasBloqueadasContainer'
+        );
+
+    if (!container) {
+        return;
+    }
 
     try {
 
@@ -963,7 +1008,7 @@ document.addEventListener('DOMContentLoaded', async function () {
       order: [[5, 'asc']],
       language: { url: i18n.getDataTablesLanguageUrl() },
       dom: '<"top"lf>rt<"bottom"ip><"clear">',
-      pageLength: 5,
+      pageLength: {{ relatorios_registos }},
       pagingType: "simple_numbers"
     });
     
@@ -1021,6 +1066,15 @@ document.addEventListener('DOMContentLoaded', async function () {
 
   ///////////////////////////////////////////////////////
   //TABELA ENSAIOS
+
+const podeEditarPendente =
+{% if user and user.funcao_id in [2, 3] %}
+    true;
+{% else %}
+    false;
+{% endif %}
+
+
   let homeEnsaiosTable = $('#homeEnsaiosTable').DataTable({
     columns: [
       // 0: Ensaio (link)
@@ -1056,6 +1110,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 class="chk-pendente"
                 data-id="${row.id}"
                 ${data ? 'checked' : ''}
+                ${podeEditarPendente ? '' : 'disabled'}
             >
         `;
     }
@@ -1080,7 +1135,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     order: [[6, 'asc']], // ordenar por datasolicitada asc
     language: { url: i18n.getDataTablesLanguageUrl() },
     dom: '<"top"lf>rt<"bottom"ip><"clear">',
-	pageLength: 5,
+	pageLength: {{ ensaios_registos }},
     pagingType: "simple_numbers",
     createdRow: function (row, data) {
       // Pintar a laranja se datasolicitada < hoje
@@ -1367,7 +1422,8 @@ function atualizarVisibilidadeAvisosHorasCard() {
           { data: 'ultima_exportacao', className: 'text-center' },
         ],
         searching: false,
-        paging: false,
+        paging: true,
+        pageLength: {{ resumo_horas_registos }},
         info: false,
         ordering: false,
         language: { url: i18n.getDataTablesLanguageUrl() },
@@ -1473,10 +1529,11 @@ function atualizarVisibilidadeAvisosHorasCard() {
       autoWidth: false,
       searching: false,
       lengthChange: false,
-      paging: false,
+      paging: true,
       info: false,
+      pageLength: {{ pedidos_horas_extra_registos }},
       language: { url: i18n.getDataTablesLanguageUrl() },
-      dom: 't'
+      dom: 'tp'
     });
   
     await carregarPedidosHorasExtra();
@@ -1628,6 +1685,66 @@ function atualizarVisibilidadeAvisosEnsaiosCard() {
 
     card.style.display = mostrar ? '' : 'none';
 }
+
+
+
+const dashboardConfig = {{ dashboard_config|tojson }};
+
+function aplicarDashboardConfig() {
+
+    const widgets =
+        dashboardConfig.widgets || {};
+
+    const widgetsOrdenados =
+        Object.entries(widgets)
+            .sort((a, b) => {
+
+                const ordemA =
+                    a[1].ordem || 999;
+
+                const ordemB =
+                    b[1].ordem || 999;
+
+                return ordemA - ordemB;
+
+            });
+
+    widgetsOrdenados.forEach(
+        ([widgetId, cfg]) => {
+
+            const elemento =
+                document.getElementById(
+                    'widget_' + widgetId
+                );
+
+            if (!elemento) {
+                return;
+            }
+
+            if (!cfg.ativo) {
+
+                elemento.style.display =
+                    'none';
+
+                return;
+            }
+
+            elemento.style.display = '';
+
+            const destino =
+                cfg.coluna === 'right'
+                ? document.getElementById(
+                    'dashboardRightColumn'
+                )
+                : document.getElementById(
+                    'dashboardLeftColumn'
+                );
+
+            destino.appendChild( elemento );
+        });
+}
+
+document.addEventListener( 'DOMContentLoaded', function() { aplicarDashboardConfig(); } );
 
 </script>
 

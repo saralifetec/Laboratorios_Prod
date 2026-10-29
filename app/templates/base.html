@@ -96,12 +96,12 @@
           </div>
           <div class="sidebar-wrapper scrollbar scrollbar-inner">
             <div class="sidebar-content">
-			<h3 class="sidebar-title" style="padding-left: 30px;">
-        <span data-i18n="common.app_name">Laboratórios</span>
-        <span class="badge bg-secondary">
-            {{ LOCALIZACAO }}
-        </span>
-      </h3>
+              <h3 class="sidebar-title" style="padding-left: 30px;">
+                <span data-i18n="common.app_name">Laboratórios</span>
+                <span class="badge bg-secondary">
+                    {{ LOCALIZACAO }}
+                </span>
+              </h3>
        
               <!-- Sidebar content here -->
               <ul class="nav nav-secondary">
@@ -343,13 +343,24 @@
                                   <span class="sub-item" data-i18n="nav.validation_rules">Regras Validação</span>
                               </a>
                           </li>
+                          {% endif %}
 
-                          <li class="{% if endpoint == 'construtorconsultas' %}active{% endif %}">
-                              <a href="{{ url_for('construtorconsultas') }}">
-                                  <span class="sub-item" data-i18n="nav.query_builder">Construtor de Consultas</span>
+                          {% if user and user.funcao_id != 1 %}
+                          <li class="{% if endpoint == 'dashboard.dashboardconfig' %}active{% endif %}">
+                              <a href="{{ url_for('dashboard.dashboardconfig') }}">
+                                  <span class="sub-item">Dashboard</span>
                               </a>
                           </li>
                           {% endif %}
+
+
+                          
+                          <!--<li class="{% if endpoint == 'construtorconsultas' %}active{% endif %}">
+                              <a href="{{ url_for('construtorconsultas') }}">
+                                  <span class="sub-item" data-i18n="nav.query_builder">Construtor de Consultas</span>
+                              </a>
+                          </li>-->
+                          
 
                       </ul>
                   </div>
@@ -630,10 +641,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
 
 
-      
-</script>
-
-<script>
 
 let confGeral = null;
 
@@ -649,26 +656,17 @@ async function carregarConfiguracaoGlobal() {
 function aplicarConfiguracaoGlobal() {
 
     if (confGeral.horas !== '1') {
-
-        document
-            .getElementById('menuHoras')
-            ?.remove();
+        document .getElementById('menuHoras') ?.remove();
+        document.getElementById('menuHorasAuto')?.remove();
     }
 
     if (confGeral.armazem_plme !== '1') {
-
-        document
-            .getElementById('menuArmazemPLME')
-            ?.remove();
+        document .getElementById('menuArmazemPLME') ?.remove();
     }
 
     if (confGeral.armazem_ext !== '1') {
-
-        document
-            .getElementById('menuArmazemExterno')
-            ?.remove();
+        document .getElementById('menuArmazemExterno') ?.remove();
     }
-
 
 }  
 

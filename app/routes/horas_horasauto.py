@@ -1,9 +1,9 @@
-from datetime import date
+from datetime import date, timedelta
 from flask import Blueprint, jsonify, render_template, request, session
 from sqlalchemy import or_
 from app.models import Ensaio, HorasAuto, HorasAutoExecucao, Testes, Tipotestes, User, db
 from app.routes.geral import login_required
-from app.utils.datas import formatar_data
+from app.utils.datas import formatar_data, parse_data
 from services.horas_horasauto_service import anular_exportacao_horas_auto, atualizar_horasesgotadas, atualizar_horasesgotadas_teste, calcular_tarefas_pep, calcular_total_disponivel, calcular_disponibilidade_por_teste, calcular_tarefas, calcular_tarefas_gerais, distribuir_ensaios_pep, distribuir_gerais_pep, distribuir_horas, distribuir_horas_gerais, inserir_horas, inserir_horas_gerais, inserir_horas_pep, obter_codigosg_por_user, obter_historico_exportacoes, obter_periodos_disponiveis, obter_preview_periodo
 from services.horas_pessoa_service import obter_horas_mensais
 
@@ -311,7 +311,7 @@ def testes_disponiveis():
     if laboratorio_id:
 
         query = query.filter(
-            Tipotestes.laboratorio_id ==
+            Ensaio.laboratorio_id ==
             laboratorio_id
         )
 
@@ -347,9 +347,9 @@ def testes_disponiveis():
             ),
 
             "laboratorio": (
-                teste.teste.laboratorio.laboratorio
-                if teste.teste
-                and teste.teste.laboratorio
+                teste.ensaio.laboratorio.laboratorio
+                if teste.ensaio
+                and teste.ensaio.laboratorio
                 else ""
             ),
 
@@ -365,8 +365,24 @@ def testes_disponiveis():
                 else ""
             ),
 
-            "datainicio": formatar_data(teste.datainicio),
-            "datafim": formatar_data(teste.datafim),
+            "datainicio": (
+                parse_data(teste.datainicio).strftime("%d/%m/%Y")
+                if parse_data(teste.datainicio)
+                else ""
+            ),
+
+            "datafim": (
+                parse_data(teste.datafim).strftime("%d/%m/%Y")
+                if parse_data(teste.datafim)
+                else ""
+            ),
+
+            "dataconclusao": (
+                parse_data(teste.ensaio.concluido).strftime("%d/%m/%Y")
+                if teste.ensaio and parse_data(teste.ensaio.concluido)
+                else ""
+            ),
+
 
         })
 
@@ -421,11 +437,9 @@ def testes_recalcular():
         type=int
     )
 
-    incluir_esgotados = (
-        request.args.get(
-            'incluir_esgotados',
-            '0'
-        ) == '1'
+    filtro_esgotados = request.args.get(
+        'filtro_esgotados',
+        'nao'
     )
 
     query = (
@@ -436,7 +450,7 @@ def testes_recalcular():
 
     if laboratorio_id:
         query = query.filter(
-            Tipotestes.laboratorio_id ==
+            Ensaio.laboratorio_id ==
             laboratorio_id
         )
 
@@ -458,10 +472,19 @@ def testes_recalcular():
 
         )
 
-    if not incluir_esgotados:
+    if filtro_esgotados == 'nao':
+
         query = query.filter(
             Testes.esgotadomanualmente == 0
         )
+
+    elif filtro_esgotados == 'sim':
+
+        query = query.filter(
+            Testes.esgotadomanualmente == 1
+        )
+
+    # 'todos' -> não filtra
 
     testes = (
         query
@@ -488,8 +511,8 @@ def testes_recalcular():
             ),
 
             "laboratorio": (
-                teste.teste.laboratorio.laboratorio
-                if teste.teste and teste.teste.laboratorio
+                teste.ensaio.laboratorio.laboratorio
+                if teste.ensaio and teste.ensaio.laboratorio
                 else ""
             ),
 
@@ -580,5 +603,55 @@ def horas_dia():
         return jsonify({
             "error": str(e)
         }), 500
+
+@horas_horasauto_bp.route('/proximo_periodo')
+def proximo_periodo_horas_auto():
+
+    config = HorasAuto.query.first()
+
+    if not config:
+        return jsonify({
+            'success': False,
+            'error': 'Configuração não encontrada.'
+        })
+
+    ultima = (
+        HorasAutoExecucao.query
+        .order_by(HorasAutoExecucao.data_fim.desc())
+        .first()
+    )
+
+    if ultima:
+
+        data_inicio = (
+            ultima.data_fim +
+            timedelta(days=1)
+        )
+
+    else:
+
+        data_inicio = config.dia_inicio
+
+    if config.frequencia == 'semanal':
+
+        data_fim = (
+            data_inicio +
+            timedelta(days=6)
+        )
+
+    else:
+
+        data_fim = (
+            data_inicio +
+            timedelta(days=6)
+        )
+
+    return jsonify({
+        'success': True,
+        'data_inicio':
+            data_inicio.isoformat(),
+        'data_fim':
+            data_fim.isoformat()
+    })
 
 

@@ -1,6 +1,7 @@
 from datetime import date
 
 from flask import Blueprint, jsonify, request, session
+from gbs3api.models import payload
 from sqlalchemy import func, or_
 
 from app.models import Horas, Templatenormas, Testes, User
@@ -138,10 +139,8 @@ def inserir_horas():
         horas_in  = payload.get('horas')
         data_str  = payload.get('data') or payload.get('dia') or payload.get('date')
         obs       = (payload.get('obs') or '').strip()
-
-        # Validações básicas
-        if not ensaio_id or not teste_id:
-            return jsonify({'error': 'ensaio_id e teste_id são obrigatórios.'}), 400
+        codigog_id = payload.get('codigog_id')
+        manual = payload.get('manual')
 
         # Data é obrigatória no modelo
         try:
@@ -158,75 +157,122 @@ def inserir_horas():
         if horas_val <= 0:
             return jsonify({'error': 'As horas devem ser superiores a zero.'}), 400
 
+        if ensaio_id:
 
-        print("ENSAIO_ID:", ensaio_id)
-        print("TESTE_ID:", teste_id)
-        # 1) Bloquear a linha do teste para evitar corrida (precisa InnoDB e transação)
-        teste = (db.session.query(Testes)
-                .filter(Testes.id == teste_id, Testes.ensaio_id == ensaio_id)
-                .with_for_update()
+            # Validações básicas
+            if not ensaio_id or not teste_id:
+                return jsonify({'error': 'ensaio_id e teste_id são obrigatórios.'}), 400
+
+            print("ENSAIO_ID:", ensaio_id)
+            print("TESTE_ID:", teste_id)
+            # 1) Bloquear a linha do teste para evitar corrida (precisa InnoDB e transação)
+            teste = (db.session.query(Testes)
+                    .filter(Testes.id == teste_id, Testes.ensaio_id == ensaio_id)
+                    .with_for_update()
+                    .first())
+
+            if not teste:
+                return jsonify({'error': 'Teste não encontrado para o ensaio indicado.'}), 404
+            print("TESTE ENCONTRADO:", teste)
+            ensaio = teste.ensaio
+            if not ensaio or not ensaio.norma_id:
+                return jsonify({'error': 'O ensaio não tem norma associada. Não é possível calcular horas máximas.'}), 400
+
+            # 2) Obter template desta norma para este tipo de teste
+            tpl = (Templatenormas.query
+                .filter_by(norma_id=ensaio.norma_id, teste_id=teste.teste_id)
                 .first())
+            if not tpl:
+                return jsonify({'error': 'Teste não existe no template da norma do ensaio.'}), 400
 
-        if not teste:
-            return jsonify({'error': 'Teste não encontrado para o ensaio indicado.'}), 404
-        print("TESTE ENCONTRADO:", teste)
-        ensaio = teste.ensaio
-        if not ensaio or not ensaio.norma_id:
-            return jsonify({'error': 'O ensaio não tem norma associada. Não é possível calcular horas máximas.'}), 400
+    
+            qtd_pecas = teste.qtd or 0
+            horas_max = (tpl.duracaomontagem or 0.0) + ((tpl.tempopp or 0.0) * qtd_pecas)
 
-        # 2) Obter template desta norma para este tipo de teste
-        tpl = (Templatenormas.query
-            .filter_by(norma_id=ensaio.norma_id, teste_id=teste.teste_id)
-            .first())
-        if not tpl:
-            return jsonify({'error': 'Teste não existe no template da norma do ensaio.'}), 400
+            # 3) Recalcular horas já colocadas (no momento, dentro do lock/mesma transação)
+            horas_colocadas = (
+                db.session.query(func.sum(Horas.horas))
+                .filter(Horas.teste_id == teste.id)
+                .filter(or_(Horas.extra.is_(False), Horas.extra.is_(None)))
+                .scalar()
+            ) or 0.0
 
-   
-        qtd_pecas = teste.qtd or 0
-        horas_max = (tpl.duracaomontagem or 0.0) + ((tpl.tempopp or 0.0) * qtd_pecas)
+            restantes = round(horas_max - horas_colocadas, 4)
 
-        # 3) Recalcular horas já colocadas (no momento, dentro do lock/mesma transação)
-        horas_colocadas = (
-            db.session.query(func.sum(Horas.horas))
-            .filter(Horas.teste_id == teste.id)
-            .filter(or_(Horas.extra.is_(False), Horas.extra.is_(None)))
-            .scalar()
-        ) or 0.0
+            if horas_val > restantes + 1e-9:
+                # Conflito: alguém pode ter lançado horas entretanto
+                return jsonify({
+                    'error': 'Horas excedem as disponíveis para este teste.',
+                    'horas_max': round(horas_max, 2),
+                    'horas_colocadas': round(horas_colocadas, 2),
+                    'horas_disponiveis': round(max(0.0, restantes), 2)
+                }), 409
 
-        restantes = round(horas_max - horas_colocadas, 4)
+            # 4) Inserir horas — técnico é SEMPRE o utilizador autenticado
+            reg = Horas(
+                tecnico_id=user,
+                data=dia,
+                horas=float(horas_val),
+                ensaio_id=int(ensaio_id),
+                teste_id=int(teste_id),
+                obs=obs if obs else None
+            )
+            db.session.add(reg)
+            db.session.commit()
 
-        if horas_val > restantes + 1e-9:
-            # Conflito: alguém pode ter lançado horas entretanto
+            # 5) Devolver totals atualizados
+            novas_colocadas = horas_colocadas + float(horas_val)
+            novas_disp = max(0.0, horas_max - novas_colocadas)
+
             return jsonify({
-                'error': 'Horas excedem as disponíveis para este teste.',
+                'success': True,
+                'message': 'Horas inseridas com sucesso.',
                 'horas_max': round(horas_max, 2),
-                'horas_colocadas': round(horas_colocadas, 2),
-                'horas_disponiveis': round(max(0.0, restantes), 2)
-            }), 409
+                'horas_colocadas': round(novas_colocadas, 2),
+                'horas_disponiveis': round(novas_disp, 2)
+            }), 201
 
-        # 4) Inserir horas — técnico é SEMPRE o utilizador autenticado
-        reg = Horas(
-            tecnico_id=user,
-            data=dia,
-            horas=float(horas_val),
-            ensaio_id=int(ensaio_id),
-            teste_id=int(teste_id),
-            obs=obs if obs else None
-        )
-        db.session.add(reg)
-        db.session.commit()
+        elif codigog_id:
 
-        # 5) Devolver totals atualizados
-        novas_colocadas = horas_colocadas + float(horas_val)
-        novas_disp = max(0.0, horas_max - novas_colocadas)
+            reg = Horas(
+                tecnico_id=user,
+                data=dia,
+                horas=float(horas_val),
+                codigog_id=int(codigog_id),
+                obs=obs if obs else None
+            )
 
-        return jsonify({
-            'success': True,
-            'message': 'Horas inseridas com sucesso.',
-            'horas_max': round(horas_max, 2),
-            'horas_colocadas': round(novas_colocadas, 2),
-            'horas_disponiveis': round(novas_disp, 2)
-        }), 201
+            db.session.add(reg)
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'message': 'Horas inseridas com sucesso.'
+            }), 201
+
+        elif manual:
+
+            reg = Horas(
+                tecnico_id=user,
+                data=dia,
+                horas=float(horas_val),
+                manual=manual,
+                obs=obs if obs else None
+            )
+
+            db.session.add(reg)
+            db.session.commit()
+
+            return jsonify({
+                'success': True,
+                'message': 'Horas inseridas com sucesso.'
+            }), 201
+
+        else:
+
+            return jsonify({
+                'error': 'Tipo inválido.'
+            }), 400
 
     except Exception as e:
         db.session.rollback()
